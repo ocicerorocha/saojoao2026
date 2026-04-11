@@ -825,11 +825,9 @@ function tryLogin() {
   try {
     buildApp();
   } catch(e) {
-    // Show error on screen so we can see what's failing
     app.style.cssText = 'display:none';
     document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('login-err').textContent = 'Erro interno: ' + e.message + ' | ' + e.stack?.split('
-')[1];
+    document.getElementById('login-err').textContent = 'Erro: ' + (e.message || e);
     console.error('buildApp error:', e);
   }
 }
