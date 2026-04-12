@@ -6,6 +6,7 @@
 <title>São João 2026 — ALL IN MUSIC</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#0e0f0e;--surface:#161714;--surface2:#1d1f1c;--surface3:#242622;
@@ -239,6 +240,20 @@ tbody tr:hover td{background:var(--surface2)}
 .upload-area{border:0.5px dashed var(--border2);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;transition:.15s;font-size:12px;color:var(--text3);font-family:var(--fm)}
 .upload-area:hover{border-color:var(--accent);color:var(--accent)}
 .upload-area input{display:none}
+
+/* Sócio — somente leitura: ocultar botões de ação */
+.socio-readonly .btn-primary,
+.socio-readonly .btn-green,
+.socio-readonly .btn-red,
+.socio-readonly button[onclick*="save"],
+.socio-readonly button[onclick*="submit"],
+.socio-readonly button[onclick*="aprovar"],
+.socio-readonly button[onclick*="rejeitar"],
+.socio-readonly button[onclick*="confirmar"],
+.socio-readonly button[onclick*="openModal"],
+.socio-readonly button[onclick*="nova-receita"],
+.socio-readonly button[onclick*="upload-doc"],
+.socio-readonly .upload-area { display: none !important; }
 </style>
 </head>
 <body>
@@ -361,6 +376,7 @@ tbody tr:hover td{background:var(--surface2)}
             <select class="form-select" id="sol-cidade" onchange="loadItens()">
               <option value="">Selecionar cidade</option>
             </select>
+            <div id="sol-cidade-locked" style="display:none;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text)"></div>
           </div>
           <div class="form-group">
             <div class="form-label">Categoria</div>
@@ -400,8 +416,9 @@ tbody tr:hover td{background:var(--surface2)}
         <div id="sol-step2" style="display:none">
           <div class="form-group">
             <div class="form-label">Valor a solicitar agora (R$)</div>
-            <input class="form-input" id="sol-valor" type="number" placeholder="0,00" oninput="calcParcelas()">
+            <input class="form-input" id="sol-valor" type="number" placeholder="0,00" oninput="calcParcelas();checkValorDiff()">
             <div class="form-hint">Pode solicitar valor parcial. O item aceita múltiplas solicitações.</div>
+            <div id="sol-valor-aviso" style="display:none;margin-top:8px;background:var(--amber-dim);border:0.5px solid rgba(240,168,48,.3);border-radius:var(--r);padding:9px 14px;font-size:12px;color:var(--amber);font-family:var(--fm)"></div>
           </div>
           <div class="form-group">
             <div class="form-label">Este pagamento é parcelado?</div>
@@ -480,7 +497,7 @@ tbody tr:hover td{background:var(--surface2)}
 
     <!-- ═══ DESPESAS ═══ -->
     <div id="page-despesas" class="page">
-      <div class="filter-row">
+      <div class="filter-row" id="de-filter-row">
         <select id="de-cidade" onchange="renderDespesas()"><option value="">Todas as cidades</option><option>Irecê</option><option>Jequié</option><option>Serrinha</option></select>
         <select id="de-status" onchange="renderDespesas()"><option value="">Todos os status</option><option>Pendente</option><option>Em análise</option><option>Aprovado</option><option>Pago</option><option>Rejeitado</option></select>
         <select id="de-cat" onchange="renderDespesas()"><option value="">Todas as categorias</option><option>Infraestrutura</option><option>Artista</option><option>Equipe</option><option>Marketing</option><option>Alimentação</option><option>Transporte</option><option>Hospedagem</option><option>Open Bar</option><option>Taxas e Impostos</option><option>Outros</option></select>
@@ -544,7 +561,15 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="blt-form">
           <div class="sec-hd"><div class="sec-title">Atualizar dados de bilheteria</div></div>
           <div class="form-row">
-            <div class="form-group"><div class="form-label">Cidade / Evento</div>
+            <div class="form-group">
+            <div class="form-label">Upload relatório PDV (MeuBilhete)</div>
+            <div style="border:0.5px dashed var(--border2);border-radius:var(--r);padding:14px;cursor:pointer;text-align:center" onclick="document.getElementById('pdv-file-input').click()">
+              <input type="file" id="pdv-file-input" accept=".xls,.xlsx" style="display:none" onchange="handlePDVUpload(this)">
+              <div style="font-size:12px;font-family:var(--fm);color:var(--text3)">Clique para selecionar o arquivo .xls do MeuBilhete</div>
+            </div>
+            <div id="pdv-parse-info" style="display:none;margin-top:12px;background:var(--surface2);border-radius:var(--r);padding:14px"></div>
+          </div>
+          <div class="form-group"><div class="form-label">Cidade / Evento</div>
               <select class="form-select" id="blt-cidade"><option value="">Selecionar</option><option>Irecê</option><option>Jequié</option><option>Serrinha</option></select>
             </div>
             <div class="form-group"><div class="form-label">Semana de referência</div>
@@ -660,6 +685,119 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
+
+    <!-- ═══ PRODUÇÃO ═══ -->
+    <div id="page-producao" class="page">
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
+        <div class="sec-title" style="margin-bottom:0">Ferramenta de Produção</div>
+        <div class="cidade-pills" id="prod-city-pills" style="display:flex;gap:6px"></div>
+      </div>
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);overflow:hidden;height:calc(100vh - 160px)">
+        <iframe id="prod-iframe" 
+          src="" 
+          style="width:100%;height:100%;border:none;background:#f5f4f1"
+          title="Ferramenta de Produção">
+        </iframe>
+      </div>
+      <div id="prod-no-city" style="display:none;text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--fm);font-size:13px">
+        Selecione uma cidade para abrir a ferramenta de produção
+      </div>
+    </div>
+
+    <!-- ═══ CONFIGURAÇÕES ═══ -->
+    <div id="page-configuracoes" class="page">
+      <div style="max-width:640px">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Conexão Google Sheets</div>
+          <div class="field-group"><div class="field-label">Chave de API</div>
+            <input class="field-input" id="cfg2-key" type="text" placeholder="AIzaSy...">
+            <div class="field-hint">Planilhas precisam estar públicas ("qualquer pessoa com o link — leitor")</div>
+          </div>
+          <div class="field-group"><div class="field-label">ID — Planilha Geral</div>
+            <input class="field-input" id="cfg2-geral" type="text" placeholder="ID da planilha geral">
+          </div>
+          <div class="field-group"><div class="field-label">ID — PPP Irecê</div>
+            <input class="field-input" id="cfg2-irece" type="text">
+          </div>
+          <div class="field-group"><div class="field-label">ID — PPP Serrinha</div>
+            <input class="field-input" id="cfg2-serrinha" type="text">
+          </div>
+          <div class="field-group"><div class="field-label">ID — PPP Jequié</div>
+            <input class="field-input" id="cfg2-jequie" type="text">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="testSheetsConn()">Testar conexão</button>
+          <div id="cfg2-sheet-status" style="font-size:11px;font-family:var(--fm);margin-top:8px"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Cloudflare Worker (Assistente IA + Escrita no Sheets)</div>
+          <div class="al info" style="margin-bottom:14px">
+            <span class="aldot"></span>
+            <span>O Worker resolve o bloqueio CORS da API Anthropic e habilita escrita nas planilhas. <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--blue)">workers.cloudflare.com</a></span>
+          </div>
+          <div class="field-group"><div class="field-label">URL do Worker</div>
+            <input class="field-input" id="cfg2-worker" type="text" placeholder="https://saojoao-proxy.seu-usuario.workers.dev">
+          </div>
+          <div class="field-hint" style="font-size:11px;font-family:var(--fm);color:var(--text3);line-height:1.8;margin-top:6px">
+            1. Acesse workers.cloudflare.com → Criar Worker<br>
+            2. Cole o código do briefing e faça Deploy<br>
+            3. Em Settings → Variables: adicione ANTHROPIC_API_KEY<br>
+            4. Cole a URL do Worker aqui
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Twilio WhatsApp</div>
+          <div class="field-group"><div class="field-label">Account SID</div>
+            <input class="field-input" id="cfg2-tsid" type="text" placeholder="ACxxxxxxxx">
+          </div>
+          <div class="field-group"><div class="field-label">Auth Token</div>
+            <input class="field-input" id="cfg2-ttoken" type="password" placeholder="••••••••••••">
+          </div>
+          <div class="field-group"><div class="field-label">Número Twilio WhatsApp</div>
+            <input class="field-input" id="cfg2-tnum" type="text" placeholder="+14155238886">
+          </div>
+          <div class="field-group"><div class="field-label">WhatsApp — Aprovador</div>
+            <input class="field-input" id="cfg2-wa-aprov" type="text" placeholder="+55 71 99999-0001">
+          </div>
+          <div class="field-group"><div class="field-label">WhatsApp — Pagador</div>
+            <input class="field-input" id="cfg2-wa-pag" type="text" placeholder="+55 71 99999-0002">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="resetCfg2()">Resetar</button>
+          <button class="btn btn-primary" onclick="saveCfg2()">Salvar configurações</button>
+        </div>
+      </div>
+
+      <!-- Criar evento — só para Mestre -->
+      <div id="cfg-evento-section" style="display:none">
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">Criar novo evento</div>
+          <div class="field-group">
+            <div class="field-label">Nome do evento</div>
+            <input class="field-input" id="evt-nome" placeholder="Ex: Forró 2027">
+          </div>
+          <div class="field-group">
+            <div class="field-label">Data principal</div>
+            <input class="field-input" id="evt-data" type="date">
+          </div>
+          <div class="field-group">
+            <div class="field-label">Cidades</div>
+            <div style="display:flex;gap:16px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" class="evt-cidade" value="Irecê"> Irecê</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" class="evt-cidade" value="Jequié"> Jequié</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" class="evt-cidade" value="Serrinha"> Serrinha</label>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:4px" onclick="criarEvento()">Gerar códigos de acesso</button>
+          <div id="evt-resultado" style="display:none;margin-top:16px;background:var(--surface2);border-radius:var(--r);padding:14px"></div>
+        </div>
+      </div>
+    </div>
+    </div>
+
   </div><!-- /content -->
 </main>
 </div><!-- /app -->
@@ -710,7 +848,7 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="modal-title">Nova receita</div>
   <div class="form-row">
     <div class="form-group"><div class="form-label">Cidade</div><select class="form-select" id="nr-cidade"><option>Irecê</option><option>Jequié</option><option>Serrinha</option></select></div>
-    <div class="form-group"><div class="form-label">Fonte</div><select class="form-select" id="nr-fonte"><option>Bilheteria</option><option>Patrocínio</option><option>Bar</option><option>PDV</option><option>Outros</option></select></div>
+    <div class="form-group"><div class="form-label">Fonte</div><input class="form-input" id="nr-fonte" list="fontes-list" placeholder="Selecione ou digite..."><datalist id="fontes-list"><option value="Bilheteria"><option value="Patrocínio"><option value="Bar"><option value="PDV"><option value="Cota de Patrocínio"><option value="Outros"></datalist></div>
   </div>
   <div class="form-group"><div class="form-label">Descrição</div><input class="form-input" id="nr-desc" placeholder="Ex: Patrocínio Brahma — cota ouro"></div>
   <div class="form-row">
@@ -781,23 +919,41 @@ tbody tr:hover td{background:var(--surface2)}
 <script>
 // ══════════════ USERS / AUTH ══════════════
 const ALL_CITIES = ['Todas','Irecê','Jequié','Serrinha'];
-const USERS = {
-  'SOCIO01': { name:'Sócio', role:'Sócio', color:'#d4f04a', bg:'#2a3010', readonly:true,
-    pages:['dashboard','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente'],
-    cities: ALL_CITIES },
-  'FIN001':  { name:'Financeiro', role:'Financeiro', color:'#5cb8f0', bg:'#0a2030', readonly:false,
-    pages:['dashboard','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente'],
-    cities: ALL_CITIES },
-  'IRECE1':  { name:'Produtor Irecê', role:'Produtor', color:'#f0a830', bg:'#302010', readonly:false,
-    pages:['dashboard','solicitacao','despesas','documentos','assistente'], cities:['Irecê'] },
-  'SERR01':  { name:'Produtor Serrinha', role:'Produtor', color:'#f0a830', bg:'#302010', readonly:false,
-    pages:['dashboard','solicitacao','despesas','documentos','assistente'], cities:['Serrinha'] },
-  'JEQU01':  { name:'Produtor Jequié', role:'Produtor', color:'#f0a830', bg:'#302010', readonly:false,
-    pages:['dashboard','solicitacao','despesas','documentos','assistente'], cities:['Jequié'] },
-  'VEND01':  { name:'Gerente Vendas', role:'Vendas', color:'#4cdb8a', bg:'#0a2015', readonly:false,
-    pages:['bilheteria'], cities: ALL_CITIES }
+const CITY_SHEETS = {
+  'Irecê':    '1ONkVO-kQVdXeLPLUrmaySl8h1piuKndvpb7A4h8NjO0',
+  'Serrinha': '14vb5-aYNrvrQHyvydKNh_wjILQ19ARfYvTRdMkk0ms4',
+  'Jequié':   '1hCXBWEkMET0dUj7mt-tF-mxRrRNYXSj6GDVS8LLtmGU'
 };
-const PAGE_LABELS = { dashboard:'Dashboard', solicitacao:'Solicitação', despesas:'Despesas', aprovacoes:'Aprovações', receitas:'Receitas', bilheteria:'Bilheteria', documentos:'Documentos', alertas:'Alertas & Histórico', assistente:'Assistente IA' };
+const GERAL_SHEET = '1wOBINaKVLAfe4Hx94CtxLW-lLJ0odrl9KUkCvgAo68o';
+const API_KEY = 'AIzaSyDVQzDCL-VJmCv6IJetwgp3dGP8vv6HobE';
+// Worker URL — preencher após deploy no Cloudflare
+let WORKER_URL = localStorage.getItem('sj_worker_url') || '';
+
+const USERS = {
+  'MESTRE01': { name:'Mestre', role:'mestre', color:'#d4f04a', bg:'#2a3010', readonly:false,
+    cities: ALL_CITIES,
+    pages:['dashboard','producao','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente','configuracoes'] },
+  'FIN001':   { name:'Financeiro', role:'financeiro', color:'#5cb8f0', bg:'#0a2030', readonly:false,
+    cities: ALL_CITIES,
+    pages:['dashboard','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente','configuracoes'] },
+  'SOCIO01':  { name:'Sócio', role:'socio', color:'#a78bfa', bg:'#1a1030', readonly:true,
+    cities: ALL_CITIES,
+    pages:['dashboard','despesas','receitas','bilheteria','documentos','alertas','assistente'] },
+  'IRECE01':  { name:'Produtor Irecê', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
+    cities:['Irecê'],
+    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+  'SERR01':   { name:'Produtor Serrinha', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
+    cities:['Serrinha'],
+    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+  'JEQU01':   { name:'Produtor Jequié', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
+    cities:['Jequié'],
+    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+  'VEND01':   { name:'Gerente Vendas', role:'vendas', color:'#4cdb8a', bg:'#0a2015', readonly:false,
+    cities: ALL_CITIES,
+    pages:['bilheteria'] }
+};
+
+const PAGE_LABELS = { dashboard:'Dashboard', producao:'Produção', solicitacao:'Solicitação', despesas:'Despesas', aprovacoes:'Aprovações', receitas:'Receitas', bilheteria:'Bilheteria', documentos:'Documentos', alertas:'Alertas & Histórico', assistente:'Assistente IA', configuracoes:'Configurações' };
 const PAGE_ICONS = {
   dashboard:'<rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>',
   solicitacao:'<rect x="3" y="1" width="10" height="14" rx="1.5"/><line x1="6" y1="5" x2="10" y2="5"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="6" y1="11" x2="8" y2="11"/>',
@@ -807,7 +963,9 @@ const PAGE_ICONS = {
   bilheteria:'<rect x="1" y="4" width="14" height="9" rx="1"/><path d="M5 4V2M11 4V2M1 8h14"/><circle cx="5" cy="11" r="1"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="11" r="1"/>',
   documentos:'<path d="M9 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V6z"/><polyline points="9,1 9,6 14,6"/>',
   alertas:'<path d="M8 1L1 14h14z"/><line x1="8" y1="6" x2="8" y2="10"/><circle cx="8" cy="12.5" r=".5" fill="currentColor"/>',
-  assistente:'<path d="M2 2h12v9H9l-3 3v-3H2z"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="8" y2="9"/>'
+  assistente:'<path d="M2 2h12v9H9l-3 3v-3H2z"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="8" y2="9"/>',
+  producao:'<rect x="1" y="3" width="14" height="10" rx="1"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="8" y2="10"/><circle cx="12" cy="10" r="1" fill="currentColor"/>',
+  configuracoes:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42"/>'
 };
 
 let currentUser = null, currentCity = 'Irecê', cfg = {}, currentApTab = 'pendente', currentApId = null;
@@ -859,8 +1017,16 @@ function buildApp() {
     </button>`).join('');
   // City pills
   const pills = document.getElementById('cpills');
-  pills.innerHTML = u.cities.map((c,i) => `<button class="cpill${i===0?' active':''}" onclick="setCidade('${c}',this)">${c}</button>`).join('');
-  currentCity = u.cities[0];
+  // Produtor: sem filtro de cidade — cidade fixada automaticamente
+  if(u.role === 'produtor') {
+    pills.innerHTML = '';
+    pills.style.display = 'none';
+    currentCity = u.cities[0];
+  } else {
+    pills.style.display = 'flex';
+    pills.innerHTML = u.cities.map((c,i) => `<button class="cpill${i===0?' active':''}" onclick="setCidade('${c}',this)">${c}</button>`).join('');
+    currentCity = u.cities[0];
+  }
   // Show first page
   showPage(u.pages[0], nav.querySelector('.ni'));
   // Init charts
@@ -879,10 +1045,20 @@ function showPage(p, btn) {
   document.getElementById('tb-title').textContent = PAGE_LABELS[p];
   if (p==='aprovacoes') renderAprovacoes();
   if (p==='receitas') renderReceitas();
+  if (p==='despesas') {
+    // Produtor: esconder filtro de cidade
+    const cidSel = document.getElementById('de-cidade');
+    if(cidSel && currentUser?.role === 'produtor') {
+      cidSel.style.display = 'none';
+      cidSel.value = currentUser.cities[0];
+    }
+  }
   if (p==='bilheteria') { initBltChart(); renderBilheteria(); }
   if (p==='documentos') renderDocs();
   if (p==='solicitacao') initSolicitacao();
-  if (p==='dashboard') { initCountdown(); document.getElementById('dash-praca-nome').textContent=currentCity; }
+  if (p==='dashboard') { initCountdown(); const pn=document.getElementById('dash-praca-nome'); if(pn) pn.textContent=currentCity; updateDashboardMetrics(); }
+  if (p==='producao') initProducao();
+  if (p==='configuracoes') initCfg2();
   if (p==='alertas') renderVariacoes();
   if(currentUser && currentUser.readonly) setTimeout(enforceReadonly, 50);
 }
@@ -896,11 +1072,11 @@ function setCidade(c, btn) {
 // ══════════════ CONFIG ══════════════
 function loadConfig() {
   cfg = {
-    apiKey: localStorage.getItem('sj_apikey')||'AIzaSyDVQzDCL-VJmCv6IJetwgp3dGP8vv6HobE',
-    execSheet: localStorage.getItem('sj_exec')||'1wOBINaKVLAfe4Hx94CtxLW-lLJ0odrl9KUkCvgAo68o',
-    ireceSheet: localStorage.getItem('sj_irece')||'1ONkVO-kQVdXeLPLUrmaySl8h1piuKndvpb7A4h8NjO0',
-    serrinhaSheet: localStorage.getItem('sj_serrinha')||'14vb5-aYNrvrQHyvydKNh_wjILQ19ARfYvTRdMkk0ms4',
-    jequieSheet: localStorage.getItem('sj_jequie')||'1hCXBWEkMET0dUj7mt-tF-mxRrRNYXSj6GDVS8LLtmGU',
+    apiKey: localStorage.getItem('sj_apikey') || API_KEY,
+    execSheet: localStorage.getItem('sj_exec') || GERAL_SHEET,
+    ireceSheet: localStorage.getItem('sj_irece') || CITY_SHEETS['Irecê'],
+    serrinhaSheet: localStorage.getItem('sj_serrinha') || CITY_SHEETS['Serrinha'],
+    jequieSheet: localStorage.getItem('sj_jequie') || CITY_SHEETS['Jequié'],
     twilioSid: localStorage.getItem('sj_tsid')||'',
     twilioToken: localStorage.getItem('sj_ttoken')||'',
     twilioNum: localStorage.getItem('sj_tnum')||'',
@@ -981,7 +1157,12 @@ async function loadDespesas() {
 function renderDespesas() {
   const c=document.getElementById('de-cidade').value, s=document.getElementById('de-status').value,
     cat=document.getElementById('de-cat').value, b=document.getElementById('de-busca').value.toLowerCase();
-  const f=despesasData.filter(r=>(!c||r.cidade===c)&&(!s||r.status===s)&&(!cat||r.categoria===cat)&&(!b||r.solicitante.toLowerCase().includes(b)||r.descricao.toLowerCase().includes(b)));
+  // Produtor vê só as suas despesas
+  const cidadeForce = currentUser?.role === 'produtor' ? currentUser.cities[0] : null;
+  const f=despesasData.filter(r=>{
+    if(cidadeForce && r.cidade !== cidadeForce) return false;
+    return (!c||r.cidade===c)&&(!s||r.status===s)&&(!cat||r.categoria===cat)&&(!b||r.solicitante.toLowerCase().includes(b)||r.descricao.toLowerCase().includes(b));
+  });
   const total=f.reduce((s,r)=>s+r.valor,0), pend=f.filter(r=>r.status==='Pendente').length, pagos=f.filter(r=>r.status==='Pago').reduce((s,r)=>s+r.valor,0);
   document.getElementById('de-total').textContent='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2});
   document.getElementById('de-count').textContent=f.length;
@@ -1236,26 +1417,64 @@ const ITENS_PPP = {
 };
 
 function initSolicitacao() {
-  const sel=document.getElementById('sol-cidade');
-  sel.innerHTML='<option value="">Selecionar cidade</option>';
-  currentUser.cities.filter(c=>c!=='Todas').forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  const sel = document.getElementById('sol-cidade');
+  const locked = document.getElementById('sol-cidade-locked');
+  sel.innerHTML = '<option value="">Selecionar cidade</option>';
+  const cidades = currentUser.cities.filter(c => c !== 'Todas');
+  cidades.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+  // Produtor: travar na própria cidade
+  if(currentUser.role === 'produtor' && cidades.length === 1) {
+    sel.value = cidades[0];
+    sel.style.display = 'none';
+    if(locked) {
+      locked.style.display = 'block';
+      locked.textContent = cidades[0];
+    }
+    loadItens();
+  } else {
+    sel.style.display = '';
+    if(locked) locked.style.display = 'none';
+  }
   solStep(1);
 }
 
 async function loadItens() {
-  const cidade=document.getElementById('sol-cidade').value;
+  const cidade = document.getElementById('sol-cidade').value;
   if(!cidade) return;
-  const sel=document.getElementById('sol-item');
-  sel.innerHTML='<option value="">Carregando...</option>';
-  // Try live sheet first
+  const sel = document.getElementById('sol-item');
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  // Try live sheet first, fallback to local
   let itens = await loadItensFromSheet(cidade);
-  if(!itens || !itens.length) itens = ITENS_PPP[cidade]||[];
-  const cat=document.getElementById('sol-categoria').value;
-  const filtered=cat?itens.filter(i=>i.cat===cat):itens;
-  sel.innerHTML='<option value="">Selecionar item</option>'+filtered.map(i=>`<option value="${i.nome}">${i.nome} ${i.orc2026>0?'— R$ '+i.orc2026.toLocaleString('pt-BR'):''}</option>`).join('');
-  document.getElementById('sol-item-info').style.display='none';
+  if(!itens || !itens.length) itens = ITENS_PPP[cidade] || [];
+  // Update categories dropdown
+  populateSolCategorias(itens);
+  const cat = document.getElementById('sol-categoria').value;
+  const filtered = cat ? itens.filter(i => i.cat === cat) : itens;
+  sel.innerHTML = '<option value="">Selecionar item</option>' +
+    filtered.map(i =>
+      `<option value="${i.nome}">${i.nome}${i.orc2026 > 0 ? ' — R$ ' + i.orc2026.toLocaleString('pt-BR') : ''}</option>`
+    ).join('');
+  document.getElementById('sol-item-info').style.display = 'none';
 }
 function filterItens(){loadItens();}
+
+// Populate categoria dropdown from items loaded
+function populateSolCategorias(itens) {
+  const cats = [...new Set(itens.map(i => i.cat).filter(Boolean))].sort();
+  const sel = document.getElementById('sol-categoria');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todas as categorias</option>';
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+  if(current) sel.value = current;
+}
 
 function onItemSelect() {
   const nome=document.getElementById('sol-item').value, cidade=document.getElementById('sol-cidade').value;
@@ -1448,7 +1667,7 @@ document.querySelectorAll('.modal-ov').forEach(m=>m.addEventListener('click',e=>
 // ══════════════ COUNTDOWN ══════════════
 function initCountdown() {
   // São João da Bahia typically June 22-24
-  const eventDate = new Date('2026-06-22');
+  const eventDate = new Date('2026-06-20'); // São João 2026 — abertura
   const today = new Date();
   today.setHours(0,0,0,0);
   const diff = Math.ceil((eventDate - today) / (1000*60*60*24));
@@ -1465,6 +1684,8 @@ function initCountdown() {
 // ══════════════ READONLY ENFORCEMENT ══════════════
 function enforceReadonly() {
   if(!currentUser || !currentUser.readonly) return;
+  // Add class to app container — CSS handles hiding via .socio-readonly selectors
+  document.getElementById('app').classList.add('socio-readonly');
   // Only disable specific write-action buttons by ID or data attribute
   const writeActionSelectors = [
     '#sol-submit-btn',
@@ -1675,6 +1896,258 @@ function addAITyping() {
 function useChip(el) {
   const input = document.getElementById('ai-input');
   if(input) { input.value = el.textContent; sendAI(); }
+}
+
+
+
+// ══════════════ CONFIGURAÇÕES 2 (inline page) ══════════════
+function initCfg2() {
+  document.getElementById('cfg2-key').value = cfg.apiKey || API_KEY;
+  document.getElementById('cfg2-geral').value = cfg.execSheet || GERAL_SHEET;
+  document.getElementById('cfg2-irece').value = cfg.ireceSheet || CITY_SHEETS['Irecê'];
+  document.getElementById('cfg2-serrinha').value = cfg.serrinhaSheet || CITY_SHEETS['Serrinha'];
+  document.getElementById('cfg2-jequie').value = cfg.jequieSheet || CITY_SHEETS['Jequié'];
+  document.getElementById('cfg2-worker').value = WORKER_URL;
+  document.getElementById('cfg2-tsid').value = cfg.twilioSid || '';
+  document.getElementById('cfg2-ttoken').value = cfg.twilioToken || '';
+  document.getElementById('cfg2-tnum').value = cfg.twilioNum || '';
+  document.getElementById('cfg2-wa-aprov').value = cfg.waAprov || '';
+  document.getElementById('cfg2-wa-pag').value = cfg.waPag || '';
+  // Mostrar seção de eventos só para Mestre
+  const evtSection = document.getElementById('cfg-evento-section');
+  if(evtSection) evtSection.style.display = currentUser?.role === 'mestre' ? 'block' : 'none';
+}
+
+function saveCfg2() {
+  cfg.apiKey = document.getElementById('cfg2-key').value.trim();
+  cfg.execSheet = document.getElementById('cfg2-geral').value.trim();
+  cfg.ireceSheet = document.getElementById('cfg2-irece').value.trim();
+  cfg.serrinhaSheet = document.getElementById('cfg2-serrinha').value.trim();
+  cfg.jequieSheet = document.getElementById('cfg2-jequie').value.trim();
+  WORKER_URL = document.getElementById('cfg2-worker').value.trim();
+  cfg.twilioSid = document.getElementById('cfg2-tsid').value.trim();
+  cfg.twilioToken = document.getElementById('cfg2-ttoken').value.trim();
+  cfg.twilioNum = document.getElementById('cfg2-tnum').value.trim();
+  cfg.waAprov = document.getElementById('cfg2-wa-aprov').value.trim();
+  cfg.waPag = document.getElementById('cfg2-wa-pag').value.trim();
+  const keys = {sj_apikey:cfg.apiKey,sj_exec:cfg.execSheet,sj_irece:cfg.ireceSheet,sj_serrinha:cfg.serrinhaSheet,sj_jequie:cfg.jequieSheet,sj_worker_url:WORKER_URL,sj_tsid:cfg.twilioSid,sj_ttoken:cfg.twilioToken,sj_tnum:cfg.twilioNum,sj_wa_aprov:cfg.waAprov,sj_wa_pag:cfg.waPag};
+  Object.entries(keys).forEach(([k,v]) => localStorage.setItem(k,v));
+  if(cfg.apiKey) { setSyncLive(); loadDespesas(); }
+  const st = document.getElementById('cfg2-sheet-status');
+  st.textContent = '✓ Configurações salvas!';
+  st.style.color = 'var(--green)';
+  setTimeout(() => { st.textContent = ''; }, 3000);
+}
+
+function resetCfg2() {
+  if(!confirm('Resetar todas as configurações?')) return;
+  ['sj_apikey','sj_exec','sj_irece','sj_serrinha','sj_jequie','sj_worker_url','sj_tsid','sj_ttoken','sj_tnum','sj_wa_aprov','sj_wa_pag'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+async function testSheetsConn() {
+  const key = document.getElementById('cfg2-key').value.trim();
+  const id = document.getElementById('cfg2-geral').value.trim() || GERAL_SHEET;
+  const st = document.getElementById('cfg2-sheet-status');
+  st.textContent = 'Testando...';
+  st.style.color = 'var(--text2)';
+  try {
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/A1:B2?key=${key}`);
+    if(!r.ok) throw new Error((await r.json()).error?.message);
+    st.textContent = '✓ Conexão com Google Sheets OK!';
+    st.style.color = 'var(--green)';
+  } catch(e) {
+    st.textContent = '✗ ' + e.message;
+    st.style.color = 'var(--red)';
+  }
+}
+
+// ══════════════ PRODUÇÃO (iframe por cidade) ══════════════
+const PROD_URLS = {
+  'Irecê':    'https://ocicerorocha.github.io/saojoao2026/producao_irece.html',
+  'Serrinha': 'https://ocicerorocha.github.io/saojoao2026/producao_serrinha.html',
+  'Jequié':   'https://ocicerorocha.github.io/saojoao2026/producao_jequie.html'
+};
+
+function initProducao() {
+  const pills = document.getElementById('prod-city-pills');
+  if(!pills) return;
+  const cidades = currentUser.cities.filter(c => c !== 'Todas');
+  // Produtor: auto-load sua cidade
+  if(currentUser.role === 'produtor' && cidades.length === 1) {
+    loadProducaoCidade(cidades[0]);
+    pills.style.display = 'none';
+    return;
+  }
+  pills.innerHTML = cidades.map(c =>
+    `<button class="cpill" onclick="loadProducaoCidade('${c}',this)">${c}</button>`
+  ).join('');
+  // Auto-load first city
+  if(cidades.length > 0) {
+    const firstBtn = pills.querySelector('.cpill');
+    loadProducaoCidade(cidades[0], firstBtn);
+  }
+}
+
+function loadProducaoCidade(cidade, btn) {
+  if(btn) {
+    document.querySelectorAll('#prod-city-pills .cpill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const iframe = document.getElementById('prod-iframe');
+  const noCity = document.getElementById('prod-no-city');
+  if(iframe && PROD_URLS[cidade]) {
+    iframe.style.display = 'block';
+    iframe.src = PROD_URLS[cidade];
+    if(noCity) noCity.style.display = 'none';
+  } else if(noCity) {
+    iframe.style.display = 'none';
+    noCity.style.display = 'block';
+    noCity.textContent = `Ferramenta de produção para ${cidade} ainda não disponível. Faça upload do arquivo producao_${cidade.toLowerCase()}.html no GitHub.`;
+  }
+}
+
+// ══════════════ DASHBOARD CITY FILTER FIX ══════════════
+function setCidade(c, btn) {
+  currentCity = c;
+  document.querySelectorAll('.cpill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Update dashboard elements
+  const pracanome = document.getElementById('dash-praca-nome');
+  if(pracanome) pracanome.textContent = c;
+  initCountdown();
+  // Re-render despesas if filtered
+  if(despesasData.length) {
+    renderDespesas();
+    updateDashboardMetrics();
+  }
+}
+
+function updateDashboardMetrics() {
+  const isAll = currentCity === 'Todas';
+  const data = isAll ? despesasData : despesasData.filter(r => r.cidade === currentCity);
+  const total = data.reduce((s,r) => s + r.valor, 0);
+  const pagos = data.filter(r => r.status === 'Pago').reduce((s,r) => s + r.valor, 0);
+  const pend = data.filter(r => r.status === 'Pendente' || r.status === 'Em análise').length;
+
+  // Orçamento: soma das 3 PPPs ou da cidade específica
+  const orcamentos = { 'Irecê': 925550, 'Jequié': 0, 'Serrinha': 0 }; // atualizar quando PPPs tiverem dados
+  const totalOrc = isAll ? Object.values(orcamentos).reduce((s,v) => s+v, 0) : (orcamentos[currentCity] || 0);
+
+  const el = (id) => document.getElementById(id);
+  if(el('d-orc')) el('d-orc').textContent = 'R$ ' + totalOrc.toLocaleString('pt-BR',{minimumFractionDigits:0});
+  if(el('d-real')) el('d-real').textContent = 'R$ ' + pagos.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  if(el('d-real-pct')) el('d-real-pct').textContent = totalOrc > 0 ? (pagos/totalOrc*100).toFixed(1) + '% executado' : '0% executado';
+  if(el('m-pend-txt')) el('m-pend-txt').textContent = pend + ' pag. pendentes';
+
+  const recFilt = receitasData.filter(r => isAll || r.cidade === currentCity);
+  const recTotal = recFilt.filter(r => r.confirmado).reduce((s,r) => s+r.valor, 0);
+  if(el('d-rec')) el('d-rec').textContent = 'R$ ' + recTotal.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  if(el('d-rec-sub')) el('d-rec-sub').textContent = recFilt.length + ' receitas confirmadas';
+}
+
+// ══════════════ BILHETERIA — PARSE PDV MEUBILHETE ══════════════
+function parsePDV(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+        // Find data rows (after header row with "Ingresso")
+        const headerIdx = rows.findIndex(r => String(r[0]).toLowerCase().includes('ingresso'));
+        const emptyIdx = rows.findIndex((r,i) => i > headerIdx && (!r[0] || r[0] === ''));
+        const dataRows = rows.slice(headerIdx+1, emptyIdx > 0 ? emptyIdx : undefined)
+          .filter(r => r[0] && r[0] !== 'Ingresso');
+        // Extract totals
+        const totalRow = rows.find(r => String(r[0]) === 'Total bilhetes');
+        const creditoRow = rows.find(r => String(r[0]).includes('Crédito'));
+        const pixRow = rows.find(r => String(r[0]).includes('Pix'));
+        const pedidosRow = rows.find(r => String(r[0]) === 'Qtd. pedidos');
+        resolve({
+          ingressos: dataRows,
+          totalQtd: totalRow ? Number(totalRow[3]) : 0,
+          totalReceita: totalRow ? Number(totalRow[4]) : 0,
+          creditoQtd: creditoRow ? Number(creditoRow[3]) : 0,
+          creditoReceita: creditoRow ? Number(creditoRow[4]) : 0,
+          pixQtd: pixRow ? Number(pixRow[3]) : 0,
+          pixReceita: pixRow ? Number(pixRow[4]) : 0,
+          qtdPedidos: pedidosRow ? Number(pedidosRow[4]) : 0
+        });
+      } catch(err) { reject(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function handlePDVUpload(input) {
+  if(!input.files[0]) return;
+  try {
+    const parsed = await parsePDV(input.files[0]);
+    // Fill bilheteria fields
+    const el = (id) => document.getElementById(id);
+    if(el('blt-ingressos')) el('blt-ingressos').value = parsed.totalQtd;
+    if(el('blt-receita')) el('blt-receita').value = parsed.totalReceita;
+    // Show parsed summary
+    const info = document.getElementById('pdv-parse-info');
+    if(info) {
+      info.style.display = 'block';
+      info.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-family:var(--fm);font-size:12px">
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">TOTAL INGRESSOS</div><div style="color:var(--accent);font-size:18px;font-weight:600">${parsed.totalQtd}</div></div>
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">RECEITA TOTAL</div><div style="color:var(--green);font-size:18px;font-weight:600">R$ ${parsed.totalReceita.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">Nº PEDIDOS</div><div style="font-size:18px;font-weight:600">${parsed.qtdPedidos}</div></div>
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">CRÉDITO</div><div style="color:var(--blue)">${parsed.creditoQtd} ingressos · R$ ${parsed.creditoReceita.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">PIX</div><div style="color:var(--blue)">${parsed.pixQtd} ingressos · R$ ${parsed.pixReceita.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+          <div><div style="color:var(--text3);font-size:10px;margin-bottom:3px">TICKET MÉDIO</div><div>${parsed.totalQtd > 0 ? 'R$ ' + (parsed.totalReceita/parsed.totalQtd).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}</div></div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text3)">Arquivo: ${input.files[0].name} · ${parsed.ingressos.length} tipos de ingresso</div>`;
+    }
+    calcTicket();
+  } catch(e) {
+    alert('Erro ao ler arquivo PDV: ' + e.message);
+  }
+}
+
+
+// ══════════════ MESTRE — CRIAR EVENTOS ══════════════
+function criarEvento() {
+  const nome = document.getElementById('evt-nome')?.value?.trim();
+  const data = document.getElementById('evt-data')?.value;
+  const cidades = Array.from(document.querySelectorAll('.evt-cidade:checked')).map(c => c.value);
+  if(!nome || !data || !cidades.length) {
+    alert('Preencha nome, data e pelo menos uma cidade.');
+    return;
+  }
+  const ano = new Date(data).getFullYear().toString().slice(-2);
+  const prefixo = nome.replace(/\s/g,'').substring(0,3).toUpperCase() + ano;
+  const codigos = {
+    [`${prefixo}FIN`]: { role:'financeiro', nome:'Financeiro '+nome },
+    [`${prefixo}SOC`]: { role:'socio', nome:'Sócio '+nome, readonly:true },
+    [`${prefixo}VND`]: { role:'vendas', nome:'Vendas '+nome },
+  };
+  cidades.forEach((c, i) => {
+    const sigla = c.substring(0,3).toUpperCase();
+    codigos[`${prefixo}${sigla}`] = { role:'produtor', cidade:c, nome:`Produtor ${c} - ${nome}` };
+  });
+  // Save to localStorage
+  const eventos = JSON.parse(localStorage.getItem('sj_eventos')||'[]');
+  eventos.push({ nome, data, cidades, codigos, criado: new Date().toISOString() });
+  localStorage.setItem('sj_eventos', JSON.stringify(eventos));
+  // Show codes
+  const res = document.getElementById('evt-resultado');
+  if(res) {
+    res.style.display = 'block';
+    res.innerHTML = `<div style="font-size:11px;font-family:var(--fm);color:var(--text3);margin-bottom:8px">CÓDIGOS GERADOS — ${nome.toUpperCase()}</div>` +
+      Object.entries(codigos).map(([k,v]) =>
+        `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-family:var(--fm);font-size:12px">
+          <span style="color:var(--accent);font-weight:600">${k}</span>
+          <span style="color:var(--text2)">${v.nome}${v.cidade?' — '+v.cidade:''}</span>
+        </div>`
+      ).join('');
+  }
 }
 
 </script>
