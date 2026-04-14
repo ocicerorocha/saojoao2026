@@ -1579,8 +1579,7 @@ async function submitSolicitacao() {
   try {
     if(cfg.apiKey && cfg.execSheet) await appendSheet(cfg.execSheet,'A:L',[row]);
     const item=(ITENS_PPP[row[1]]||[]).find(i=>i.nome===document.getElementById('sol-item').value);
-    const msg=`🔔 *Nova solicitação — São João 2026*\n\n*Item:* ${document.getElementById('sol-item').value}\n*Cidade:* ${row[1]}\n*Solicitante:* ${currentUser.name}\n*Favorecido:* ${row[5]}\n*Valor solicitado:* R$ ${(parseFloat(row[7])||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}\n*Orçado 2026:* ${item?'R$ '+item.orc2026.toLocaleString('pt-BR'):'Não definido'}\n*Custo 2025:* ${item&&item.ref2025?'R$ '+item.ref2025.toLocaleString('pt-BR'):'—'}\n*Categoria:* ${row[4]}\n*Pagamento:* ${row[8]}\n*Banco / PIX:* ${row[6]}\n*Justificativa:* ${document.getElementById('sol-descricao').value}\n\nAcesse o painel para aprovar ou rejeitar.`;
-    await sendWhatsApp(cfg.waAprov, msg);
+    // notification handled below
     // Add to local data immediately so it shows in Despesas and Aprovações
     const newEntry = {
       id: Date.now(),
@@ -1591,7 +1590,7 @@ async function submitSolicitacao() {
     };
     despesasData.push(newEntry);
     // Send notification to approver
-    const item = (ITENS_PPP[row[1]]||[]).find(i => i.nome === document.getElementById('sol-item').value);
+    const itemRef = (ITENS_PPP[row[1]]||[]).find(i => i.nome === document.getElementById('sol-item').value);
     const msg = `🔔 *Nova solicitação — São João 2026*
 
 *Item:* ${document.getElementById('sol-item').value}
@@ -1599,8 +1598,8 @@ async function submitSolicitacao() {
 *Solicitante:* ${currentUser.name}
 *Favorecido:* ${row[5]}
 *Valor:* R$ ${(parseFloat(row[7])||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
-*Orçado 2026:* ${item ? 'R$ '+item.orc2026.toLocaleString('pt-BR') : 'Não definido'}
-*Custo 2025:* ${item && item.ref2025 ? 'R$ '+item.ref2025.toLocaleString('pt-BR') : '—'}
+*Orçado 2026:* ${itemRef ? 'R$ '+itemRef.orc2026.toLocaleString('pt-BR') : 'Não definido'}
+*Custo 2025:* ${itemRef && itemRef.ref2025 ? 'R$ '+itemRef.ref2025.toLocaleString('pt-BR') : '—'}
 *Categoria:* ${row[4]}
 *Pagamento:* ${row[8]}
 *Banco/PIX:* ${row[6]}
