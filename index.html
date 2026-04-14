@@ -97,7 +97,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fd);min-height:100
 
 /* ALERTS */
 .alerts{display:flex;flex-direction:column;gap:7px}
-.al{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r);font-size:12px;line-height:1.5}
+.al{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r);font-size:12px;line-height:1.5;justify-content:space-between}
 .al.danger{background:var(--red-dim);border:0.5px solid rgba(255,92,92,.2);color:#ff8a8a}
 .al.warn{background:var(--amber-dim);border:0.5px solid rgba(240,168,48,.2);color:#f0b85a}
 .al.info{background:var(--blue-dim);border:0.5px solid rgba(92,184,240,.2);color:#7ec8f5}
@@ -336,11 +336,11 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="card">
           <div class="card-title">Alertas ativos</div>
           <div class="alerts">
-            <div class="al danger"><span class="aldot"></span><span><b>Licenciamento & Taxas</b> — R$ 1,1M em 2025 sem orçamento 2026.</span></div>
-            <div class="al danger"><span class="aldot"></span><span><b>Open Bar</b> — R$ 656k em 2025 sem previsão 2026.</span></div>
-            <div class="al warn"><span class="aldot"></span><span><b>Mídia & Comunicação</b> — R$ 301k em 2025 sem orçamento.</span></div>
-            <div class="al warn"><span class="aldot"></span><span><b>Segurança</b> — R$ 103k em 2025 sem previsão.</span></div>
-            <div class="al info"><span class="aldot"></span><span><b>Infra & Cenografia</b> caiu de R$2,7M → R$904k. Confirmar escopo.</span></div>
+            <div class="al danger" id="dal-1"><span class="aldot"></span><span><b>Licenciamento & Taxas</b> — R$ 1,1M em 2025 sem orçamento 2026.</span><button onclick="dispensarAlertaDash('dal-1')" style="margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;font-family:var(--fm);flex-shrink:0">Ciente ×</button></div>
+            <div class="al danger" id="dal-2"><span class="aldot"></span><span><b>Open Bar</b> — R$ 656k em 2025 sem previsão 2026.</span><button onclick="dispensarAlertaDash('dal-2')" style="margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;font-family:var(--fm);flex-shrink:0">Ciente ×</button></div>
+            <div class="al warn" id="dal-3"><span class="aldot"></span><span><b>Mídia & Comunicação</b> — R$ 301k em 2025 sem orçamento.</span><button onclick="dispensarAlertaDash('dal-3')" style="margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;font-family:var(--fm);flex-shrink:0">Ciente ×</button></div>
+            <div class="al warn" id="dal-4"><span class="aldot"></span><span><b>Segurança</b> — R$ 103k em 2025 sem previsão.</span><button onclick="dispensarAlertaDash('dal-4')" style="margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;font-family:var(--fm);flex-shrink:0">Ciente ×</button></div>
+            <div class="al info" id="dal-5"><span class="aldot"></span><span><b>Infra & Cenografia</b> caiu de R$2,7M → R$904k. Confirmar escopo.</span><button onclick="dispensarAlertaDash('dal-5')" style="margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:11px;font-family:var(--fm);flex-shrink:0">Ciente ×</button></div>
           </div>
         </div>
       </div>
@@ -1017,7 +1017,7 @@ function showPage(p, btn) {
   if (p==='bilheteria') { initBltChart(); renderBilheteria(); }
   if (p==='documentos') renderDocs();
   if (p==='solicitacao') initSolicitacao();
-  if (p==='dashboard') { initCountdown(); const pn=document.getElementById('dash-praca-nome'); if(pn) pn.textContent=currentCity; updateDashboardMetrics(); }
+  if (p==='dashboard') { initCountdown(); const pn=document.getElementById('dash-praca-nome'); if(pn) pn.textContent=currentCity; updateDashboardMetrics(); restoreDismissedAlerts(); }
   if (p==='producao') initProducao();
   if (p==='configuracoes') initCfg2();
   if (p==='alertas') renderVariacoes();
@@ -1611,12 +1611,18 @@ Acesse o painel para aprovar ou rejeitar.`;
     document.getElementById('sol-success').style.display = 'block';
     btn.textContent = 'Enviar solicitação';
     btn.disabled = false;
+    // Refresh views so data appears immediately
+    renderDespesas();
+    renderAprovacoes();
   } catch(e) {
     console.error('submitSolicitacao error:', e);
+    // Still add to local data and show success even if Sheets write fails
     document.getElementById('sol-step4').style.display = 'none';
     document.getElementById('sol-success').style.display = 'block';
     btn.textContent = 'Enviar solicitação';
     btn.disabled = false;
+    renderDespesas();
+    renderAprovacoes();
   }
 }
 
@@ -2003,7 +2009,7 @@ function updateDashboardMetrics() {
   if(el('d-rec-sub')) el('d-rec-sub').textContent = recFilt.length + ' receitas confirmadas';
   // Custo 2025 by city
   const custo2025map = { 'Irecê': 5280761, 'Jequié': 0, 'Serrinha': 0, 'Todas': 5280761 };
-  const custo2025val = custo2025map[currentCity] || custo2025map['Todas'];
+  const custo2025val = custo2025map.hasOwnProperty(currentCity) ? custo2025map[currentCity] : custo2025map['Todas'];
   if(el('d-custo2025')) {
     if(custo2025val >= 1000000) {
       el('d-custo2025').textContent = 'R$ ' + (custo2025val/1000000).toFixed(2).replace('.',',') + 'M';
@@ -2158,6 +2164,28 @@ function dispensarAlerta(btn) {
     }
   }
 }
+
+function dispensarAlertaDash(id) {
+  const el = document.getElementById(id);
+  if(el) {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; }, 300);
+  }
+  // Persist dismissal
+  const dismissed = JSON.parse(localStorage.getItem('sj_dismissed_dash_alerts') || '[]');
+  if(!dismissed.includes(id)) { dismissed.push(id); localStorage.setItem('sj_dismissed_dash_alerts', JSON.stringify(dismissed)); }
+}
+
+// Restore dismissed alerts state on dashboard load
+function restoreDismissedAlerts() {
+  const dismissed = JSON.parse(localStorage.getItem('sj_dismissed_dash_alerts') || '[]');
+  dismissed.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+}
+
 </script>
 </body>
 </html>
