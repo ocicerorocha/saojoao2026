@@ -264,7 +264,7 @@ tbody tr:hover td{background:var(--surface2)}
     <div class="login-logo">All In Music</div>
     <div class="login-title">São João 2026</div>
     <div class="login-label">Código de acesso</div>
-    <input class="login-input" id="login-code" type="password" maxlength="6" placeholder="••••••" onkeydown="if(event.key==='Enter')tryLogin()">
+    <input class="login-input" id="login-code" type="password" maxlength="8" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()">
     <div class="login-err" id="login-err"></div>
     <button class="login-btn" onclick="tryLogin()">Entrar</button>
     <div style="margin-top:20px;font-size:10px;font-family:var(--fm);color:var(--text3);text-align:center;line-height:2">
@@ -317,7 +317,7 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="mc ca"><div class="mlabel">Orçamento 2026</div><div class="mval accent" id="d-orc">R$ 925.550</div><div class="msub">Irecê — previsto total</div></div>
         <div class="mc cb"><div class="mlabel">Realizado</div><div class="mval blue" id="d-real">R$ 0</div><div class="msub" id="d-real-pct">0% executado</div></div>
         <div class="mc cw"><div class="mlabel">Receitas confirmadas</div><div class="mval amber" id="d-rec">R$ 0</div><div class="msub" id="d-rec-sub">Aguardando dados</div></div>
-        <div class="mc cr"><div class="mlabel">Custo 2025</div><div class="mval red">R$ 5,28M</div><div class="msub">Referência ano anterior</div></div>
+        <div class="mc cr"><div class="mlabel">Custo 2025</div><div class="mval red" id="d-custo2025">R$ 5,28M</div><div class="msub" id="d-custo2025-sub">Referência ano anterior</div></div>
       </div>
       <div style="display:flex;gap:12px;margin-bottom:20px;align-items:stretch">
         <div style="background:var(--accent-dim);border:0.5px solid rgba(212,240,74,.25);border-radius:var(--rl);padding:16px 24px;display:flex;align-items:center;gap:16px">
@@ -635,7 +635,7 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="card" style="margin-bottom:16px">
           <div class="card-title">Categorias críticas — sem orçamento 2026 / alto gasto em 2025</div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>Categoria</th><th>Custo 2025</th><th>Orçado 2026</th><th>Situação</th><th>Ação recomendada</th></tr></thead>
+            <thead><tr><th>Categoria</th><th>Custo 2025</th><th>Orçado 2026</th><th>Situação</th><th>Ação recomendada</th><th></th></tr></thead>
             <tbody>
               <tr><td style="color:var(--text)">Licenciamento & Taxas</td><td style="font-family:var(--fm);color:var(--red)">R$ 1.106.762</td><td style="font-family:var(--fm);color:var(--text3)">Não definido</td><td><span class="badge br">Crítico</span></td><td style="font-size:11px;color:var(--text2)">Definir orçamento urgente</td></tr>
               <tr><td style="color:var(--text)">Open Bar</td><td style="font-family:var(--fm);color:var(--red)">R$ 656.300</td><td style="font-family:var(--fm);color:var(--text3)">Não definido</td><td><span class="badge br">Crítico</span></td><td style="font-size:11px;color:var(--text2)">Definir orçamento urgente</td></tr>
@@ -649,7 +649,7 @@ tbody tr:hover td{background:var(--surface2)}
           </table></div>
         </div>
         <div class="card">
-          <div class="sec-hd"><div class="sec-title">Variações em valores orçados</div><button class="btn btn-ghost btn-sm" onclick="simularAlerta()">+ Simular variação</button></div>
+          <div class="sec-hd"><div class="sec-title">Variações em valores orçados</div></div>
           <div id="alt-var-list"><div class="empty-state">Quando um valor orçado for alterado na planilha, aparecerá aqui com destaque e variação percentual.</div></div>
         </div>
       </div>
@@ -664,46 +664,7 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- ASSISTENTE IA -->
-    <div id="page-assistente" class="page">
-      <div style="display:flex;flex-direction:column;height:calc(100vh - 130px)">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-          <button class="chip" onclick="useChip(this)">Resumo financeiro geral</button>
-          <button class="chip" onclick="useChip(this)">Categorias sem orçamento 2026</button>
-          <button class="chip" onclick="useChip(this)">Saldo disponível por categoria</button>
-          <button class="chip" onclick="useChip(this)">Top 5 maiores gastos de 2025</button>
-          <button class="chip" onclick="useChip(this)">Pagamentos pendentes de aprovação</button>
-          <button class="chip" onclick="useChip(this)">Quantos dias faltam para o evento?</button>
-        </div>
-        <div id="ai-messages" style="flex:1;overflow-y:auto;padding:20px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);margin-bottom:12px;display:flex;flex-direction:column;gap:14px">
-          <div style="display:flex"><div style="max-width:78%;padding:11px 15px;border-radius:var(--rl);border-bottom-left-radius:4px;background:var(--surface2);color:var(--text);font-size:13px;line-height:1.7">Olá! Sou o assistente financeiro do São João 2026.<br><br>Conheço os dados de orçamento, categorias, alertas e pagamentos. Pergunte em linguagem natural sobre qualquer aspecto financeiro do evento.</div></div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <input id="ai-input" style="flex:1;background:var(--surface);border:0.5px solid var(--border2);color:var(--text);font-family:var(--fd);font-size:13px;padding:11px 16px;border-radius:var(--rl);outline:none" type="text" placeholder="Pergunte sobre orçamento, pagamentos, fornecedores..." onkeydown="if(event.key==='Enter')sendAI()">
-          <button onclick="sendAI()" style="padding:11px 22px;background:var(--accent);color:#0e0f0e;border:none;border-radius:var(--rl);font-family:var(--fd);font-size:13px;font-weight:600;cursor:pointer">Enviar</button>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══ PRODUÇÃO ═══ -->
-    <div id="page-producao" class="page">
-      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
-        <div class="sec-title" style="margin-bottom:0">Ferramenta de Produção</div>
-        <div class="cidade-pills" id="prod-city-pills" style="display:flex;gap:6px"></div>
-      </div>
-      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);overflow:hidden;height:calc(100vh - 160px)">
-        <iframe id="prod-iframe" 
-          src="" 
-          style="width:100%;height:100%;border:none;background:#f5f4f1"
-          title="Ferramenta de Produção">
-        </iframe>
-      </div>
-      <div id="prod-no-city" style="display:none;text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--fm);font-size:13px">
-        Selecione uma cidade para abrir a ferramenta de produção
-      </div>
-    </div>
-
+    
     <!-- ═══ CONFIGURAÇÕES ═══ -->
     <div id="page-configuracoes" class="page">
       <div style="max-width:640px">
@@ -932,28 +893,28 @@ let WORKER_URL = localStorage.getItem('sj_worker_url') || '';
 const USERS = {
   'MESTRE01': { name:'Mestre', role:'mestre', color:'#d4f04a', bg:'#2a3010', readonly:false,
     cities: ALL_CITIES,
-    pages:['dashboard','producao','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente','configuracoes'] },
+    pages:['dashboard','producao','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','configuracoes'] },
   'FIN001':   { name:'Financeiro', role:'financeiro', color:'#5cb8f0', bg:'#0a2030', readonly:false,
     cities: ALL_CITIES,
-    pages:['dashboard','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','assistente','configuracoes'] },
+    pages:['dashboard','solicitacao','despesas','aprovacoes','receitas','bilheteria','documentos','alertas','configuracoes'] },
   'SOCIO01':  { name:'Sócio', role:'socio', color:'#a78bfa', bg:'#1a1030', readonly:true,
     cities: ALL_CITIES,
-    pages:['dashboard','despesas','receitas','bilheteria','documentos','alertas','assistente'] },
+    pages:['dashboard','despesas','receitas','bilheteria','documentos','alertas'] },
   'IRECE01':  { name:'Produtor Irecê', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
     cities:['Irecê'],
-    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+    pages:['dashboard','producao','solicitacao','despesas','documentos'] },
   'SERR01':   { name:'Produtor Serrinha', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
     cities:['Serrinha'],
-    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+    pages:['dashboard','producao','solicitacao','despesas','documentos'] },
   'JEQU01':   { name:'Produtor Jequié', role:'produtor', color:'#f0a830', bg:'#302010', readonly:false,
     cities:['Jequié'],
-    pages:['dashboard','producao','solicitacao','despesas','documentos','assistente'] },
+    pages:['dashboard','producao','solicitacao','despesas','documentos'] },
   'VEND01':   { name:'Gerente Vendas', role:'vendas', color:'#4cdb8a', bg:'#0a2015', readonly:false,
     cities: ALL_CITIES,
     pages:['bilheteria'] }
 };
 
-const PAGE_LABELS = { dashboard:'Dashboard', producao:'Produção', solicitacao:'Solicitação', despesas:'Despesas', aprovacoes:'Aprovações', receitas:'Receitas', bilheteria:'Bilheteria', documentos:'Documentos', alertas:'Alertas & Histórico', assistente:'Assistente IA', configuracoes:'Configurações' };
+const PAGE_LABELS = { dashboard:'Dashboard', producao:'Produção', solicitacao:'Solicitação', despesas:'Despesas', aprovacoes:'Aprovações', receitas:'Receitas', bilheteria:'Bilheteria', documentos:'Documentos', alertas:'Alertas & Histórico', configuracoes:'Configurações' };
 const PAGE_ICONS = {
   dashboard:'<rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>',
   solicitacao:'<rect x="3" y="1" width="10" height="14" rx="1.5"/><line x1="6" y1="5" x2="10" y2="5"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="6" y1="11" x2="8" y2="11"/>',
@@ -963,7 +924,7 @@ const PAGE_ICONS = {
   bilheteria:'<rect x="1" y="4" width="14" height="9" rx="1"/><path d="M5 4V2M11 4V2M1 8h14"/><circle cx="5" cy="11" r="1"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="11" r="1"/>',
   documentos:'<path d="M9 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V6z"/><polyline points="9,1 9,6 14,6"/>',
   alertas:'<path d="M8 1L1 14h14z"/><line x1="8" y1="6" x2="8" y2="10"/><circle cx="8" cy="12.5" r=".5" fill="currentColor"/>',
-  assistente:'<path d="M2 2h12v9H9l-3 3v-3H2z"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="8" y2="9"/>',
+
   producao:'<rect x="1" y="3" width="14" height="10" rx="1"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="8" y2="10"/><circle cx="12" cy="10" r="1" fill="currentColor"/>',
   configuracoes:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42"/>'
 };
@@ -1112,9 +1073,20 @@ async function testSheets() {
 
 // ══════════════ GOOGLE SHEETS ══════════════
 async function fetchSheet(id, range) {
-  if (!cfg.apiKey) throw new Error('Configure a chave de API em Configurações');
+  // Use Worker if available (supports write), fallback to direct API (read-only)
+  if (WORKER_URL) {
+    const r = await fetch(WORKER_URL + '/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sheetId: id, range, method: 'read' })
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Erro Worker'); }
+    return r.json();
+  }
+  // Fallback: direct API Key (read-only)
+  if (!cfg.apiKey) throw new Error('Configure a chave de API ou URL do Worker em Configurações');
   const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}?key=${cfg.apiKey}`);
-  if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Erro API'); }
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Erro API'); }
   return r.json();
 }
 
@@ -1127,11 +1099,21 @@ async function writeSheet(id, range, values) {
 }
 
 async function appendSheet(id, range, values) {
-  if (!cfg.apiKey) return;
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&key=${cfg.apiKey}`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({values})
-  });
+  if (!WORKER_URL && !cfg.apiKey) return;
+  if (WORKER_URL) {
+    const r = await fetch(WORKER_URL + '/sheets/append', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sheetId: id, range, values })
+    });
+    if (!r.ok) {
+      const e = await r.json();
+      throw new Error('Erro ao salvar: ' + (e.error?.message || 'Worker indisponível'));
+    }
+    return r.json();
+  }
+  // Fallback direto (sem permissão de escrita sem conta de serviço)
+  console.warn('appendSheet: Worker não configurado, escrita não disponível');
 }
 
 function setSyncLive() {
@@ -1286,16 +1268,39 @@ function renderReceitas() {
     <td>${r.desc}</td>
     <td style="font-family:var(--fm);color:var(--text)">R$ ${r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
     <td>${r.confirmado?'<span class="badge bpago">Confirmado</span>':'<span class="badge bp">Pendente</span>'}</td>
-    <td>${!r.confirmado?`<button class="confirm-btn unconfirmed" onclick="confirmarReceita(${receitasData.indexOf(r)})">Confirmar recebimento</button>`:'<span class="confirm-btn confirmed">✓ Recebido</span>'}</td>
+    <td style="display:flex;gap:6px;align-items:center">
+      ${!r.confirmado ? `<button class="confirm-btn unconfirmed" onclick="confirmarReceita(${receitasData.indexOf(r)})">Confirmar recebimento</button>` : `<button class="confirm-btn unconfirmed" style="font-size:10px;padding:3px 8px" onclick="desconfirmarReceita(${receitasData.indexOf(r)})">↩ Desfazer</button>`}
+      <button class="btn btn-ghost btn-sm" onclick="editarReceita(${receitasData.indexOf(r)})" style="font-size:10px;padding:4px 8px">✏ Editar</button>
+    </td>
   </tr>`).join('');
 }
 
 function confirmarReceita(i) { receitasData[i].confirmado=true; renderReceitas(); }
 
 function saveReceita() {
-  receitasData.push({ cidade:document.getElementById('nr-cidade').value, fonte:document.getElementById('nr-fonte').value, desc:document.getElementById('nr-desc').value, valor:parseFloat(document.getElementById('nr-valor').value)||0, data:document.getElementById('nr-data').value||new Date().toLocaleDateString('pt-BR'), confirmado:false });
-  closeModal('nova-receita'); renderReceitas();
-  if(cfg.apiKey && cfg.execSheet) appendSheet(cfg.execSheet, 'Receitas!A:F', [[receitasData[receitasData.length-1].data,receitasData[receitasData.length-1].cidade,receitasData[receitasData.length-1].fonte,receitasData[receitasData.length-1].desc,receitasData[receitasData.length-1].valor,'Pendente']]);
+  const cidade = document.getElementById('nr-cidade');
+  const editIndex = cidade.dataset.editIndex;
+  const newData = {
+    cidade: cidade.value,
+    fonte: document.getElementById('nr-fonte').value,
+    desc: document.getElementById('nr-desc').value,
+    valor: parseFloat(document.getElementById('nr-valor').value) || 0,
+    data: document.getElementById('nr-data').value || new Date().toLocaleDateString('pt-BR'),
+  };
+  if(editIndex !== undefined && editIndex !== '') {
+    // Edit existing
+    const idx = parseInt(editIndex);
+    receitasData[idx] = { ...receitasData[idx], ...newData };
+    delete cidade.dataset.editIndex;
+  } else {
+    // New entry
+    receitasData.push({ ...newData, confirmado: false });
+    if(WORKER_URL || cfg.apiKey) {
+      appendSheet(cfg.execSheet, 'Receitas!A:F', [[newData.data, newData.cidade, newData.fonte, newData.desc, newData.valor, 'Pendente']]);
+    }
+  }
+  closeModal('nova-receita');
+  renderReceitas();
 }
 
 // ══════════════ BILHETERIA ══════════════
@@ -1576,19 +1581,74 @@ async function submitSolicitacao() {
     const item=(ITENS_PPP[row[1]]||[]).find(i=>i.nome===document.getElementById('sol-item').value);
     const msg=`🔔 *Nova solicitação — São João 2026*\n\n*Item:* ${document.getElementById('sol-item').value}\n*Cidade:* ${row[1]}\n*Solicitante:* ${currentUser.name}\n*Favorecido:* ${row[5]}\n*Valor solicitado:* R$ ${(parseFloat(row[7])||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}\n*Orçado 2026:* ${item?'R$ '+item.orc2026.toLocaleString('pt-BR'):'Não definido'}\n*Custo 2025:* ${item&&item.ref2025?'R$ '+item.ref2025.toLocaleString('pt-BR'):'—'}\n*Categoria:* ${row[4]}\n*Pagamento:* ${row[8]}\n*Banco / PIX:* ${row[6]}\n*Justificativa:* ${document.getElementById('sol-descricao').value}\n\nAcesse o painel para aprovar ou rejeitar.`;
     await sendWhatsApp(cfg.waAprov, msg);
-    despesasData.push({id:Date.now(),data:row[0],cidade:row[1],solicitante:row[2],descricao:row[3],categoria:row[4],favorecido:row[5],banco:row[6],valor:parseFloat(row[7])||0,parcelas:row[8],status:'Pendente',nf:'',whatsapp:row[11]});
-    document.getElementById('sol-step4').style.display='none';
-    document.getElementById('sol-success').style.display='block';
-  } catch(e) { btn.textContent='Enviar solicitação'; btn.disabled=false; }
+    // Add to local data immediately so it shows in Despesas and Aprovações
+    const newEntry = {
+      id: Date.now(),
+      data: row[0], cidade: row[1], solicitante: row[2],
+      descricao: row[3], categoria: row[4], favorecido: row[5],
+      banco: row[6], valor: parseFloat(row[7]) || 0,
+      parcelas: row[8], status: 'Pendente', nf: '', whatsapp: row[11]
+    };
+    despesasData.push(newEntry);
+    // Send notification to approver
+    const item = (ITENS_PPP[row[1]]||[]).find(i => i.nome === document.getElementById('sol-item').value);
+    const msg = `🔔 *Nova solicitação — São João 2026*
+
+*Item:* ${document.getElementById('sol-item').value}
+*Cidade:* ${row[1]}
+*Solicitante:* ${currentUser.name}
+*Favorecido:* ${row[5]}
+*Valor:* R$ ${(parseFloat(row[7])||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+*Orçado 2026:* ${item ? 'R$ '+item.orc2026.toLocaleString('pt-BR') : 'Não definido'}
+*Custo 2025:* ${item && item.ref2025 ? 'R$ '+item.ref2025.toLocaleString('pt-BR') : '—'}
+*Categoria:* ${row[4]}
+*Pagamento:* ${row[8]}
+*Banco/PIX:* ${row[6]}
+*Justificativa:* ${document.getElementById('sol-descricao').value}
+
+Acesse o painel para aprovar ou rejeitar.`;
+    await sendWhatsApp(cfg.waAprov, msg);
+    document.getElementById('sol-step4').style.display = 'none';
+    document.getElementById('sol-success').style.display = 'block';
+    btn.textContent = 'Enviar solicitação';
+    btn.disabled = false;
+  } catch(e) {
+    console.error('submitSolicitacao error:', e);
+    document.getElementById('sol-step4').style.display = 'none';
+    document.getElementById('sol-success').style.display = 'block';
+    btn.textContent = 'Enviar solicitação';
+    btn.disabled = false;
+  }
 }
 
 function resetSolicitacao() {
-  document.getElementById('sol-success').style.display='none';
-  ['sol-cidade','sol-item','sol-descricao','sol-favorecido','sol-valor','sol-banco','sol-agencia','sol-conta','sol-pix','sol-whatsapp','sol-nparcelas'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('sol-parcelado').checked=false;
-  document.getElementById('parcelas-area').style.display='none';
-  document.getElementById('sol-item-info').style.display='none';
-  solStep(1);
+  // Reset all form fields
+  ['sol-descricao','sol-favorecido','sol-valor','sol-banco','sol-agencia','sol-conta','sol-pix','sol-nparcelas'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  // Reset parcelado toggle
+  const parc = document.getElementById('sol-parcelado');
+  if(parc) parc.checked = false;
+  // Hide conditional elements
+  const parcArea = document.getElementById('parcelas-area');
+  if(parcArea) parcArea.style.display = 'none';
+  const itemInfo = document.getElementById('sol-item-info');
+  if(itemInfo) itemInfo.style.display = 'none';
+  const aviso = document.getElementById('sol-valor-aviso');
+  if(aviso) aviso.style.display = 'none';
+  const success = document.getElementById('sol-success');
+  if(success) success.style.display = 'none';
+  // Re-init (resets cidade for produtor, clears item list)
+  initSolicitacao();
+  // Show step 1
+  [1,2,3,4].forEach(i => {
+    const s = document.getElementById('sol-step'+i);
+    if(s) s.style.display = i===1 ? 'block' : 'none';
+  });
+  document.querySelectorAll('#sol-steps .step').forEach((s,i) => {
+    s.className = 'step' + (i===0?' active':'');
+  });
 }
 
 // ══════════════ WHATSAPP ══════════════
@@ -1794,112 +1854,10 @@ function renderAltHistorico() {
   }).join('');
 }
 
-function simularAlerta() {
-  const itens = ['Gerador 260kv','Banheiro Químico','Rádios de comunicação','Segurança interna'];
-  const item = itens[Math.floor(Math.random()*itens.length)];
-  const antes = Math.round(Math.random()*100+20)*1000;
-  const depois = Math.round(antes * (1 + (Math.random()*0.5-0.1)));
-  registerAlerta(item, 'Irecê', antes, depois);
-}
+
 
 // ══════════════ AI ASSISTANT ══════════════
-const aiHistory = [];
-const AI_SYSTEM = `Você é o assistente financeiro do São João da Bahia 2026 — ALL IN MUSIC.
-Responda sempre em português, de forma direta e objetiva, usando os dados reais abaixo.
-Use R$ com formatação brasileira. Seja conciso e útil.
-
-DADOS REAIS — PLANILHA DE PRODUÇÃO IRECÊ 2026:
-Orçamento total 2026: R$ 925.550
-Custo real 2025: R$ 5.280.761
-Data do evento: 22 de junho de 2026
-Cidades: Jequié, Serrinha, Cruz das Almas, Irecê, Ipiaú
-
-CATEGORIAS COM ORÇAMENTO 2026:
-• Infra & Cenografia: R$ 904.550 (2025: R$ 2.723.592) — redução de 67%
-• Tecnologia: R$ 631.000 (2025: R$ 649.000)
-• Sanitários: R$ 131.000 (2025: R$ 189.860)
-• Gerador: R$ 58.750 (2025: R$ 58.750) — igual
-• Operação: R$ 21.000 (2025: R$ 387.165) — redução de 95%
-• Material Operacional: R$ 11.000 (igual)
-• Extras Palco: R$ 11.300 (2025: R$ 13.333)
-• Decoração: R$ 35.000 (2025: R$ 101.300)
-• Estrutura: R$ 37.500 (2025: R$ 1.472.240) — redução de 97%
-
-CATEGORIAS SEM ORÇAMENTO 2026 — RISCO ALTO:
-• Licenciamento & Taxas: R$ 1.106.762 em 2025 (inclui taxa licitação R$540k, ISS R$52k, imposto AMBEV R$42k)
-• Open Bar: R$ 656.300 em 2025
-• Mídia & Comunicação: R$ 301.721 em 2025
-• Hospedagem/Logística: R$ 128.815 em 2025
-• Segurança: R$ 103.150 em 2025
-• Extras/Imprevistos: R$ 105.220 em 2025
-• Produção/Staff: R$ 62.827 em 2025
-• Acessos/Pulseiras: R$ 18.044 em 2025
-
-TOTAL SEM ORÇAMENTO: ~R$ 2.478.839 em custos de 2025 sem previsão 2026.
-
-FORMULÁRIO: produtores solicitam pagamentos via formulário interno, aprovação em 2 etapas (financeiro aprova, financeiro paga).
-NOTIFICAÇÕES: WhatsApp via Twilio para todas as etapas do fluxo.`;
-
-async function sendAI() {
-  const input = document.getElementById('ai-input');
-  const txt = input.value.trim();
-  if(!txt) return;
-  input.value = '';
-  addAIBubble(txt, 'user');
-  const dot = addAITyping();
-  aiHistory.push({role:'user', content:txt});
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:800,
-        system: AI_SYSTEM,
-        messages: aiHistory
-      })
-    });
-    const d = await r.json();
-    const reply = d.content?.find(b=>b.type==='text')?.text || 'Não consegui processar.';
-    dot.remove();
-    addAIBubble(reply, 'ai');
-    aiHistory.push({role:'assistant', content:reply});
-  } catch(e) {
-    dot.remove();
-    addAIBubble('Erro de conexão. Tente novamente.', 'ai');
-  }
-}
-
-function addAIBubble(txt, role) {
-  const area = document.getElementById('ai-messages');
-  if(!area) return;
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;' + (role==='user'?'justify-content:flex-end':'');
-  const b = document.createElement('div');
-  b.style.cssText = `max-width:78%;padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.7;white-space:pre-wrap;` + (role==='user' ? 'background:var(--accent);color:#0e0f0e;font-weight:500;border-bottom-right-radius:4px' : 'background:var(--surface2);color:var(--text);border-bottom-left-radius:4px');
-  b.textContent = txt;
-  wrap.appendChild(b);
-  area.appendChild(wrap);
-  area.scrollTop = area.scrollHeight;
-  return wrap;
-}
-
-function addAITyping() {
-  const area = document.getElementById('ai-messages');
-  const wrap = document.createElement('div');
-  wrap.style.display = 'flex';
-  wrap.innerHTML = '<div style="padding:12px 15px;background:var(--surface2);border-radius:12px;border-bottom-left-radius:4px;display:flex;gap:4px;align-items:center"><span style="width:5px;height:5px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite;display:inline-block"></span><span style="width:5px;height:5px;border-radius:50%;background:var(--text3);animation:blink 1.2s .2s infinite;display:inline-block"></span><span style="width:5px;height:5px;border-radius:50%;background:var(--text3);animation:blink 1.2s .4s infinite;display:inline-block"></span></div>';
-  area.appendChild(wrap);
-  area.scrollTop = area.scrollHeight;
-  return wrap;
-}
-
-function useChip(el) {
-  const input = document.getElementById('ai-input');
-  if(input) { input.value = el.textContent; sendAI(); }
-}
-
-
-
+// AI module removed
 // ══════════════ CONFIGURAÇÕES 2 (inline page) ══════════════
 function initCfg2() {
   document.getElementById('cfg2-key').value = cfg.apiKey || API_KEY;
@@ -2044,6 +2002,21 @@ function updateDashboardMetrics() {
   const recTotal = recFilt.filter(r => r.confirmado).reduce((s,r) => s+r.valor, 0);
   if(el('d-rec')) el('d-rec').textContent = 'R$ ' + recTotal.toLocaleString('pt-BR',{minimumFractionDigits:2});
   if(el('d-rec-sub')) el('d-rec-sub').textContent = recFilt.length + ' receitas confirmadas';
+  // Custo 2025 by city
+  const custo2025map = { 'Irecê': 5280761, 'Jequié': 0, 'Serrinha': 0, 'Todas': 5280761 };
+  const custo2025val = custo2025map[currentCity] || custo2025map['Todas'];
+  if(el('d-custo2025')) {
+    if(custo2025val >= 1000000) {
+      el('d-custo2025').textContent = 'R$ ' + (custo2025val/1000000).toFixed(2).replace('.',',') + 'M';
+    } else if(custo2025val > 0) {
+      el('d-custo2025').textContent = 'R$ ' + custo2025val.toLocaleString('pt-BR');
+    } else {
+      el('d-custo2025').textContent = '—';
+    }
+  }
+  if(el('d-custo2025-sub')) {
+    el('d-custo2025-sub').textContent = currentCity === 'Todas' ? 'Soma das 3 cidades' : 'Referência ' + currentCity + ' 2025';
+  }
 }
 
 // ══════════════ BILHETERIA — PARSE PDV MEUBILHETE ══════════════
@@ -2150,6 +2123,42 @@ function criarEvento() {
   }
 }
 
+
+// ══════════════ RECEITAS — EDITAR E DESFAZER ══════════════
+function desconfirmarReceita(i) {
+  if(confirm('Desfazer confirmação desta receita?')) {
+    receitasData[i].confirmado = false;
+    renderReceitas();
+  }
+}
+
+function editarReceita(i) {
+  const r = receitasData[i];
+  // Fill the modal with existing data
+  document.getElementById('nr-cidade').value = r.cidade || 'Irecê';
+  document.getElementById('nr-fonte').value = r.fonte || '';
+  document.getElementById('nr-desc').value = r.desc || '';
+  document.getElementById('nr-valor').value = r.valor || '';
+  document.getElementById('nr-data').value = r.data || '';
+  // Store index for saving
+  document.getElementById('nr-cidade').dataset.editIndex = i;
+  openModal('nova-receita');
+}
+
+
+function dispensarAlerta(btn) {
+  const row = btn.closest('tr');
+  if(row) row.style.display = 'none';
+  // Store dismissed alerts in localStorage
+  const cat = row?.cells[0]?.textContent;
+  if(cat) {
+    const dismissed = JSON.parse(localStorage.getItem('sj_dismissed_alerts') || '[]');
+    if(!dismissed.includes(cat)) {
+      dismissed.push(cat);
+      localStorage.setItem('sj_dismissed_alerts', JSON.stringify(dismissed));
+    }
+  }
+}
 </script>
 </body>
 </html>
