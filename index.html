@@ -1829,14 +1829,17 @@ function formatBRL(val) {
   return 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Converte serial do Google Sheets (dias desde 30/12/1899) para Date
+// Converte serial do Google Sheets para Date
+// Google Sheets usa 30/12/1899 como epoch MAS conta 29/02/1900 indevidamente (bug Lotus 1-2-3)
+// Para datas > 28/02/1900 (serial > 59), subtrai 1 para compensar
 function serialToDate(serial) {
   if (!serial) return null;
   const n = parseFloat(serial);
   if (isNaN(n)) return null;
   const msPerDay = 86400000;
   const epoch = new Date(Date.UTC(1899, 11, 30));
-  return new Date(epoch.getTime() + n * msPerDay);
+  const adjusted = n > 59 ? n - 1 : n;
+  return new Date(epoch.getTime() + adjusted * msPerDay);
 }
 
 // ── Estado global de dados ──
