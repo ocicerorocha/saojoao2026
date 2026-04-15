@@ -204,6 +204,15 @@ tbody td.muted{color:var(--text2);font-family:var(--font-mono);font-size:12px}
 /* BLOCO 4 */
 .prod-sub{display:none}
 .prod-sub.active{display:block}
+.cat-row td{
+  background:var(--surface3)!important;
+  color:var(--accent)!important;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:8px 14px!important;font-weight:600;
+  border-top:1px solid var(--border)!important;
+  border-bottom:1px solid var(--border)!important;
+}
 .diff-pos{color:var(--red)}
 .diff-neg{color:var(--green)}
 .diff-zero{color:var(--text3)}
@@ -393,7 +402,12 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="form-group" style="grid-column:1/-1">
                 <label class="form-label">Categoria</label>
-                <select class="form-select" id="edit-categoria"></select>
+                <select class="form-select" id="edit-categoria" onchange="atualizarSubcats()"></select>
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Subcategoria <span style="color:var(--text3);font-size:10px">opcional</span></label>
+                <input class="form-input" id="edit-subcategoria" list="subcats-list" placeholder="Ex: ESTRUTURA">
+                <datalist id="subcats-list"></datalist>
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label class="form-label">Item</label>
@@ -764,7 +778,7 @@ async function loadAppData(){
 async function loadPPP(cidade){
   const id=SHEET_IDS[cidade];if(!id)return;
   try{
-    const[pR,eR]=await Promise.all([sheetsRead(id,'Produção!A:N'),sheetsRead(id,'Equipe!A:P')]);
+    const[pR,eR]=await Promise.all([sheetsRead(id,'Produção!A:O'),sheetsRead(id,'Equipe!A:P')]);
     if(!appData.pppData[cidade])appData.pppData[cidade]={};
     appData.pppData[cidade].producao=rowsToObjects(pR);
     appData.pppData[cidade].equipe=rowsToObjects(eR);
@@ -915,11 +929,24 @@ function renderProdPlanilha(){
     ` style="font-size:10px;padding:3px 10px">${c==='todas'?'Todas':c}</button>`
   ).join('');
   if(!prod.length){tbody.innerHTML=`<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
-  let html='';
+  let html='',catAtual=null;
   prod.forEach((row,idx)=>{
     const item=(row['ITEM']||'').trim(),cat=(row['CATEGORIA']||'').trim();
-    if(!item)return;
+    // Linha de categoria separadora (ITEM vazio)
+    if(!item){
+      if(cat&&cat!==catAtual&&(prodCatFiltro==='todas'||prodCatFiltro===cat)){
+        catAtual=cat;
+        html+=`<tr class="cat-row"><td colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+      }
+      return;
+    }
     if(prodCatFiltro!=='todas'&&cat!==prodCatFiltro)return;
+    // Injeta linha de categoria se mudou (itens sem linha separadora na planilha)
+    if(cat&&cat!==catAtual&&prodCatFiltro==='todas'){
+      catAtual=cat;
+      html+=`<tr class="cat-row"><td colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+    }
+    const subcat=(row['SUBCATEGORIA']||'').trim();
     const c25=parseBRL(row['CUSTO 2025 (R$)']||row['CUSTO 2025']);
     const t26=parseBRL(row['TOTAL 2026 (R$)']||row['CUSTO 2026']||row['CUSTO 2026 (R$)']);
     const pago=parseBRL(row['VALOR PAGO (R$)']||row['VALOR PAGO']);
@@ -930,7 +957,7 @@ function renderProdPlanilha(){
     const vu=parseBRL(row['VALOR UNIT (R$)']||row['VALOR UNIT']);
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-edit-row btn-icon" onclick="abrirModalEditItem(${idx})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
     html+=`<tr data-idx="${idx}">
-      <td style="min-width:160px"><strong>${item}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${cat}</div></td>
+      <td style="min-width:160px"><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${subcat}</div>`:''}</td>
       <td class="muted">${row['QNT']||'—'}</td><td class="muted">${row['DIAS']||'—'}</td>
       <td class="muted">${row['DATA INÍCIO']||'—'}</td>
       <td class="muted">${vu>0?formatBRL(vu):'—'}</td>
@@ -980,6 +1007,8 @@ function abrirModalEditItem(idx){
   document.getElementById('edit-obs').value=row['OBS']||'';
   preencherCatSelect(row['CATEGORIA']||'');
   preencherStatusWrap(st,STATUS_AUTO.includes(st));
+  document.getElementById('edit-subcategoria').value=row['SUBCATEGORIA']||'';
+  atualizarSubcats();
   document.getElementById('modal-edit-item').classList.add('open');
 }
 
@@ -991,7 +1020,27 @@ function abrirModalNovoItem(){
     .forEach(id=>{document.getElementById(id).value='';});
   preencherCatSelect('');
   preencherStatusWrap('Pendente',false);
+  document.getElementById('edit-subcategoria').value='';
+  atualizarSubcats();
   document.getElementById('modal-edit-item').classList.add('open');
+}
+
+function getSubcategorias(cat){
+  const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
+  const subs=[];
+  prod.forEach(r=>{
+    if((r['CATEGORIA']||'').trim()!==cat)return;
+    const s=(r['SUBCATEGORIA']||'').trim();
+    if(s&&!subs.includes(s))subs.push(s);
+  });
+  return subs;
+}
+
+function atualizarSubcats(){
+  const cat=document.getElementById('edit-categoria').value;
+  const subs=getSubcategorias(cat);
+  const dl=document.getElementById('subcats-list');
+  if(dl)dl.innerHTML=subs.map(s=>`<option value="${s}">`).join('');
 }
 
 function preencherCatSelect(catAtual){
@@ -1037,11 +1086,13 @@ async function salvarItemProducao(){
   if(!item){showToast('Preencha o nome do item.','warn');btn.disabled=false;btn.textContent='Salvar';return;}
   const diff=t2026v-c2025v;
   // Colunas: A=CAT B=ITEM C=QNT D=DIAS E=DATA F=VUNIT G=C2025 H=T2026 I=DIFF J=VPAGO K=STATUS L=FORN M=OBS
-  const rv=[[cat,item,qnt,dias,dataInicio,vUnit>0?vUnit:'',c2025v>0?c2025v:'',t2026v>0?t2026v:'',diff!==0?diff:'',pago>0?pago:'',status,forn,obs]];
+  const subcat=document.getElementById('edit-subcategoria').value.trim();
+  // Colunas: A=CAT B=ITEM C=QNT D=DIAS E=DATA F=VUNIT G=C2025 H=T2026 I=DIFF J=VPAGO K=STATUS L=FORN M=OBS N=SUBCAT
+  const rv=[[cat,item,qnt,dias,dataInicio,vUnit>0?vUnit:'',c2025v>0?c2025v:'',t2026v>0?t2026v:'',diff!==0?diff:'',pago>0?pago:'',status,forn,obs,subcat]];
   try{
-    if(isNovo){await sheetsAppend(sheetId,'Produção!A:M',rv);showToast('Item adicionado!','success');}
-    else{await sheetsWrite(sheetId,`Produção!A${idx+2}:M${idx+2}`,rv);showToast('Item atualizado!','success');}
-    delete sheetsCache[`${sheetId}::Produção!A:N`];
+    if(isNovo){await sheetsAppend(sheetId,'Produção!A:N',rv);showToast('Item adicionado!','success');}
+    else{await sheetsWrite(sheetId,`Produção!A${idx+2}:N${idx+2}`,rv);showToast('Item atualizado!','success');}
+    delete sheetsCache[`${sheetId}::Produção!A:O`];
     await loadPPP(cidade);renderProdPlanilha();fecharModalEditItem();
   }catch(err){console.error('salvarItemProducao:',err);showToast('Erro ao salvar. Tente novamente.','error');}
   btn.disabled=false;btn.textContent='Salvar';
