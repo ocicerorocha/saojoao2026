@@ -623,7 +623,49 @@ tbody tr:hover .btn-edit-row{opacity:1}
 
       </div>
       <div class="page" id="page-despesas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">💸</div><div class="empty-title">Despesas</div><div class="empty-sub">Bloco 7</div></div></div>
-      <div class="page" id="page-aprovacoes"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">✅</div><div class="empty-title">Aprovações</div><div class="empty-sub">Bloco 6</div></div></div>
+      <!-- APROVAÇÕES — Bloco 6 -->
+      <div class="page" id="page-aprovacoes">
+        <div class="section-header">
+          <span class="section-title">Pendentes de aprovação</span>
+          <button class="btn btn-ghost btn-sm" onclick="carregarAprovacoes()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+            Atualizar
+          </button>
+        </div>
+        <div id="apr-pendentes-wrap">
+          <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
+        </div>
+
+        <div style="margin-top:28px">
+          <div class="section-header">
+            <span class="section-title" style="color:var(--text2)">Histórico</span>
+          </div>
+          <div id="apr-historico-wrap">
+            <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Carregando…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL REJEITAR -->
+      <div class="modal-overlay" id="modal-rejeitar">
+        <div class="modal" style="max-width:460px">
+          <div class="modal-header">
+            <span class="modal-title">Rejeitar solicitação</span>
+            <button class="modal-close" onclick="fecharModalRejeitar()">✕</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Item: <strong id="rej-item-nome"></strong></p>
+            <div class="form-group">
+              <label class="form-label">Justificativa <span style="color:var(--red)">*</span></label>
+              <textarea class="form-textarea" id="rej-justificativa" rows="3" placeholder="Explique o motivo da rejeição…"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-ghost" onclick="fecharModalRejeitar()">Cancelar</button>
+              <button class="btn btn-red" onclick="confirmarRejeicao()">Confirmar rejeição</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="page" id="page-receitas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📈</div><div class="empty-title">Receitas</div><div class="empty-sub">Bloco 10</div></div></div>
       <div class="page" id="page-bilheteria"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">🎟️</div><div class="empty-title">Bilheteria</div><div class="empty-sub">Bloco 10</div></div></div>
       <div class="page" id="page-documentos"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📁</div><div class="empty-title">Documentos</div><div class="empty-sub">Bloco 10</div></div></div>
@@ -826,6 +868,9 @@ function navigateTo(pageId){
     if(currentUser&&appData){initProducao();navegarProdSub(pageId.startsWith('prod-')?pageId:'prod-planilha');}
   }else if(mainId==='solicitacao'){
     if(currentUser&&appData)initSolicitacao();
+    setupCityFilter();
+  }else if(mainId==='aprovacoes'){
+    if(currentUser&&appData)carregarAprovacoes();
     setupCityFilter();
   }else{
     setupCityFilter();
@@ -1269,6 +1314,216 @@ function parseDateForInput(br){
   if(/^\d{4}-\d{2}-\d{2}$/.test(br))return br;
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(br)){const[d,m,a]=br.split('/');return`${a}-${m}-${d}`;}
   return'';
+}
+
+/* ── BLOCO 6: APROVAÇÕES ── */
+let aprSolicitacoes = [];   // cache local das solicitações
+let aprRejIdx = null;       // índice da linha sendo rejeitada
+
+async function carregarAprovacoes() {
+  const pendWrap = document.getElementById('apr-pendentes-wrap');
+  const histWrap = document.getElementById('apr-historico-wrap');
+  pendWrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  histWrap.innerHTML = pendWrap.innerHTML;
+
+  try {
+    // Invalida cache e relê
+    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Solicitações!A:V');
+    aprSolicitacoes = rowsToObjects(rows);
+    renderAprovacoes();
+  } catch(err) {
+    console.error('carregarAprovacoes:', err);
+    showToast('Erro ao carregar solicitações.', 'error');
+  }
+}
+
+function renderAprovacoes() {
+  const pendentes = aprSolicitacoes.filter(r =>
+    ['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
+  );
+  const historico = aprSolicitacoes.filter(r =>
+    !['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
+  );
+
+  // Filtro por cidade para Mestre (mostra todas), já pendentes são filtradas
+  document.getElementById('apr-pendentes-wrap').innerHTML =
+    pendentes.length ? renderAprTabela(pendentes, true) :
+    `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Nenhuma solicitação pendente</div></div>`;
+
+  document.getElementById('apr-historico-wrap').innerHTML =
+    historico.length ? renderAprTabela(historico, false) :
+    `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum histórico ainda</div></div>`;
+}
+
+function renderAprTabela(rows, acoes) {
+  const colunas = acoes
+    ? `<th>Data</th><th>Cidade</th><th>Solicitante</th><th>Item</th><th>Valor</th><th>Status</th><th>Ações</th>`
+    : `<th>Data</th><th>Cidade</th><th>Solicitante</th><th>Item</th><th>Valor</th><th>Status</th><th>Aprovado por</th>`;
+
+  const linhas = rows.map((r, i) => {
+    const idx = aprSolicitacoes.indexOf(r);
+    const status = (r['STATUS']||'').trim();
+    const bCls = {
+      'Em aberto':          'badge-pendente',
+      'Pagamento solicitado':'badge-solicitado',
+      'Pagamento aprovado': 'badge-aprovado',
+      'Pago parcial':       'badge-pago-parc',
+      'Pago':               'badge-pago',
+      'Rejeitado':          'badge-rejeitado',
+    }[status] || 'badge-pendente';
+
+    const val = parseBRL(r['VALOR SOLICITADO (R$)']||r['VALOR SOLICITADO']);
+    const acoesHtml = acoes ? `
+      <td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="aprovarSolicitacao(${idx})">Aprovar</button>
+        <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
+      </td>` : `<td class="muted">${r['APROVADO POR']||'—'}</td>`;
+
+    return `<tr>
+      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${r['CIDADE']||'—'}</td>
+      <td>${r['SOLICITANTE']||'—'}</td>
+      <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
+      <td>${val > 0 ? formatBRL(val) : '—'}</td>
+      <td><span class="badge ${bCls}">${status}</span></td>
+      ${acoesHtml}
+    </tr>`;
+  }).join('');
+
+  return `<div class="table-wrap"><table><thead><tr>${colunas}</tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+
+async function aprovarSolicitacao(idx) {
+  const row = aprSolicitacoes[idx];
+  if (!row) return;
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Aprovando…';
+
+  const agora = new Date();
+  const dataAprov = `${agora.getDate().toString().padStart(2,'0')}/${(agora.getMonth()+1).toString().padStart(2,'0')}/${agora.getFullYear()}`;
+
+  try {
+    // 1. Atualiza status na Geral — linha = idx + 2 (cabeçalho + base 1)
+    const linhaGeral = idx + 2;
+    // Col P = STATUS (16), Col Q = APROVADO POR (17), Col R = DATA APROVAÇÃO (18)
+    await sheetsWrite(SHEET_IDS.geral,
+      `Solicitações!P${linhaGeral}:R${linhaGeral}`,
+      [['Pagamento aprovado', currentUser.nome, dataAprov]]
+    );
+
+    // 2. Atualiza STATUS do item na PPP da cidade
+    await atualizarStatusPPP(row, 'Pagamento aprovado');
+
+    // 3. Notifica WhatsApp (best-effort)
+    await tentarNotificarAprovacao(row);
+
+    showToast('Solicitação aprovada!', 'success');
+    await carregarAprovacoes();
+  } catch(err) {
+    console.error('aprovarSolicitacao:', err);
+    showToast('Erro ao aprovar. Tente novamente.', 'error');
+    btn.disabled = false; btn.textContent = 'Aprovar';
+  }
+}
+
+async function atualizarStatusPPP(solRow, novoStatus) {
+  // Descobre a cidade e o item
+  const nm = {Irecê:'irece', Serrinha:'serrinha', Jequié:'jequie'};
+  const cidadeNome = (solRow['CIDADE']||'').trim();
+  const cidade = nm[cidadeNome] || Object.values({irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'})
+    .reduce((acc,v,i)=>cidadeNome===v?Object.keys({irece:0,serrinha:1,jequie:2})[i]:acc,'');
+  const itemNome = (solRow['ITEM']||'').trim();
+  const sheetId = SHEET_IDS[cidade];
+  if (!sheetId || !itemNome) return;
+
+  // Recarrega PPP para ter índice atualizado
+  await loadPPP(cidade);
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const itemIdx = prod.findIndex(r => (r['ITEM']||'').trim() === itemNome);
+  if (itemIdx === -1) return;
+
+  const linhaSheet = itemIdx + 2;
+  // Col K = STATUS (11ª coluna)
+  await sheetsWrite(sheetId, `Produção!K${linhaSheet}`, [[novoStatus]]);
+  // Invalida cache PPP
+  delete sheetsCache[`${sheetId}::Produção!A:O`];
+}
+
+// Modal Rejeitar
+function abrirModalRejeitar(idx) {
+  aprRejIdx = idx;
+  const row = aprSolicitacoes[idx];
+  document.getElementById('rej-item-nome').textContent = row ? row['ITEM'] : '';
+  document.getElementById('rej-justificativa').value = '';
+  document.getElementById('modal-rejeitar').classList.add('open');
+}
+
+function fecharModalRejeitar() {
+  document.getElementById('modal-rejeitar').classList.remove('open');
+  aprRejIdx = null;
+}
+document.getElementById('modal-rejeitar').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalRejeitar();
+});
+
+async function confirmarRejeicao() {
+  const just = document.getElementById('rej-justificativa').value.trim();
+  if (!just) { showToast('Informe a justificativa.', 'warn'); return; }
+  if (aprRejIdx === null) return;
+
+  const btn = document.querySelector('#modal-rejeitar .btn-red');
+  btn.disabled = true; btn.textContent = 'Rejeitando…';
+
+  const row = aprSolicitacoes[aprRejIdx];
+  const linhaGeral = aprRejIdx + 2;
+  const agora = new Date();
+  const dataRej = `${agora.getDate().toString().padStart(2,'0')}/${(agora.getMonth()+1).toString().padStart(2,'0')}/${agora.getFullYear()}`;
+
+  try {
+    // Col P=STATUS, Q=APROVADO POR, R=DATA, Col V=OBS
+    await sheetsWrite(SHEET_IDS.geral,
+      `Solicitações!P${linhaGeral}:R${linhaGeral}`,
+      [['Rejeitado', currentUser.nome, dataRej]]
+    );
+    // Grava justificativa na col V (OBS/Comprovante)
+    await sheetsWrite(SHEET_IDS.geral,
+      `Solicitações!V${linhaGeral}`,
+      [[`Rejeitado: ${just}`]]
+    );
+    // Atualiza PPP
+    await atualizarStatusPPP(row, 'Pendente');
+
+    showToast('Solicitação rejeitada.', 'warn');
+    fecharModalRejeitar();
+    await carregarAprovacoes();
+  } catch(err) {
+    console.error('confirmarRejeicao:', err);
+    showToast('Erro ao rejeitar.', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Confirmar rejeição';
+}
+
+async function tentarNotificarAprovacao(row) {
+  const cfg = JSON.parse(localStorage.getItem('sj2026_config') || '{}');
+  if (!cfg.twilioSid || !cfg.whatsappPagador) return;
+  const val = parseBRL(row['VALOR SOLICITADO (R$)']||row['VALOR SOLICITADO']);
+  const msg = `*Pagamento Aprovado — São João 2026*
+`+
+    `Item: ${row['ITEM']}
+Cidade: ${row['CIDADE']}
+`+
+    `Favorecido: ${row['FAVORECIDO']}
+Valor: ${formatBRL(val)}
+`+
+    `PIX: ${row['PIX']||'—'}  Conta: ${row['CONTA']||'—'}`;
+  try {
+    await fetch(`${WORKER_URL}/whatsapp`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ to:cfg.whatsappPagador, from:cfg.twilioFrom, body:msg, sid:cfg.twilioSid, token:cfg.twilioToken }),
+    });
+  } catch(_) {}
 }
 
 /* ── BLOCO 5: SOLICITAÇÃO ── */
