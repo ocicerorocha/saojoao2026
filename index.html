@@ -1761,9 +1761,17 @@ async function sheetsRead(sheetId, range) {
     body: JSON.stringify({ sheetId, range }),
   });
 
-  if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+  if (!res.ok) {
+    let errMsg = `Worker HTTP ${res.status}`;
+    try {
+      const errData = await res.json();
+      errMsg = errData.error || JSON.stringify(errData);
+    } catch(_) {}
+    console.error('Worker error detail:', errMsg);
+    throw new Error(errMsg);
+  }
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || 'Sheets error');
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
   const result = data.values || [];
   sheetsCache[cacheKey] = result;
