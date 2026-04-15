@@ -201,6 +201,23 @@ tbody td.muted{color:var(--text2);font-family:var(--font-mono);font-size:12px}
 @media(max-width:1100px){.dashboard-grid{grid-template-columns:1fr}}
 .mobile-city-filter{display:none;gap:4px;padding:8px 16px 0;overflow-x:auto}
 
+/* BLOCO 5 — SOLICITAÇÃO */
+.sol-steps{display:flex;align-items:center;gap:0;margin-bottom:28px;max-width:560px}
+.sol-step{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sol-step-num{width:28px;height:28px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--text3);transition:all 0.2s}
+.sol-step-label{font-size:12px;font-weight:600;color:var(--text3);transition:color 0.2s}
+.sol-step.active .sol-step-num{background:var(--accent);border-color:var(--accent);color:#0e0f0e}
+.sol-step.active .sol-step-label{color:var(--text)}
+.sol-step.done .sol-step-num{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.sol-step.done .sol-step-label{color:var(--text2)}
+.sol-step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.sol-passo{display:none}
+.sol-passo.active{display:block}
+.sol-resumo-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border2);font-size:13px;gap:16px}
+.sol-resumo-row:last-child{border-bottom:none}
+.sol-resumo-label{color:var(--text3);font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;flex-shrink:0}
+.sol-resumo-val{color:var(--text);font-weight:500;text-align:right}
+
 /* BLOCO 4 */
 .prod-sub{display:none}
 .prod-sub.active{display:block}
@@ -459,7 +476,152 @@ tbody tr:hover .btn-edit-row{opacity:1}
       </div>
 
       <!-- PLACEHOLDERS -->
-      <div class="page" id="page-solicitacao"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📋</div><div class="empty-title">Nova Solicitação</div><div class="empty-sub">Bloco 5</div></div></div>
+      <!-- SOLICITAÇÃO — Bloco 5 -->
+      <div class="page" id="page-solicitacao">
+
+        <!-- Steps indicator -->
+        <div class="sol-steps" id="sol-steps">
+          <div class="sol-step active" data-step="1"><span class="sol-step-num">1</span><span class="sol-step-label">Item</span></div>
+          <div class="sol-step-line"></div>
+          <div class="sol-step" data-step="2"><span class="sol-step-num">2</span><span class="sol-step-label">Valor</span></div>
+          <div class="sol-step-line"></div>
+          <div class="sol-step" data-step="3"><span class="sol-step-num">3</span><span class="sol-step-label">Pagamento</span></div>
+          <div class="sol-step-line"></div>
+          <div class="sol-step" data-step="4"><span class="sol-step-num">4</span><span class="sol-step-label">Confirmação</span></div>
+        </div>
+
+        <!-- Passo 1 — Item -->
+        <div class="sol-passo active" id="sol-passo-1">
+          <div class="card" style="max-width:560px">
+            <div class="section-title" style="margin-bottom:20px">Selecione o item</div>
+            <div class="form-group">
+              <label class="form-label">Cidade</label>
+              <select class="form-select" id="sol-cidade" onchange="solCarregarCategorias()"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select class="form-select" id="sol-categoria" onchange="solCarregarItens()">
+                <option value="">— selecione a cidade primeiro —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Item</label>
+              <select class="form-select" id="sol-item" onchange="solSelecionarItem()">
+                <option value="">— selecione a categoria primeiro —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Descrição / Justificativa</label>
+              <textarea class="form-textarea" id="sol-descricao" rows="3" placeholder="Descreva o que será adquirido e a justificativa…"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-primary" onclick="solAvancar(1)">Próximo →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passo 2 — Valor -->
+        <div class="sol-passo" id="sol-passo-2">
+          <div class="card" style="max-width:560px">
+            <div class="section-title" style="margin-bottom:20px">Valor da solicitação</div>
+            <div id="sol-aviso-valor" class="alert alert-warn" style="display:none;margin-bottom:16px">
+              <span class="alert-icon">⚠️</span>
+              <span id="sol-aviso-valor-txt"></span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label class="form-label">Custo orçado 2026 (R$)</label>
+                <input class="form-input" id="sol-custo-orcado" readonly style="opacity:0.6;cursor:default">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor solicitado (R$)</label>
+                <input class="form-input" id="sol-valor" type="number" min="0" step="0.01" oninput="solVerificarValor()" placeholder="0,00">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Parcelas</label>
+                <select class="form-select" id="sol-parcelas">
+                  <option value="1">1× (à vista)</option>
+                  <option value="2">2×</option>
+                  <option value="3">3×</option>
+                  <option value="4">4×</option>
+                  <option value="5">5×</option>
+                  <option value="6">6×</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px">
+              <button class="btn btn-ghost" onclick="solVoltar(2)">← Voltar</button>
+              <button class="btn btn-primary" onclick="solAvancar(2)">Próximo →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passo 3 — Pagamento -->
+        <div class="sol-passo" id="sol-passo-3">
+          <div class="card" style="max-width:560px">
+            <div class="section-title" style="margin-bottom:20px">Dados de pagamento</div>
+            <div class="form-group">
+              <label class="form-label">Nome do favorecido</label>
+              <input class="form-input" id="sol-favorecido" placeholder="Nome completo ou razão social">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label class="form-label">Banco</label>
+                <input class="form-input" id="sol-banco" placeholder="Ex: Nubank, Bradesco…">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Agência</label>
+                <input class="form-input" id="sol-agencia" placeholder="0000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Conta</label>
+                <input class="form-input" id="sol-conta" placeholder="00000-0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">PIX <span style="color:var(--text3);font-size:10px">ou chave</span></label>
+                <input class="form-input" id="sol-pix" placeholder="CPF, e-mail, telefone…">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">WhatsApp do solicitante</label>
+                <input class="form-input" id="sol-whatsapp" type="tel" placeholder="(71) 99999-9999">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px">
+              <button class="btn btn-ghost" onclick="solVoltar(3)">← Voltar</button>
+              <button class="btn btn-primary" onclick="solAvancar(3)">Próximo →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passo 4 — Confirmação -->
+        <div class="sol-passo" id="sol-passo-4">
+          <div class="card" style="max-width:560px">
+            <div class="section-title" style="margin-bottom:20px">Confirmar solicitação</div>
+            <div id="sol-resumo" style="margin-bottom:20px"></div>
+            <div id="sol-erro" class="alert alert-danger" style="display:none;margin-bottom:12px">
+              <span class="alert-icon">⚠️</span><span id="sol-erro-txt"></span>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:space-between">
+              <button class="btn btn-ghost" onclick="solVoltar(4)">← Voltar</button>
+              <button class="btn btn-primary" id="btn-sol-enviar" onclick="solEnviar()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Enviar solicitação
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sucesso -->
+        <div class="sol-passo" id="sol-passo-ok">
+          <div class="card" style="max-width:560px;text-align:center;padding:48px 32px">
+            <div style="font-size:40px;margin-bottom:16px">✅</div>
+            <div class="section-title" style="margin-bottom:8px">Solicitação enviada!</div>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Registrada na planilha. O financeiro será notificado.</p>
+            <button class="btn btn-primary" onclick="solNovaSolicitacao()">Nova solicitação</button>
+          </div>
+        </div>
+
+      </div>
       <div class="page" id="page-despesas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">💸</div><div class="empty-title">Despesas</div><div class="empty-sub">Bloco 7</div></div></div>
       <div class="page" id="page-aprovacoes"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">✅</div><div class="empty-title">Aprovações</div><div class="empty-sub">Bloco 6</div></div></div>
       <div class="page" id="page-receitas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📈</div><div class="empty-title">Receitas</div><div class="empty-sub">Bloco 10</div></div></div>
@@ -662,6 +824,9 @@ function navigateTo(pageId){
     document.getElementById('city-filter-desktop').style.display='none';
     document.getElementById('city-filter-mobile').style.display='none';
     if(currentUser&&appData){initProducao();navegarProdSub(pageId.startsWith('prod-')?pageId:'prod-planilha');}
+  }else if(mainId==='solicitacao'){
+    if(currentUser&&appData)initSolicitacao();
+    setupCityFilter();
   }else{
     setupCityFilter();
   }
@@ -1104,6 +1269,274 @@ function parseDateForInput(br){
   if(/^\d{4}-\d{2}-\d{2}$/.test(br))return br;
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(br)){const[d,m,a]=br.split('/');return`${a}-${m}-${d}`;}
   return'';
+}
+
+/* ── BLOCO 5: SOLICITAÇÃO ── */
+let solPasso = 1;
+let solDados = {};
+
+function initSolicitacao() {
+  solPasso = 1;
+  solDados = {};
+  // Renderiza steps e passo 1
+  solMostrarPasso(1);
+
+  // Cidade — travada para produtor, livre para mestre/fin
+  const sel = document.getElementById('sol-cidade');
+  const u = currentUser;
+  if (u.perfil === 'prod') {
+    const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+    sel.innerHTML = `<option value="${u.cidade}">${nm[u.cidade]||u.cidade}</option>`;
+    sel.disabled = true;
+  } else {
+    sel.disabled = false;
+    sel.innerHTML = `
+      <option value="">— selecione —</option>
+      <option value="irece">Irecê</option>
+      <option value="serrinha">Serrinha</option>
+      <option value="jequie">Jequié</option>`;
+  }
+  solCarregarCategorias();
+}
+
+function solCarregarCategorias() {
+  const cidade = document.getElementById('sol-cidade').value;
+  const catSel = document.getElementById('sol-categoria');
+  const itemSel = document.getElementById('sol-item');
+  catSel.innerHTML = '<option value="">— selecione —</option>';
+  itemSel.innerHTML = '<option value="">— selecione a categoria primeiro —</option>';
+  if (!cidade) return;
+
+  // Garante que os dados da cidade estão carregados
+  if (!appData.pppData[cidade]) {
+    loadPPP(cidade).then(() => solCarregarCategorias());
+    return;
+  }
+
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const cats = [];
+  prod.forEach(r => {
+    const cat = (r['CATEGORIA']||'').trim();
+    if (cat && !cats.includes(cat)) cats.push(cat);
+  });
+  catSel.innerHTML = '<option value="">— selecione —</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function solCarregarItens() {
+  const cidade = document.getElementById('sol-cidade').value;
+  const cat = document.getElementById('sol-categoria').value;
+  const itemSel = document.getElementById('sol-item');
+  itemSel.innerHTML = '<option value="">— selecione —</option>';
+  if (!cidade || !cat) return;
+
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const itens = prod.filter(r => (r['CATEGORIA']||'').trim() === cat && (r['ITEM']||'').trim());
+  itemSel.innerHTML = '<option value="">— selecione —</option>' +
+    itens.map(r => `<option value="${r['ITEM']}">${r['ITEM']}</option>`).join('');
+}
+
+function solSelecionarItem() {
+  const cidade = document.getElementById('sol-cidade').value;
+  const itemNome = document.getElementById('sol-item').value;
+  if (!cidade || !itemNome) return;
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const row = prod.find(r => (r['ITEM']||'').trim() === itemNome);
+  if (!row) return;
+  // Guarda no estado
+  solDados.itemRow = row;
+  const t2026 = parseBRL(row['TOTAL 2026 (R$)']||row['CUSTO 2026']||row['CUSTO 2026 (R$)']);
+  solDados.custoOrcado = t2026;
+  // Pré-preenche passo 2
+  document.getElementById('sol-custo-orcado').value = t2026 > 0 ? t2026.toFixed(2) : '';
+  document.getElementById('sol-valor').value = t2026 > 0 ? t2026.toFixed(2) : '';
+  solVerificarValor();
+}
+
+function solVerificarValor() {
+  const val = parseFloat(document.getElementById('sol-valor').value) || 0;
+  const orc = solDados.custoOrcado || 0;
+  const aviso = document.getElementById('sol-aviso-valor');
+  const avisoTxt = document.getElementById('sol-aviso-valor-txt');
+  if (orc > 0 && Math.abs(val - orc) > 0.01) {
+    const diff = val - orc;
+    const sinal = diff > 0 ? '+' : '';
+    avisoTxt.textContent = `Valor ${sinal}${formatBRL(diff)} em relação ao orçado (${formatBRL(orc)}).`;
+    aviso.style.display = 'flex';
+  } else {
+    aviso.style.display = 'none';
+  }
+}
+
+function solAvancar(passoAtual) {
+  // Validações por passo
+  if (passoAtual === 1) {
+    const cidade = document.getElementById('sol-cidade').value;
+    const cat   = document.getElementById('sol-categoria').value;
+    const item  = document.getElementById('sol-item').value;
+    const desc  = document.getElementById('sol-descricao').value.trim();
+    if (!cidade) { showToast('Selecione a cidade.', 'warn'); return; }
+    if (!cat)    { showToast('Selecione a categoria.', 'warn'); return; }
+    if (!item)   { showToast('Selecione o item.', 'warn'); return; }
+    if (!desc)   { showToast('Preencha a descrição/justificativa.', 'warn'); return; }
+    solDados.cidade     = cidade;
+    solDados.categoria  = cat;
+    solDados.item       = item;
+    solDados.descricao  = desc;
+  }
+  if (passoAtual === 2) {
+    const val = parseFloat(document.getElementById('sol-valor').value);
+    if (!val || val <= 0) { showToast('Informe o valor solicitado.', 'warn'); return; }
+    solDados.valor    = val;
+    solDados.parcelas = parseInt(document.getElementById('sol-parcelas').value) || 1;
+  }
+  if (passoAtual === 3) {
+    const fav = document.getElementById('sol-favorecido').value.trim();
+    const pix = document.getElementById('sol-pix').value.trim();
+    const wpp = document.getElementById('sol-whatsapp').value.trim();
+    if (!fav) { showToast('Informe o nome do favorecido.', 'warn'); return; }
+    if (!pix && !document.getElementById('sol-conta').value.trim()) {
+      showToast('Informe PIX ou conta bancária.', 'warn'); return;
+    }
+    solDados.favorecido = fav;
+    solDados.banco      = document.getElementById('sol-banco').value.trim();
+    solDados.agencia    = document.getElementById('sol-agencia').value.trim();
+    solDados.conta      = document.getElementById('sol-conta').value.trim();
+    solDados.pix        = pix;
+    solDados.whatsapp   = wpp;
+    solMontarResumo();
+  }
+  solPasso = passoAtual + 1;
+  solMostrarPasso(solPasso);
+}
+
+function solVoltar(passoAtual) {
+  solPasso = passoAtual - 1;
+  solMostrarPasso(solPasso);
+}
+
+function solMostrarPasso(n) {
+  document.querySelectorAll('.sol-passo').forEach(p => p.classList.remove('active'));
+  const alvo = document.getElementById(`sol-passo-${n === 5 ? 'ok' : n}`);
+  if (alvo) alvo.classList.add('active');
+  // Atualiza steps indicator
+  document.querySelectorAll('.sol-step').forEach(s => {
+    const sn = parseInt(s.dataset.step);
+    s.classList.remove('active','done');
+    if (sn === n) s.classList.add('active');
+    else if (sn < n) s.classList.add('done');
+  });
+}
+
+function solMontarResumo() {
+  const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  const parc = solDados.parcelas > 1
+    ? ` (${solDados.parcelas}× de ${formatBRL(solDados.valor / solDados.parcelas)})`
+    : ' (à vista)';
+
+  const linhas = [
+    ['Cidade',        nm[solDados.cidade] || solDados.cidade],
+    ['Categoria',     solDados.categoria],
+    ['Item',          solDados.item],
+    ['Descrição',     solDados.descricao],
+    ['Valor',         formatBRL(solDados.valor) + parc],
+    ['Favorecido',    solDados.favorecido],
+    ['Banco',         solDados.banco || '—'],
+    ['Agência/Conta', `${solDados.agencia||'—'} / ${solDados.conta||'—'}`],
+    ['PIX',           solDados.pix || '—'],
+  ];
+  document.getElementById('sol-resumo').innerHTML = linhas.map(([l,v]) =>
+    `<div class="sol-resumo-row"><span class="sol-resumo-label">${l}</span><span class="sol-resumo-val">${v}</span></div>`
+  ).join('');
+  document.getElementById('sol-erro').style.display = 'none';
+}
+
+async function solEnviar() {
+  const btn = document.getElementById('btn-sol-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+
+  const agora = new Date();
+  const dataStr = `${agora.getDate().toString().padStart(2,'0')}/${(agora.getMonth()+1).toString().padStart(2,'0')}/${agora.getFullYear()}`;
+  const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  const parc = solDados.parcelas > 1 ? `${solDados.parcelas}x` : '1x (à vista)';
+
+  // Ordem colunas Solicitações: DATA | CIDADE | SOLICITANTE | WHATSAPP | CATEGORIA | ITEM | DESCRIÇÃO | FAVORECIDO | BANCO | AGÊNCIA | CONTA | PIX | VALOR SOLICITADO | CUSTO 2026 | PARCELAS | STATUS | ...
+  const row = [[
+    dataStr,
+    nm[solDados.cidade] || solDados.cidade,
+    currentUser.nome,
+    solDados.whatsapp || '',
+    solDados.categoria,
+    solDados.item,
+    solDados.descricao,
+    solDados.favorecido,
+    solDados.banco || '',
+    solDados.agencia || '',
+    solDados.conta || '',
+    solDados.pix || '',
+    solDados.valor,
+    solDados.custoOrcado || '',
+    parc,
+    'Em aberto',
+    '', '', '', '', '', ''   // campos de aprovação/pagamento em branco
+  ]];
+
+  try {
+    await sheetsAppend(SHEET_IDS.geral, 'Solicitações!A:V', row);
+    // Tenta notificar WhatsApp (silencia erro se não configurado)
+    await tentarNotificarWhatsApp(solDados);
+    solMostrarPasso(5);
+    // Invalida cache de solicitações
+    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+  } catch(err) {
+    console.error('solEnviar:', err);
+    document.getElementById('sol-erro-txt').textContent = `Erro ao gravar: ${err.message}`;
+    document.getElementById('sol-erro').style.display = 'flex';
+  }
+
+  btn.disabled = false; btn.textContent = 'Enviar solicitação';
+}
+
+function solNovaSolicitacao() {
+  // Limpa campos
+  ['sol-descricao','sol-valor','sol-favorecido','sol-banco','sol-agencia','sol-conta','sol-pix','sol-whatsapp']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('sol-parcelas').value = '1';
+  solDados = {};
+  initSolicitacao();
+}
+
+// ── WhatsApp via Worker (ativo só quando credenciais configuradas) ──
+async function tentarNotificarWhatsApp(dados) {
+  const cfg = JSON.parse(localStorage.getItem('sj2026_config') || '{}');
+  if (!cfg.twilioSid || !cfg.twilioToken || !cfg.twilioFrom || !cfg.whatsappAprovador) return;
+  const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  const msg = `*Nova Solicitação — São João 2026*
+`+
+    `Cidade: ${nm[dados.cidade]||dados.cidade}
+`+
+    `Item: ${dados.item} (${dados.categoria})
+`+
+    `Valor: ${formatBRL(dados.valor)}
+`+
+    `Favorecido: ${dados.favorecido}
+`+
+    `PIX/Conta: ${dados.pix||dados.conta||'—'}
+`+
+    `Solicitante: ${currentUser.nome}`;
+  try {
+    await fetch(`${WORKER_URL}/whatsapp`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        to: cfg.whatsappAprovador,
+        from: cfg.twilioFrom,
+        body: msg,
+        sid: cfg.twilioSid,
+        token: cfg.twilioToken,
+      }),
+    });
+  } catch(_) { /* silencia — WhatsApp é best-effort */ }
 }
 
 /* ── ICONS ── */
