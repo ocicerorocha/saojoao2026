@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 /* ═══════════════════════════════════════════
    DESIGN SYSTEM — SÃO JOÃO 2026
@@ -1278,7 +1279,9 @@ tbody td.muted { color: var(--text2); font-family: var(--font-mono); font-size: 
             <div class="section-header">
               <span class="section-title">Orçamento por categoria</span>
             </div>
-            <div class="placeholder-chart">Gráfico carregado com dados do Sheets (Bloco 2)</div>
+            <div style="position:relative;height:220px">
+              <canvas id="budget-chart"></canvas>
+            </div>
           </div>
           <div class="card">
             <div class="section-header">
@@ -1542,11 +1545,14 @@ function startApp() {
   buildUserUI();
   buildNav();
   setupCityFilter();
-  setupCountdown();
+  setupCountdownFallback();
 
   // Navigate to default page
   const defaultPage = currentUser.perfil === 'vend' ? 'bilheteria' : 'dashboard';
   navigateTo(defaultPage);
+
+  // Load real data from Sheets (async — updates UI when ready)
+  loadAppData();
 }
 
 /* ═══════════════════════════════════════════
@@ -1718,22 +1724,415 @@ function setupCityFilter() {
         document.querySelectorAll('.city-pill').forEach(p => {
           p.classList.toggle('active', p.dataset.city === currentCity);
         });
+        // Re-render dashboard with new city filter
+        if (appData.pppData && Object.keys(appData.pppData).length > 0) {
+          renderDashboard();
+        }
       });
     });
   });
 }
 
 /* ═══════════════════════════════════════════
-   COUNTDOWN — placeholder (dados virão do Sheets no Bloco 2)
+   BLOCO 2 — WORKER API + SHEETS
 ═══════════════════════════════════════════ */
+
+// ── Configuração (editável via aba Configurações no Bloco 11) ──
+const WORKER_URL = 'https://fragrant-salad-6b53.psi-cicerorocha.workers.dev';
+
+const SHEET_IDS = {
+  geral:    '1HHijJY80EdU47XhStyEKz5CH9kUPYOgmRDBtDSBxrYA',
+  irece:    '1Arpu6ZZpdwtdo_-uCIHLYdHsSE4vg2mNFStue9QGgxw',
+  serrinha: '1j30DRgK7db5wxY39oztKJ5xLVh3NMR5od6XNW9L8R24',
+  jequie:   '1Y67qhVkoo5baIr5MBFiezR-60HkpFeygxXky3-e5bIQ',
+};
+
+// Cache em memória para a sessão — evita chamadas duplicadas
+const sheetsCache = {};
+
+// ── Camada de comunicação ──
+async function sheetsRead(sheetId, range) {
+  const cacheKey = `${sheetId}::${range}`;
+  if (sheetsCache[cacheKey]) return sheetsCache[cacheKey];
+
+  const res = await fetch(`${WORKER_URL}/sheets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sheetId, range }),
+  });
+
+  if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'Sheets error');
+
+  const result = data.values || [];
+  sheetsCache[cacheKey] = result;
+  return result;
+}
+
+async function sheetsWrite(sheetId, range, values) {
+  // Invalida cache do range afetado
+  delete sheetsCache[`${sheetId}::${range}`];
+
+  const res = await fetch(`${WORKER_URL}/sheets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sheetId, range, method: 'write', values }),
+  });
+
+  if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'Sheets write error');
+  return data;
+}
+
+async function sheetsAppend(sheetId, range, values) {
+  const res = await fetch(`${WORKER_URL}/sheets/append`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sheetId, range, values }),
+  });
+
+  if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'Sheets append error');
+  return data;
+}
+
+// ── Helpers de parsing ──
+function rowsToObjects(rows) {
+  if (!rows || rows.length < 2) return [];
+  const headers = rows[0].map(h => (h || '').trim());
+  return rows.slice(1).filter(r => r.some(c => c !== undefined && c !== ''))
+    .map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (row[i] || '').toString().trim(); });
+      return obj;
+    });
+}
+
+function parseBRL(str) {
+  if (!str) return 0;
+  const n = parseFloat(str.toString().replace(/[R$\s.]/g, '').replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+function formatBRL(val) {
+  return 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Converte serial do Google Sheets (dias desde 30/12/1899) para Date
+function serialToDate(serial) {
+  if (!serial) return null;
+  const n = parseFloat(serial);
+  if (isNaN(n)) return null;
+  const msPerDay = 86400000;
+  const epoch = new Date(Date.UTC(1899, 11, 30));
+  return new Date(epoch.getTime() + n * msPerDay);
+}
+
+// ── Estado global de dados ──
+let appData = {
+  config: null,       // linha da aba Configurações
+  eventos: [],        // rows da aba Eventos
+  pppData: {},        // { irece: { producao: [], equipe: [], ... }, ... }
+  eventoAtivo: null,
+};
+
+// ── Carregamento inicial ──
+async function loadAppData() {
+  try {
+    showLoadingOverlay(true);
+
+    // 1. Configurações + Eventos (Planilha Geral)
+    const [configRows, eventoRows] = await Promise.all([
+      sheetsRead(SHEET_IDS.geral, 'Configurações!A:K'),
+      sheetsRead(SHEET_IDS.geral, 'Eventos!A:G'),
+    ]);
+
+    // Configurações: segunda linha = dados do evento ativo
+    if (configRows && configRows.length >= 2) {
+      const headers = configRows[0];
+      const vals    = configRows[1];
+      appData.config = {};
+      headers.forEach((h, i) => { appData.config[h.trim()] = (vals[i] || '').trim(); });
+    }
+
+    // Eventos
+    appData.eventos = rowsToObjects(eventoRows);
+    appData.eventoAtivo = appData.eventos.find(e =>
+      (e['STATUS'] || '').toLowerCase().includes('produção') ||
+      (e['STATUS'] || '').toLowerCase().includes('ativo')
+    ) || appData.eventos[0] || null;
+
+    // 2. PPP da cidade relevante para o usuário
+    const cidadesParaCarregar = currentUser.cidade
+      ? [currentUser.cidade]
+      : ['irece', 'serrinha', 'jequie'];
+
+    await Promise.all(cidadesParaCarregar.map(c => loadPPP(c)));
+
+    // 3. Atualiza UI
+    setupCountdown();
+    renderDashboard();
+
+  } catch (err) {
+    console.error('loadAppData:', err);
+    showToast('Erro ao conectar ao Sheets. Verifique o Worker.', 'error', 6000);
+    // Countdown fallback
+    setupCountdownFallback();
+  } finally {
+    showLoadingOverlay(false);
+  }
+}
+
+async function loadPPP(cidade) {
+  const id = SHEET_IDS[cidade];
+  if (!id) return;
+
+  try {
+    const [producaoRows, equipeRows] = await Promise.all([
+      sheetsRead(id, 'Produção!A:N'),
+      sheetsRead(id, 'Equipe!A:P'),
+    ]);
+
+    if (!appData.pppData[cidade]) appData.pppData[cidade] = {};
+    appData.pppData[cidade].producao = rowsToObjects(producaoRows);
+    appData.pppData[cidade].equipe   = rowsToObjects(equipeRows);
+  } catch (err) {
+    console.error(`loadPPP(${cidade}):`, err);
+  }
+}
+
+// ── Countdown dinâmico ──
 function setupCountdown() {
-  // Data de referência placeholder — será lida da aba Eventos no Bloco 2
+  let dataEvento = null;
+
+  // Tenta usar a data do evento ativo lida do Sheets
+  if (appData.eventoAtivo) {
+    const raw = appData.eventoAtivo['DATA INÍCIO'] || appData.eventoAtivo['DATA FIM'];
+    // Pode vir como serial numérico ou como string de data
+    if (raw && !isNaN(parseFloat(raw))) {
+      dataEvento = serialToDate(parseFloat(raw));
+    } else if (raw) {
+      dataEvento = new Date(raw);
+    }
+  }
+
+  // Fallback se não carregou
+  if (!dataEvento || isNaN(dataEvento.getTime())) {
+    dataEvento = new Date('2026-06-11');
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  dataEvento.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((dataEvento - hoje) / (1000 * 60 * 60 * 24));
+
+  const el = document.getElementById('countdown-days');
+  el.textContent = diff > 0 ? diff : '0';
+
+  // Nome do evento no topbar (se existir)
+  if (appData.eventoAtivo && appData.eventoAtivo['NOME DO EVENTO']) {
+    const chip = document.getElementById('countdown-chip');
+    chip.title = appData.eventoAtivo['NOME DO EVENTO'];
+  }
+}
+
+function setupCountdownFallback() {
   const eventDate = new Date('2026-06-11');
   const today = new Date();
   const diff = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
-  const el = document.getElementById('countdown-days');
-  if (diff > 0) el.textContent = diff;
-  else el.textContent = '0';
+  document.getElementById('countdown-days').textContent = diff > 0 ? diff : '0';
+}
+
+// ── Dashboard ──
+function renderDashboard() {
+  const cidade = currentUser.cidade || (currentCity === 'todas' ? null : currentCity);
+
+  // Agrega dados de produção das cidades relevantes
+  let totalOrcamento2026 = 0;
+  let totalPago = 0;
+  let totalCusto2025 = 0;
+
+  const cidadesFiltro = cidade ? [cidade] : ['irece', 'serrinha', 'jequie'];
+
+  cidadesFiltro.forEach(c => {
+    const prod = (appData.pppData[c] && appData.pppData[c].producao) || [];
+    prod.forEach(row => {
+      // Pula linhas de categoria (sem ITEM preenchido)
+      if (!row['ITEM']) return;
+      totalOrcamento2026 += parseBRL(row['TOTAL 2026 (R$)'] || row['CUSTO 2026'] || row['CUSTO 2026 (R$)']);
+      totalPago          += parseBRL(row['VALOR PAGO (R$)'] || row['VALOR PAGO']);
+      totalCusto2025     += parseBRL(row['CUSTO 2025 (R$)'] || row['CUSTO 2025']);
+    });
+  });
+
+  // Atualiza cards
+  setMetric('m-orcamento',  totalOrcamento2026 > 0 ? formatBRL(totalOrcamento2026) : 'R$ —');
+  setMetric('m-realizado',  totalPago          > 0 ? formatBRL(totalPago)          : 'R$ —');
+  setMetric('m-custo2025',  totalCusto2025     > 0 ? formatBRL(totalCusto2025)     : 'R$ —');
+
+  // Receitas confirmadas virão no Bloco 10 — mantém placeholder
+  setMetric('m-receitas', 'R$ —');
+
+  // Alertas de itens sem orçamento 2026
+  renderDashboardAlerts(cidadesFiltro);
+
+  // Gráfico (Chart.js — Bloco 3 expande isso, aqui já renderiza o básico)
+  renderBudgetChart(cidadesFiltro);
+}
+
+function setMetric(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function renderDashboardAlerts(cidadesFiltro) {
+  const container = document.getElementById('alerts-container');
+  const dispensados = JSON.parse(localStorage.getItem(`sj2026_dispensados_${currentUser.code}`) || '{}');
+  const alertas = [];
+
+  cidadesFiltro.forEach(c => {
+    const prod = (appData.pppData[c] && appData.pppData[c].producao) || [];
+    const cidadeNome = { irece: 'Irecê', serrinha: 'Serrinha', jequie: 'Jequié' }[c];
+
+    prod.forEach((row, idx) => {
+      if (!row['ITEM']) return;
+      const key = `${c}_${idx}`;
+      if (dispensados[key]) return;
+
+      const custo2026 = parseBRL(row['TOTAL 2026 (R$)'] || row['CUSTO 2026'] || row['CUSTO 2026 (R$)']);
+      const custo2025 = parseBRL(row['CUSTO 2025 (R$)'] || row['CUSTO 2025']);
+      const diff = custo2025 > 0 ? ((custo2026 - custo2025) / custo2025) * 100 : 0;
+
+      if (custo2026 === 0) {
+        alertas.push({ key, tipo: 'warn', msg: `<strong>${row['ITEM']}</strong> (${cidadeNome}) sem orçamento 2026 definido.` });
+      } else if (diff > 20) {
+        alertas.push({ key, tipo: 'warn', msg: `<strong>${row['ITEM']}</strong> (${cidadeNome}) ${diff.toFixed(0)}% acima do custo 2025.` });
+      } else if (diff < -20) {
+        alertas.push({ key, tipo: 'info', msg: `<strong>${row['ITEM']}</strong> (${cidadeNome}) ${Math.abs(diff).toFixed(0)}% abaixo do custo 2025.` });
+      }
+    });
+  });
+
+  if (alertas.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔔</div>
+      <div class="empty-title">Nenhum alerta ativo</div>
+      <div class="empty-sub">Todos os itens com orçamento definido</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = alertas.slice(0, 8).map(a => `
+    <div class="alert alert-${a.tipo}" style="margin-bottom:6px">
+      <span class="alert-icon">${a.tipo === 'warn' ? '⚠️' : 'ℹ️'}</span>
+      <span style="flex:1;font-size:12px">${a.msg}</span>
+      <button class="btn btn-ghost btn-sm" onclick="dispensarAlerta('${a.key}')" style="flex-shrink:0;padding:3px 8px;font-size:11px">Ciente</button>
+    </div>`).join('');
+}
+
+function dispensarAlerta(key) {
+  const k = `sj2026_dispensados_${currentUser.code}`;
+  const d = JSON.parse(localStorage.getItem(k) || '{}');
+  d[key] = true;
+  localStorage.setItem(k, JSON.stringify(d));
+  const cidade = currentUser.cidade || (currentCity === 'todas' ? null : currentCity);
+  renderDashboardAlerts(cidade ? [cidade] : ['irece', 'serrinha', 'jequie']);
+}
+
+function renderBudgetChart(cidadesFiltro) {
+  const canvas = document.getElementById('budget-chart');
+  if (!canvas) return;
+
+  // Agrega por categoria
+  const catMap = {};
+  cidadesFiltro.forEach(c => {
+    const prod = (appData.pppData[c] && appData.pppData[c].producao) || [];
+    prod.forEach(row => {
+      if (!row['ITEM'] || !row['CATEGORIA']) return;
+      const cat = row['CATEGORIA'];
+      const val = parseBRL(row['TOTAL 2026 (R$)'] || row['CUSTO 2026'] || row['CUSTO 2026 (R$)']);
+      catMap[cat] = (catMap[cat] || 0) + val;
+    });
+  });
+
+  const labels = Object.keys(catMap);
+  const data   = Object.values(catMap);
+
+  if (labels.length === 0) return;
+
+  // Cores baseadas no design system
+  const palette = [
+    '#d4f04a','#4cdb8a','#5cb8f0','#f0a830','#f05c5c',
+    '#a78bfa','#34d399','#fb923c','#60a5fa','#e879f9',
+  ];
+
+  if (window._budgetChart) window._budgetChart.destroy();
+
+  window._budgetChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: labels.map((_, i) => palette[i % palette.length] + 'cc'),
+        borderColor: labels.map((_, i) => palette[i % palette.length]),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8a8c85',
+            font: { family: 'DM Mono', size: 11 },
+            padding: 12,
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${formatBRL(ctx.raw)}`
+          },
+          bodyFont: { family: 'DM Mono', size: 12 },
+          backgroundColor: '#1d1f1c',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+        }
+      }
+    }
+  });
+}
+
+// ── Loading overlay ──
+function showLoadingOverlay(show) {
+  let overlay = document.getElementById('loading-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(14,15,14,0.75);
+      z-index:999;display:flex;align-items:center;justify-content:center;
+      backdrop-filter:blur(3px);transition:opacity 0.2s;
+    `;
+    overlay.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+        <div style="width:28px;height:28px;border:2px solid rgba(212,240,74,0.2);
+          border-top-color:#d4f04a;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:#8a8c85">
+          Conectando ao Sheets…
+        </span>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = show ? 'flex' : 'none';
 }
 
 /* ═══════════════════════════════════════════
