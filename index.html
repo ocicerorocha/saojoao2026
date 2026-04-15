@@ -1107,13 +1107,15 @@ tbody td.muted { color: var(--text2); font-family: var(--font-mono); font-size: 
 /* Categoria row */
 .cat-row td {
   background: var(--surface3) !important;
-  color: var(--text2);
+  color: var(--accent) !important;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 6px 14px !important;
+  padding: 8px 14px !important;
   font-weight: 600;
+  border-top: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
 /* Diferença colorida */
@@ -2514,7 +2516,9 @@ function renderProdPlanilha() {
     if (cat && cat !== catAtual) {
       catAtual = cat;
       if (!item) {
-        html += `<tr class="cat-row"><td colspan="14">${cat}</td></tr>`;
+        html += `<tr class="cat-row"><td colspan="14">
+          <span style="opacity:0.5;margin-right:6px">▸</span>${cat}
+        </td></tr>`;
         return;
       }
     }
