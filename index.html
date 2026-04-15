@@ -1923,9 +1923,15 @@ function setupCountdown() {
     const raw = appData.eventoAtivo['DATA INÍCIO'] || appData.eventoAtivo['DATA FIM'];
     console.log('[countdown] eventoAtivo:', JSON.stringify(appData.eventoAtivo));
     console.log('[countdown] raw date:', raw);
-    if (raw && !isNaN(parseFloat(raw))) {
+    if (raw && !isNaN(parseFloat(raw)) && !/\//.test(raw)) {
+      // Serial numérico puro (ex: 46198)
       dataEvento = serialToDate(parseFloat(raw));
       console.log('[countdown] serial→date:', dataEvento?.toISOString());
+    } else if (raw && /^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+      // Formato brasileiro DD/MM/AAAA
+      const [d, m, a] = raw.split('/');
+      dataEvento = new Date(`${a}-${m}-${d}`);
+      console.log('[countdown] DD/MM/AAAA→date:', dataEvento?.toISOString());
     } else if (raw) {
       dataEvento = new Date(raw);
       console.log('[countdown] string→date:', dataEvento?.toISOString());
