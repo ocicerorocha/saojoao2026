@@ -1884,7 +1884,7 @@ async function loadAppData() {
     await Promise.all(cidadesParaCarregar.map(c => loadPPP(c)));
 
     // 3. Atualiza UI
-    setupCountdown();
+    setupCountdown();   // agora com appData.eventoAtivo populado
     renderDashboard();
 
   } catch (err) {
@@ -1919,40 +1919,46 @@ async function loadPPP(cidade) {
 function setupCountdown() {
   let dataEvento = null;
 
-  // Tenta usar a data do evento ativo lida do Sheets
   if (appData.eventoAtivo) {
     const raw = appData.eventoAtivo['DATA INÍCIO'] || appData.eventoAtivo['DATA FIM'];
-    // Pode vir como serial numérico ou como string de data
+    console.log('[countdown] eventoAtivo:', JSON.stringify(appData.eventoAtivo));
+    console.log('[countdown] raw date:', raw);
     if (raw && !isNaN(parseFloat(raw))) {
       dataEvento = serialToDate(parseFloat(raw));
+      console.log('[countdown] serial→date:', dataEvento?.toISOString());
     } else if (raw) {
       dataEvento = new Date(raw);
+      console.log('[countdown] string→date:', dataEvento?.toISOString());
     }
+  } else {
+    console.log('[countdown] eventoAtivo é null');
   }
 
-  // Fallback se não carregou
+  // Fallback correto
   if (!dataEvento || isNaN(dataEvento.getTime())) {
-    dataEvento = new Date('2026-06-11');
+    console.log('[countdown] usando fallback 24/06/2026');
+    dataEvento = new Date('2026-06-24');
   }
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   dataEvento.setHours(0, 0, 0, 0);
   const diff = Math.ceil((dataEvento - hoje) / (1000 * 60 * 60 * 24));
+  console.log('[countdown] diff dias:', diff);
 
   const el = document.getElementById('countdown-days');
   el.textContent = diff > 0 ? diff : '0';
 
-  // Nome do evento no topbar (se existir)
   if (appData.eventoAtivo && appData.eventoAtivo['NOME DO EVENTO']) {
-    const chip = document.getElementById('countdown-chip');
-    chip.title = appData.eventoAtivo['NOME DO EVENTO'];
+    document.getElementById('countdown-chip').title = appData.eventoAtivo['NOME DO EVENTO'];
   }
 }
 
 function setupCountdownFallback() {
-  const eventDate = new Date('2026-06-11');
+  const eventDate = new Date('2026-06-24');
   const today = new Date();
+  today.setHours(0,0,0,0);
+  eventDate.setHours(0,0,0,0);
   const diff = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
   document.getElementById('countdown-days').textContent = diff > 0 ? diff : '0';
 }
