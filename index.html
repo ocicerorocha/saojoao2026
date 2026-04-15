@@ -1098,6 +1098,48 @@ tbody td.muted { color: var(--text2); font-family: var(--font-mono); font-size: 
   border: 1px dashed var(--border);
 }
 
+/* ═══════════════════════════════════════════
+   BLOCO 4 — PRODUÇÃO
+═══════════════════════════════════════════ */
+.prod-sub { display: none; }
+.prod-sub.active { display: block; }
+
+/* Categoria row */
+.cat-row td {
+  background: var(--surface3) !important;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px !important;
+  font-weight: 600;
+}
+
+/* Diferença colorida */
+.diff-pos { color: var(--red); }
+.diff-neg { color: var(--green); }
+.diff-zero { color: var(--text3); }
+
+/* Botão editar na linha */
+.btn-edit-row {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+tbody tr:hover .btn-edit-row { opacity: 1; }
+
+/* Status select inline */
+.status-select-inline {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
 /* Cidade badge no topbar */
 .cidade-badge {
   font-family: var(--font-mono);
@@ -1299,11 +1341,178 @@ tbody td.muted { color: var(--text2); font-family: var(--font-mono); font-size: 
       </div>
 
       <!-- PLACEHOLDER PAGES -->
+      <!-- PRODUÇÃO — Bloco 4 -->
       <div class="page" id="page-producao">
-        <div class="empty-state" style="padding:80px 24px">
-          <div class="empty-icon">🏗️</div>
-          <div class="empty-title">Aba Produção</div>
-          <div class="empty-sub">Implementada no Bloco 4</div>
+
+        <!-- Seletor de cidade (só Mestre) -->
+        <div id="prod-cidade-selector" style="display:none;margin-bottom:16px">
+          <div class="city-filter" style="display:inline-flex">
+            <button class="city-pill active" data-prod-cidade="irece">Irecê</button>
+            <button class="city-pill" data-prod-cidade="jequie">Jequié</button>
+            <button class="city-pill" data-prod-cidade="serrinha">Serrinha</button>
+          </div>
+        </div>
+
+        <!-- Sub-aba ativa -->
+        <div id="prod-sub-planilha" class="prod-sub active">
+          <div class="section-header">
+            <span class="section-title" id="prod-planilha-titulo">Planilha de Produção</span>
+            <button class="btn btn-primary btn-sm" id="btn-add-item" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo item
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table id="prod-planilha-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qtd</th>
+                  <th>Dias</th>
+                  <th>Data início</th>
+                  <th>Valor unit</th>
+                  <th>Custo 2025</th>
+                  <th>Total 2026</th>
+                  <th>Diferença</th>
+                  <th>Valor pago</th>
+                  <th>Em aberto</th>
+                  <th>Status</th>
+                  <th>Fornecedor</th>
+                  <th>OBS</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="prod-planilha-body">
+                <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="prod-sub-cronograma" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">Cronograma (Gantt)</div>
+            <div class="empty-sub">Implementado no Bloco 8</div>
+          </div>
+        </div>
+        <div id="prod-sub-equipe" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">👥</div><div class="empty-title">Equipe</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-hospedagem" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🏨</div><div class="empty-title">Hospedagem</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-transporte" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🚐</div><div class="empty-title">Transporte</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-pulseiras" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🎫</div><div class="empty-title">Pulseiras</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-radios" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">📻</div><div class="empty-title">Rádios</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-alimentacao" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🍽️</div><div class="empty-title">Alimentação</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-sinalizacoes" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🪧</div><div class="empty-title">Sinalizações</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+        <div id="prod-sub-mapa" class="prod-sub">
+          <div class="empty-state" style="padding:60px 24px">
+            <div class="empty-icon">🗺️</div><div class="empty-title">Mapa</div>
+            <div class="empty-sub">Implementado no Bloco 9</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL EDIÇÃO DE ITEM -->
+      <div class="modal-overlay" id="modal-edit-item">
+        <div class="modal" style="max-width:600px">
+          <div class="modal-header">
+            <span class="modal-title" id="modal-edit-titulo">Editar item</span>
+            <button class="modal-close" onclick="fecharModalEditItem()">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-row-index">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Item</label>
+                <input class="form-input" id="edit-item" placeholder="Nome do item">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantidade</label>
+                <input class="form-input" id="edit-qnt" type="number" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dias</label>
+                <input class="form-input" id="edit-dias" type="number" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Data início</label>
+                <input class="form-input" id="edit-data" type="date">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor unitário (R$)</label>
+                <input class="form-input" id="edit-valor-unit" type="number" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Custo 2025 (R$)</label>
+                <input class="form-input" id="edit-custo2025" type="number" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Total 2026 (R$)</label>
+                <input class="form-input" id="edit-total2026" type="number" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor pago (R$)</label>
+                <input class="form-input" id="edit-valor-pago" type="number" min="0" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="edit-status">
+                  <option>Pendente</option>
+                  <option>Orçado</option>
+                  <option>Pagamento solicitado</option>
+                  <option>Pagamento aprovado</option>
+                  <option>Pago parcial</option>
+                  <option>Pago</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fornecedor</label>
+                <input class="form-input" id="edit-fornecedor" placeholder="Nome do fornecedor">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">OBS</label>
+                <textarea class="form-textarea" id="edit-obs" rows="2"></textarea>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModalEditItem()">Cancelar</button>
+              <button class="btn btn-primary" id="btn-salvar-item" onclick="salvarItemProducao()">Salvar</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1623,6 +1832,7 @@ function buildNav() {
         subEl.innerHTML = `<span class="nav-label">${sub.label}</span>`;
         subEl.addEventListener('click', (e) => {
           e.stopPropagation();
+          navegarProdSub(sub.id);
           navigateTo(sub.id);
         });
         subNav.appendChild(subEl);
@@ -1661,6 +1871,12 @@ function navigateTo(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('page-' + mainPageId);
   if (target) target.classList.add('active');
+
+  // Init de páginas específicas
+  if (mainPageId === 'producao' && currentUser && appData.pppData) {
+    initProducao();
+    navegarProdSub(pageId.startsWith('prod-') ? pageId : 'prod-planilha');
+  }
 
   // Close mobile sidebar
   closeMobileSidebar();
@@ -1921,28 +2137,17 @@ function setupCountdown() {
 
   if (appData.eventoAtivo) {
     const raw = appData.eventoAtivo['DATA INÍCIO'] || appData.eventoAtivo['DATA FIM'];
-    console.log('[countdown] eventoAtivo:', JSON.stringify(appData.eventoAtivo));
-    console.log('[countdown] raw date:', raw);
     if (raw && !isNaN(parseFloat(raw)) && !/\//.test(raw)) {
-      // Serial numérico puro (ex: 46198)
       dataEvento = serialToDate(parseFloat(raw));
-      console.log('[countdown] serial→date:', dataEvento?.toISOString());
     } else if (raw && /^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-      // Formato brasileiro DD/MM/AAAA
       const [d, m, a] = raw.split('/');
       dataEvento = new Date(`${a}-${m}-${d}`);
-      console.log('[countdown] DD/MM/AAAA→date:', dataEvento?.toISOString());
     } else if (raw) {
       dataEvento = new Date(raw);
-      console.log('[countdown] string→date:', dataEvento?.toISOString());
     }
-  } else {
-    console.log('[countdown] eventoAtivo é null');
   }
 
-  // Fallback correto
   if (!dataEvento || isNaN(dataEvento.getTime())) {
-    console.log('[countdown] usando fallback 24/06/2026');
     dataEvento = new Date('2026-06-24');
   }
 
@@ -1950,10 +2155,8 @@ function setupCountdown() {
   hoje.setHours(0, 0, 0, 0);
   dataEvento.setHours(0, 0, 0, 0);
   const diff = Math.ceil((dataEvento - hoje) / (1000 * 60 * 60 * 24));
-  console.log('[countdown] diff dias:', diff);
 
-  const el = document.getElementById('countdown-days');
-  el.textContent = diff > 0 ? diff : '0';
+  document.getElementById('countdown-days').textContent = diff > 0 ? diff : '0';
 
   if (appData.eventoAtivo && appData.eventoAtivo['NOME DO EVENTO']) {
     document.getElementById('countdown-chip').title = appData.eventoAtivo['NOME DO EVENTO'];
@@ -2219,6 +2422,315 @@ function iconBell() {
 }
 function iconGear() {
   return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;
+}
+
+/* ═══════════════════════════════════════════
+   BLOCO 4 — PRODUÇÃO
+═══════════════════════════════════════════ */
+
+// Cidade ativa na aba Produção
+let prodCidadeAtiva = null;
+
+// Sub-aba ativa
+let prodSubAtiva = 'planilha';
+
+// Mapeamento sub-aba → id do div
+const PROD_SUB_IDS = {
+  'prod-planilha':    'prod-sub-planilha',
+  'prod-cronograma':  'prod-sub-cronograma',
+  'prod-equipe':      'prod-sub-equipe',
+  'prod-hospedagem':  'prod-sub-hospedagem',
+  'prod-transporte':  'prod-sub-transporte',
+  'prod-pulseiras':   'prod-sub-pulseiras',
+  'prod-radios':      'prod-sub-radios',
+  'prod-alimentacao': 'prod-sub-alimentacao',
+  'prod-sinalizacoes':'prod-sub-sinalizacoes',
+  'prod-mapa':        'prod-sub-mapa',
+};
+
+function initProducao() {
+  const u = currentUser;
+
+  // Define cidade ativa
+  if (u.cidade) {
+    prodCidadeAtiva = u.cidade;
+  } else {
+    // Mestre: usa o filtro global ou padrão
+    prodCidadeAtiva = currentCity !== 'todas' ? currentCity : 'irece';
+  }
+
+  // Mostra seletor de cidade só para Mestre
+  const selector = document.getElementById('prod-cidade-selector');
+  if (u.perfil === 'mestre') {
+    selector.style.display = '';
+    // Ativa pill correta
+    selector.querySelectorAll('[data-prod-cidade]').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.prodCidade === prodCidadeAtiva);
+      pill.addEventListener('click', () => {
+        prodCidadeAtiva = pill.dataset.prodCidade;
+        selector.querySelectorAll('[data-prod-cidade]').forEach(p =>
+          p.classList.toggle('active', p.dataset.prodCidade === prodCidadeAtiva)
+        );
+        renderProdPlanilha();
+      });
+    });
+  } else {
+    selector.style.display = 'none';
+  }
+
+  // Botão novo item — só Mestre e Produtor
+  const btnAdd = document.getElementById('btn-add-item');
+  if (u.perfil === 'mestre' || u.perfil === 'prod') {
+    btnAdd.style.display = '';
+    btnAdd.onclick = () => abrirModalNovoItem();
+  }
+
+  // Renderiza planilha
+  renderProdPlanilha();
+}
+
+function renderProdPlanilha() {
+  const cidade = prodCidadeAtiva;
+  const cidadeNome = { irece: 'Irecê', serrinha: 'Serrinha', jequie: 'Jequié' }[cidade] || cidade;
+  document.getElementById('prod-planilha-titulo').textContent = `Planilha de Produção — ${cidadeNome}`;
+
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const tbody = document.getElementById('prod-planilha-body');
+  const podeEditar = currentUser.perfil === 'mestre' || currentUser.perfil === 'prod';
+
+  if (prod.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado carregado</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  let catAtual = null;
+
+  prod.forEach((row, idx) => {
+    const cat = row['CATEGORIA'] || '';
+    const item = row['ITEM'] || '';
+
+    // Linha de categoria
+    if (cat && cat !== catAtual) {
+      catAtual = cat;
+      if (!item) {
+        html += `<tr class="cat-row"><td colspan="14">${cat}</td></tr>`;
+        return;
+      }
+    }
+
+    if (!item) return; // pula linhas vazias
+
+    const custo2025 = parseBRL(row['CUSTO 2025 (R$)'] || row['CUSTO 2025']);
+    const total2026 = parseBRL(row['TOTAL 2026 (R$)'] || row['CUSTO 2026'] || row['CUSTO 2026 (R$)']);
+    const valorPago = parseBRL(row['VALOR PAGO (R$)'] || row['VALOR PAGO']);
+    const emAberto = total2026 - valorPago;
+    const diff = total2026 - custo2025;
+    const diffClass = diff > 0 ? 'diff-pos' : diff < 0 ? 'diff-neg' : 'diff-zero';
+    const diffSign = diff > 0 ? '+' : '';
+
+    const status = row['STATUS'] || 'Pendente';
+    const badgeClass = {
+      'Pendente': 'badge-pendente',
+      'Orçado': 'badge-orcado',
+      'Pagamento solicitado': 'badge-solicitado',
+      'Pagamento aprovado': 'badge-aprovado',
+      'Pago parcial': 'badge-pago-parc',
+      'Pago': 'badge-pago',
+    }[status] || 'badge-pendente';
+
+    const editBtn = podeEditar
+      ? `<button class="btn btn-ghost btn-sm btn-edit-row btn-icon" onclick="abrirModalEditItem(${idx})" title="Editar">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+         </button>`
+      : '';
+
+    html += `<tr data-idx="${idx}">
+      <td><strong>${item}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${cat}</div></td>
+      <td class="muted">${row['QNT'] || '—'}</td>
+      <td class="muted">${row['DIAS'] || '—'}</td>
+      <td class="muted">${row['DATA INÍCIO'] || '—'}</td>
+      <td class="muted">${total2026 && row['VALOR UNIT (R$)'] ? 'R$ ' + parseBRL(row['VALOR UNIT (R$)']).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—'}</td>
+      <td class="muted">${custo2025 > 0 ? formatBRL(custo2025) : '—'}</td>
+      <td>${total2026 > 0 ? formatBRL(total2026) : '—'}</td>
+      <td class="${diffClass}">${custo2025 > 0 && total2026 > 0 ? diffSign + formatBRL(diff) : '—'}</td>
+      <td style="color:var(--green)">${valorPago > 0 ? formatBRL(valorPago) : '—'}</td>
+      <td style="color:${emAberto > 0 ? 'var(--amber)' : 'var(--text3)'}">${total2026 > 0 ? formatBRL(Math.max(0, emAberto)) : '—'}</td>
+      <td><span class="badge ${badgeClass}">${status}</span></td>
+      <td class="muted">${row['FORNECEDOR'] || '—'}</td>
+      <td class="muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${row['OBS'] || ''}">${row['OBS'] || '—'}</td>
+      <td style="width:36px">${editBtn}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+}
+
+// ── Navegação entre sub-abas de Produção ──
+function navegarProdSub(subId) {
+  prodSubAtiva = subId.replace('prod-', '');
+
+  // Atualiza todas as sub-abas
+  Object.entries(PROD_SUB_IDS).forEach(([key, divId]) => {
+    const el = document.getElementById(divId);
+    if (el) el.classList.toggle('active', key === subId);
+  });
+
+  // Se for planilha, garante que os dados estão renderizados
+  if (subId === 'prod-planilha') renderProdPlanilha();
+}
+
+// ── Modal edição ──
+function abrirModalEditItem(idx) {
+  const cidade = prodCidadeAtiva;
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const row = prod[idx];
+  if (!row) return;
+
+  document.getElementById('edit-row-index').value = idx;
+  document.getElementById('modal-edit-titulo').textContent = `Editar — ${row['ITEM']}`;
+  document.getElementById('edit-item').value = row['ITEM'] || '';
+  document.getElementById('edit-qnt').value = row['QNT'] || '';
+  document.getElementById('edit-dias').value = row['DIAS'] || '';
+  document.getElementById('edit-data').value = parseDateForInput(row['DATA INÍCIO']);
+  document.getElementById('edit-valor-unit').value = parseBRL(row['VALOR UNIT (R$)']) || '';
+  document.getElementById('edit-custo2025').value = parseBRL(row['CUSTO 2025 (R$)'] || row['CUSTO 2025']) || '';
+  document.getElementById('edit-total2026').value = parseBRL(row['TOTAL 2026 (R$)'] || row['CUSTO 2026'] || row['CUSTO 2026 (R$)']) || '';
+  document.getElementById('edit-valor-pago').value = parseBRL(row['VALOR PAGO (R$)'] || row['VALOR PAGO']) || '';
+  document.getElementById('edit-status').value = row['STATUS'] || 'Pendente';
+  document.getElementById('edit-fornecedor').value = row['FORNECEDOR'] || '';
+  document.getElementById('edit-obs').value = row['OBS'] || '';
+
+  document.getElementById('modal-edit-item').classList.add('open');
+}
+
+function abrirModalNovoItem() {
+  document.getElementById('edit-row-index').value = '';
+  document.getElementById('modal-edit-titulo').textContent = 'Novo item';
+  ['edit-item','edit-qnt','edit-dias','edit-data','edit-valor-unit',
+   'edit-custo2025','edit-total2026','edit-valor-pago','edit-fornecedor','edit-obs']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('edit-status').value = 'Pendente';
+  document.getElementById('modal-edit-item').classList.add('open');
+}
+
+function fecharModalEditItem() {
+  document.getElementById('modal-edit-item').classList.remove('open');
+}
+
+// Fecha modal ao clicar no overlay
+document.getElementById('modal-edit-item').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalEditItem();
+});
+
+async function salvarItemProducao() {
+  const btn = document.getElementById('btn-salvar-item');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+
+  const cidade = prodCidadeAtiva;
+  const sheetId = SHEET_IDS[cidade];
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const idxRaw = document.getElementById('edit-row-index').value;
+  const isNovo = idxRaw === '';
+  const idx = isNovo ? -1 : parseInt(idxRaw);
+
+  // Monta os valores
+  const item       = document.getElementById('edit-item').value.trim();
+  const cat        = isNovo ? '' : (prod[idx]['CATEGORIA'] || '');
+  const qnt        = document.getElementById('edit-qnt').value;
+  const dias       = document.getElementById('edit-dias').value;
+  const dataInicio = document.getElementById('edit-data').value
+    ? formatDateBR(document.getElementById('edit-data').value) : '';
+  const valorUnit  = document.getElementById('edit-valor-unit').value;
+  const custo2025  = document.getElementById('edit-custo2025').value;
+  const total2026  = document.getElementById('edit-total2026').value;
+  const valorPago  = document.getElementById('edit-valor-pago').value;
+  const status     = document.getElementById('edit-status').value;
+  const fornecedor = document.getElementById('edit-fornecedor').value.trim();
+  const obs        = document.getElementById('edit-obs').value.trim();
+
+  if (!item) {
+    showToast('Preencha o nome do item.', 'warn');
+    btn.disabled = false; btn.textContent = 'Salvar';
+    return;
+  }
+
+  // Calcula diferença e em aberto
+  const t2026 = parseFloat(total2026) || 0;
+  const c2025 = parseFloat(custo2025) || 0;
+  const pago  = parseFloat(valorPago) || 0;
+  const diferenca = t2026 - c2025;
+  const emAberto  = t2026 - pago;
+
+  const rowValues = [[
+    cat, item, qnt, dias, dataInicio,
+    valorUnit ? `R$ ${parseFloat(valorUnit).toFixed(2)}` : '',
+    custo2025 ? `R$ ${c2025.toFixed(2)}` : '',
+    total2026 ? `R$ ${t2026.toFixed(2)}` : '',
+    diferenca !== 0 ? `R$ ${diferenca.toFixed(2)}` : '',
+    valorPago ? `R$ ${pago.toFixed(2)}` : '',
+    emAberto > 0 ? `R$ ${emAberto.toFixed(2)}` : '',
+    status, fornecedor, obs
+  ]];
+
+  try {
+    if (isNovo) {
+      await sheetsAppend(sheetId, 'Produção!A:N', rowValues);
+      showToast('Item adicionado com sucesso!', 'success');
+    } else {
+      // Linha real na planilha: cabeçalho na linha 1, dados a partir da linha 2
+      // idx é o índice no array de objetos (sem cabeçalho, sem linhas de categoria)
+      // Precisa encontrar a linha real contando todas as linhas do Sheets
+      const linhaSheet = encontrarLinhaSheet(prod, idx);
+      await sheetsWrite(sheetId, `Produção!A${linhaSheet}:N${linhaSheet}`, rowValues);
+      showToast('Item atualizado com sucesso!', 'success');
+    }
+
+    // Invalida cache e recarrega
+    delete sheetsCache[`${sheetId}::Produção!A:N`];
+    await loadPPP(cidade);
+    renderProdPlanilha();
+    fecharModalEditItem();
+
+  } catch (err) {
+    console.error('salvarItemProducao:', err);
+    showToast('Erro ao salvar. Tente novamente.', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Salvar';
+}
+
+function encontrarLinhaSheet(prod, idx) {
+  // Linha 1 = cabeçalho, dados começam na linha 2
+  // prod[idx] é o objeto — precisa contar quantas linhas reais existem até ele
+  // incluindo linhas de categoria (ITEM vazio)
+  let linhaReal = 2; // começa na linha 2 (após cabeçalho)
+  let objCount = 0;
+  for (let i = 0; i < prod.length; i++) {
+    if (i === idx) return linhaReal;
+    linhaReal++;
+  }
+  return linhaReal;
+}
+
+// Converte YYYY-MM-DD para DD/MM/AAAA
+function formatDateBR(isoDate) {
+  if (!isoDate) return '';
+  const [a, m, d] = isoDate.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+// Converte DD/MM/AAAA para input[type=date] (YYYY-MM-DD)
+function parseDateForInput(brDate) {
+  if (!brDate) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(brDate)) return brDate;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(brDate)) {
+    const [d, m, a] = brDate.split('/');
+    return `${a}-${m}-${d}`;
+  }
+  return '';
 }
 
 /* ═══════════════════════════════════════════
