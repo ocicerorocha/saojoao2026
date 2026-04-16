@@ -622,7 +622,64 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
 
       </div>
-      <div class="page" id="page-despesas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">💸</div><div class="empty-title">Despesas</div><div class="empty-sub">Bloco 7</div></div></div>
+      <!-- DESPESAS — Bloco 7 -->
+      <div class="page" id="page-despesas">
+        <div class="section-header">
+          <span class="section-title">Despesas</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="form-select" id="desp-filtro-status" style="min-height:32px;font-size:12px;padding:4px 10px;width:auto" onchange="renderDespesas()">
+              <option value="">Todos os status</option>
+              <option value="Em aberto">Em aberto</option>
+              <option value="Pagamento solicitado">Solicitado</option>
+              <option value="Pagamento aprovado">Aprovado</option>
+              <option value="Pago parcial">Pago parcial</option>
+              <option value="Pago">Pago</option>
+              <option value="Rejeitado">Rejeitado</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="carregarDespesas()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Atualizar
+            </button>
+          </div>
+        </div>
+        <div id="desp-table-wrap">
+          <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
+        </div>
+      </div>
+
+      <!-- MODAL REGISTRAR PAGAMENTO -->
+      <div class="modal-overlay" id="modal-pagamento">
+        <div class="modal" style="max-width:460px">
+          <div class="modal-header">
+            <span class="modal-title">Registrar pagamento</span>
+            <button class="modal-close" onclick="fecharModalPagamento()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div id="pag-info" style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label class="form-label">Valor pago (R$) <span style="color:var(--red)">*</span></label>
+                <input class="form-input" id="pag-valor" type="number" min="0" step="0.01" placeholder="0,00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Data do pagamento</label>
+                <input class="form-input" id="pag-data" type="date">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Comprovante <span style="color:var(--text3);font-size:10px">link ou referência</span></label>
+                <input class="form-input" id="pag-comprovante" placeholder="Cole o link do comprovante (upload no Bloco 10)" style="opacity:0.7">
+              </div>
+            </div>
+            <div id="pag-aviso" class="alert alert-info" style="display:none;margin-bottom:12px">
+              <span class="alert-icon">ℹ️</span><span id="pag-aviso-txt"></span>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-ghost" onclick="fecharModalPagamento()">Cancelar</button>
+              <button class="btn btn-primary" onclick="confirmarPagamento()">Confirmar pagamento</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- APROVAÇÕES — Bloco 6 -->
       <div class="page" id="page-aprovacoes">
         <div class="section-header">
@@ -871,6 +928,9 @@ function navigateTo(pageId){
     setupCityFilter();
   }else if(mainId==='aprovacoes'){
     if(currentUser&&appData)carregarAprovacoes();
+    setupCityFilter();
+  }else if(mainId==='despesas'){
+    if(currentUser&&appData)carregarDespesas();
     setupCityFilter();
   }else{
     setupCityFilter();
@@ -1314,6 +1374,194 @@ function parseDateForInput(br){
   if(/^\d{4}-\d{2}-\d{2}$/.test(br))return br;
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(br)){const[d,m,a]=br.split('/');return`${a}-${m}-${d}`;}
   return'';
+}
+
+/* ── BLOCO 7: DESPESAS ── */
+let despSolicitacoes = [];
+let despPagIdx = null;
+
+async function carregarDespesas() {
+  const wrap = document.getElementById('desp-table-wrap');
+  wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Solicitações!A:V');
+    despSolicitacoes = rowsToObjects(rows);
+    renderDespesas();
+  } catch(err) {
+    console.error('carregarDespesas:', err);
+    showToast('Erro ao carregar despesas.', 'error');
+  }
+}
+
+function renderDespesas() {
+  const wrap = document.getElementById('desp-table-wrap');
+  const filtroStatus = document.getElementById('desp-filtro-status').value;
+  const u = currentUser;
+
+  let rows = despSolicitacoes;
+
+  // Filtro por perfil
+  if (u.perfil === 'prod') {
+    // Produtor vê só as suas (cidade + solicitante)
+    rows = rows.filter(r =>
+      (r['CIDADE']||'').toLowerCase().includes(u.cidade) ||
+      (r['SOLICITANTE']||'').toLowerCase() === u.nome.toLowerCase()
+    );
+  }
+
+  // Filtro por status
+  if (filtroStatus) {
+    rows = rows.filter(r => (r['STATUS']||'').trim() === filtroStatus);
+  }
+
+  if (!rows.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">💸</div><div class="empty-title">Nenhuma despesa encontrada</div></div>`;
+    return;
+  }
+
+  const podePagar = u.perfil === 'mestre' || u.perfil === 'fin';
+  const idx0 = despSolicitacoes.indexOf(rows[0]); // para referência
+
+  const linhas = rows.map(r => {
+    const realIdx = despSolicitacoes.indexOf(r);
+    const status = (r['STATUS']||'').trim();
+    const bCls = {
+      'Em aberto':           'badge-pendente',
+      'Pagamento solicitado':'badge-solicitado',
+      'Pagamento aprovado':  'badge-aprovado',
+      'Pago parcial':        'badge-pago-parc',
+      'Pago':                'badge-pago',
+      'Rejeitado':           'badge-rejeitado',
+    }[status] || 'badge-pendente';
+
+    const valSol  = parseBRL(r['VALOR SOLICITADO (R$)']||r['VALOR SOLICITADO']);
+    const valPago = parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
+    const comp    = r['OBS / COMPROVANTE'] || r['OBS/COMPROVANTE'] || '';
+    const compHtml = comp && comp.startsWith('http')
+      ? `<a href="${comp}" target="_blank" style="color:var(--blue);font-size:11px">Ver</a>`
+      : comp ? `<span style="font-size:11px;color:var(--text3)">${comp.substring(0,20)}…</span>`
+      : `<span style="color:var(--text3);font-size:11px">—</span>`;
+
+    const pagarBtn = podePagar && status === 'Pagamento aprovado'
+      ? `<button class="btn btn-primary btn-sm" onclick="abrirModalPagamento(${realIdx})">Registrar pgto</button>`
+      : '';
+
+    return `<tr>
+      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${r['CIDADE']||'—'}</td>
+      <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
+      <td class="muted">${r['PARCELAS']||'1x'}</td>
+      <td>${valSol > 0 ? formatBRL(valSol) : '—'}</td>
+      <td><span class="badge ${bCls}">${status}</span></td>
+      <td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r['FAVORECIDO']||'—'}</td>
+      <td class="muted">${r['PIX']||r['CONTA']||'—'}</td>
+      <td class="muted">${r['APROVADO POR']||'—'}</td>
+      <td>${compHtml}</td>
+      <td style="padding:4px;white-space:nowrap">${pagarBtn}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Data</th><th>Cidade</th><th>Item</th><th>Parcelas</th>
+      <th>Valor</th><th>Status</th><th>Favorecido</th>
+      <th>PIX/Conta</th><th>Aprovado por</th><th>Comprovante</th><th></th>
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+  </table></div>`;
+}
+
+function abrirModalPagamento(idx) {
+  despPagIdx = idx;
+  const row = despSolicitacoes[idx];
+  if (!row) return;
+
+  const valSol = parseBRL(row['VALOR SOLICITADO (R$)']||row['VALOR SOLICITADO']);
+  const valPagoAnt = parseBRL(row['VALOR PAGO (R$)']||row['VALOR PAGO']);
+  const restante = Math.max(0, valSol - valPagoAnt);
+
+  document.getElementById('pag-info').innerHTML =
+    `<strong>${row['ITEM']}</strong> — ${row['CIDADE']}<br>`+
+    `<span style="color:var(--text2)">Valor solicitado: ${formatBRL(valSol)}</span>`+
+    (valPagoAnt > 0 ? `<span style="color:var(--green);margin-left:12px">Já pago: ${formatBRL(valPagoAnt)}</span>` : '')+
+    `<br><span style="color:var(--amber)">Restante: ${formatBRL(restante)}</span>`;
+
+  document.getElementById('pag-valor').value = restante > 0 ? restante.toFixed(2) : '';
+  document.getElementById('pag-comprovante').value = '';
+
+  // Data de hoje
+  const hoje = new Date();
+  document.getElementById('pag-data').value =
+    `${hoje.getFullYear()}-${(hoje.getMonth()+1).toString().padStart(2,'0')}-${hoje.getDate().toString().padStart(2,'0')}`;
+
+  document.getElementById('pag-aviso').style.display = 'none';
+  document.getElementById('modal-pagamento').classList.add('open');
+}
+
+function fecharModalPagamento() {
+  document.getElementById('modal-pagamento').classList.remove('open');
+  despPagIdx = null;
+}
+document.getElementById('modal-pagamento').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalPagamento();
+});
+
+async function confirmarPagamento() {
+  const btn = document.querySelector('#modal-pagamento .btn-primary');
+  const valorPago = parseFloat(document.getElementById('pag-valor').value) || 0;
+  const dataRaw   = document.getElementById('pag-data').value;
+  const comp      = document.getElementById('pag-comprovante').value.trim();
+
+  if (!valorPago || valorPago <= 0) { showToast('Informe o valor pago.', 'warn'); return; }
+  if (!dataRaw) { showToast('Informe a data do pagamento.', 'warn'); return; }
+
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  const row = despSolicitacoes[despPagIdx];
+  const linhaGeral = despPagIdx + 2;
+  const valSol     = parseBRL(row['VALOR SOLICITADO (R$)']||row['VALOR SOLICITADO']);
+  const valPagoAnt = parseBRL(row['VALOR PAGO (R$)']||row['VALOR PAGO']);
+  const totalPago  = valPagoAnt + valorPago;
+  const novoStatus = totalPago >= valSol ? 'Pago' : 'Pago parcial';
+  const dataBR     = formatDateBR(dataRaw);
+
+  try {
+    // Colunas: S=PAGO POR (19), T=DATA PAGAMENTO (20), U=VALOR PAGO (21), V=OBS/COMPROVANTE (22)
+    await sheetsWrite(SHEET_IDS.geral,
+      `Solicitações!P${linhaGeral}:V${linhaGeral}`,
+      [[novoStatus, row['APROVADO POR']||'', row['DATA APROVAÇÃO']||'',
+        currentUser.nome, dataBR, totalPago, comp || (row['OBS / COMPROVANTE']||'')]]
+    );
+
+    // Atualiza PPP — VALOR PAGO (col J) e STATUS (col K)
+    await atualizarStatusPPP(row, novoStatus);
+    // Atualiza também valor pago na PPP
+    await atualizarValorPagoPPP(row, totalPago);
+
+    showToast(`${novoStatus}! ${formatBRL(totalPago)} registrado.`, 'success');
+    fecharModalPagamento();
+    await carregarDespesas();
+  } catch(err) {
+    console.error('confirmarPagamento:', err);
+    showToast('Erro ao registrar pagamento.', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Confirmar pagamento';
+}
+
+async function atualizarValorPagoPPP(solRow, totalPago) {
+  const nm = {Irecê:'irece', Serrinha:'serrinha', Jequié:'jequie'};
+  const cidade = nm[(solRow['CIDADE']||'').trim()];
+  const itemNome = (solRow['ITEM']||'').trim();
+  const sheetId = SHEET_IDS[cidade];
+  if (!sheetId || !itemNome) return;
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const itemIdx = prod.findIndex(r => (r['ITEM']||'').trim() === itemNome);
+  if (itemIdx === -1) return;
+  const linha = itemIdx + 2;
+  // Col J = VALOR PAGO (10ª coluna)
+  await sheetsWrite(sheetId, `Produção!J${linha}`, [[totalPago]]);
+  delete sheetsCache[`${sheetId}::Produção!A:O`];
 }
 
 /* ── BLOCO 6: APROVAÇÕES ── */
