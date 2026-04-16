@@ -425,14 +425,179 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="empty-state" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Carregando cronograma…</div></div>
           </div>
         </div>
-        <div id="prod-sub-equipe" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">👥</div><div class="empty-title">Equipe</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-hospedagem" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🏨</div><div class="empty-title">Hospedagem</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-transporte" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🚐</div><div class="empty-title">Transporte</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-pulseiras" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🎫</div><div class="empty-title">Pulseiras</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-radios" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">📻</div><div class="empty-title">Rádios</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-alimentacao" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🍽️</div><div class="empty-title">Alimentação</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-sinalizacoes" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🪧</div><div class="empty-title">Sinalizações</div><div class="empty-sub">Bloco 9</div></div></div>
-        <div id="prod-sub-mapa" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🗺️</div><div class="empty-title">Mapa</div><div class="empty-sub">Bloco 9</div></div></div>
+        <!-- EQUIPE -->
+        <div id="prod-sub-equipe" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title" id="equipe-titulo">Equipe</span>
+            <button class="btn btn-primary btn-sm" id="btn-add-membro" onclick="abrirModalMembro()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo membro
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Nome</th><th>Função</th><th>Setor</th><th>Data ida</th><th>Data volta</th>
+              <th>Diárias</th><th>Valor/dia</th><th>Total</th>
+              <th>Hospedagem</th><th>Transporte</th><th>Status pgto</th><th>PIX/Conta</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="equipe-body"><tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HOSPEDAGEM -->
+        <div id="prod-sub-hospedagem" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Hospedagem</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalHospedagem()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova hospedagem
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Local</th><th>Cômodo/Quarto</th><th>Pessoa</th>
+              <th>Check-in</th><th>Check-out</th><th>Diárias</th><th>Valor/diária</th><th>Total</th><th>OBS</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="hospedagem-body"><tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TRANSPORTE -->
+        <div id="prod-sub-transporte" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Transporte</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalTransporte()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo registro
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Veículo</th><th>Trajeto</th><th>Vagas</th><th>Data partida</th><th>Horário</th><th>Pessoa</th><th>Retorno</th><th>OBS</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="transporte-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PULSEIRAS -->
+        <div id="prod-sub-pulseiras" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Pulseiras</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalPulseira()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Registrar movimentação
+            </button>
+          </div>
+          <div class="metric-grid" id="pulseiras-metricas" style="margin-bottom:16px"></div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Dia</th><th>Tipo</th><th>Estoque inicial</th><th>Saídas</th><th>Saldo</th><th>Contagem real</th><th>Diferença</th><th>Solicitante</th><th>Data/Hora</th><th>OBS</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="pulseiras-body"><tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RÁDIOS -->
+        <div id="prod-sub-radios" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Rádios</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalRadioUso()">Atualizar uso</button>
+              <button class="btn btn-primary btn-sm" onclick="abrirModalRadioNovo()">+ Adicionar rádio</button>
+            </div>
+          </div>
+          <div class="metric-grid" id="radios-metricas" style="margin-bottom:16px"></div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Nº</th><th>Responsável atual</th><th>Status</th><th>Fone?</th><th>Entrega</th><th>Devolução</th><th>OBS</th><th style="width:60px"></th>
+            </tr></thead>
+            <tbody id="radios-body"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+          <div style="margin-top:24px">
+            <div class="section-header"><span class="section-title" style="color:var(--text2)">Histórico de uso</span></div>
+            <div class="table-wrap">
+              <table><thead><tr><th>Data/Hora</th><th>Tipo</th><th>Nº Rádio</th><th>Responsável</th><th>Fone</th><th>OBS</th></tr></thead>
+              <tbody id="radios-historico-body"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALIMENTAÇÃO -->
+        <div id="prod-sub-alimentacao" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Alimentação</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalAlimentacao()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Registrar
+            </button>
+          </div>
+          <div class="metric-grid" id="alim-metricas" style="margin-bottom:16px"></div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Dia</th><th>Equipe/Setor</th><th>Fornecedor</th><th>Valor voucher</th><th>Qtd vouchers</th><th>Total</th><th>Data/Hora</th><th>OBS</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="alim-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SINALIZAÇÕES -->
+        <div id="prod-sub-sinalizacoes" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title">Sinalizações</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalSinalizacao()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova sinalização
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Item</th><th>Fornecedor</th><th>Status</th><th>Qtd</th><th>Dimensão</th><th>Descrição</th><th>Orçamento</th><th>OBS</th><th style="width:36px"></th>
+            </tr></thead>
+            <tbody id="sinalizacoes-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MAPA -->
+        <div id="prod-sub-mapa" class="prod-sub">
+          <div class="section-header">
+            <span class="section-title" id="mapa-titulo">Mapa</span>
+            <div style="display:flex;gap:8px">
+              <input class="form-input" id="mapa-url-input" placeholder="URL da imagem (Google Drive, link público…)" style="width:320px;min-height:32px;font-size:12px;padding:4px 10px">
+              <button class="btn btn-ghost btn-sm" onclick="mapaCarregarImagem()">Carregar</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;height:calc(100vh - 220px);min-height:400px">
+            <!-- Lista lateral -->
+            <div style="width:200px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow-y:auto;padding:12px">
+              <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px">Itens</div>
+              <div id="mapa-lista"></div>
+            </div>
+            <!-- Canvas do mapa -->
+            <div style="flex:1;position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden" id="mapa-container">
+              <div id="mapa-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);gap:8px">
+                <div style="font-size:32px;opacity:0.3">🗺️</div>
+                <div style="font-family:var(--font-mono);font-size:12px">Cole a URL da imagem acima e clique em Carregar</div>
+              </div>
+              <img id="mapa-img" style="display:none;width:100%;height:100%;object-fit:contain" alt="Mapa">
+              <div id="mapa-pinos" style="position:absolute;inset:0;pointer-events:none"></div>
+              <div id="mapa-overlay" style="position:absolute;inset:0;display:none;cursor:crosshair" onclick="mapaAdicionarPino(event)"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" id="btn-mapa-editar" onclick="mapaToggleEdicao()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <span id="btn-mapa-editar-txt">Modo edição</span>
+            </button>
+            <span id="mapa-edit-hint" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);display:none">Clique no mapa para adicionar pino</span>
+          </div>
+        </div>
       </div>
 
       <!-- MODAL EDIÇÃO -->
@@ -752,6 +917,218 @@ tbody tr:hover .btn-edit-row{opacity:1}
           </div>
         </div>
       </div>
+
+      <!-- MODAL MEMBRO EQUIPE -->
+      <div class="modal-overlay" id="modal-membro">
+        <div class="modal" style="max-width:600px">
+          <div class="modal-header"><span class="modal-title" id="modal-membro-titulo">Membro da equipe</span><button class="modal-close" onclick="fecharModal('modal-membro')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="membro-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Nome completo</label><input class="form-input" id="membro-nome"></div>
+              <div class="form-group"><label class="form-label">Função</label><input class="form-input" id="membro-funcao"></div>
+              <div class="form-group"><label class="form-label">Equipe/Setor</label><input class="form-input" id="membro-setor"></div>
+              <div class="form-group"><label class="form-label">Data ida</label><input class="form-input" id="membro-ida" type="date"></div>
+              <div class="form-group"><label class="form-label">Data volta</label><input class="form-input" id="membro-volta" type="date"></div>
+              <div class="form-group"><label class="form-label">Valor/dia (R$)</label><input class="form-input" id="membro-valdia" type="number" min="0" step="0.01" oninput="calcMembroTotal()"></div>
+              <div class="form-group"><label class="form-label">Total (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="membro-total" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group"><label class="form-label">Precisa hospedagem?</label><select class="form-select" id="membro-hosp"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+              <div class="form-group"><label class="form-label">Precisa transporte?</label><select class="form-select" id="membro-transp"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+              <div class="form-group"><label class="form-label">Banco</label><input class="form-input" id="membro-banco"></div>
+              <div class="form-group"><label class="form-label">Agência</label><input class="form-input" id="membro-agencia"></div>
+              <div class="form-group"><label class="form-label">Conta</label><input class="form-input" id="membro-conta"></div>
+              <div class="form-group"><label class="form-label">PIX</label><input class="form-input" id="membro-pix"></div>
+              <div class="form-group"><label class="form-label">Status pagamento</label><select class="form-select" id="membro-status"><option>Em aberto</option><option>Pagamento solicitado</option><option>Pagamento aprovado</option><option>Pago</option></select></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="membro-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-membro')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarMembro()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL HOSPEDAGEM -->
+      <div class="modal-overlay" id="modal-hospedagem">
+        <div class="modal" style="max-width:520px">
+          <div class="modal-header"><span class="modal-title" id="modal-hosp-titulo">Hospedagem</span><button class="modal-close" onclick="fecharModal('modal-hospedagem')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="hosp-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Local</label><input class="form-input" id="hosp-local"></div>
+              <div class="form-group"><label class="form-label">Cômodo/Quarto</label><input class="form-input" id="hosp-comodo"></div>
+              <div class="form-group"><label class="form-label">Pessoa</label><input class="form-input" id="hosp-pessoa" list="hosp-pessoas-list"><datalist id="hosp-pessoas-list"></datalist></div>
+              <div class="form-group"><label class="form-label">Check-in</label><input class="form-input" id="hosp-checkin" type="date" oninput="calcDiariasHosp()"></div>
+              <div class="form-group"><label class="form-label">Check-out</label><input class="form-input" id="hosp-checkout" type="date" oninput="calcDiariasHosp()"></div>
+              <div class="form-group"><label class="form-label">Diárias <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="hosp-diarias" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group"><label class="form-label">Valor/diária (R$)</label><input class="form-input" id="hosp-valdiaria" type="number" min="0" step="0.01" oninput="calcTotalHosp()"></div>
+              <div class="form-group"><label class="form-label">Total (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="hosp-total" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="hosp-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-hospedagem')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarHospedagem()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL TRANSPORTE -->
+      <div class="modal-overlay" id="modal-transporte">
+        <div class="modal" style="max-width:520px">
+          <div class="modal-header"><span class="modal-title" id="modal-transp-titulo">Transporte</span><button class="modal-close" onclick="fecharModal('modal-transporte')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="transp-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Veículo/Condução</label><input class="form-input" id="transp-veiculo"></div>
+              <div class="form-group"><label class="form-label">Trajeto</label><input class="form-input" id="transp-trajeto"></div>
+              <div class="form-group"><label class="form-label">Vagas</label><input class="form-input" id="transp-vagas" type="number" min="1"></div>
+              <div class="form-group"><label class="form-label">Data partida</label><input class="form-input" id="transp-data" type="date"></div>
+              <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="transp-horario" type="time"></div>
+              <div class="form-group"><label class="form-label">Pessoa</label><input class="form-input" id="transp-pessoa" list="transp-pessoas-list"><datalist id="transp-pessoas-list"></datalist></div>
+              <div class="form-group"><label class="form-label">Retorno</label><input class="form-input" id="transp-retorno"></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="transp-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-transporte')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarTransporte()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PULSEIRA -->
+      <div class="modal-overlay" id="modal-pulseira">
+        <div class="modal" style="max-width:460px">
+          <div class="modal-header"><span class="modal-title">Registrar movimentação</span><button class="modal-close" onclick="fecharModal('modal-pulseira')">✕</button></div>
+          <div class="modal-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Dia</label><input class="form-input" id="puls-dia" type="date"></div>
+              <div class="form-group"><label class="form-label">Tipo de pulseira</label><input class="form-input" id="puls-tipo" placeholder="Ex: VIP, Pista, Camarote"></div>
+              <div class="form-group"><label class="form-label">Estoque inicial</label><input class="form-input" id="puls-estoque" type="number" min="0"></div>
+              <div class="form-group"><label class="form-label">Saídas</label><input class="form-input" id="puls-saidas" type="number" min="0" oninput="calcSaldoPulseira()"></div>
+              <div class="form-group"><label class="form-label">Saldo <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="puls-saldo" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group"><label class="form-label">Contagem real</label><input class="form-input" id="puls-contagem" type="number" min="0"></div>
+              <div class="form-group"><label class="form-label">Solicitante</label><input class="form-input" id="puls-solicitante"></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="puls-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-pulseira')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarPulseira()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL RÁDIO USO -->
+      <div class="modal-overlay" id="modal-radio-uso">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header"><span class="modal-title">Atualizar uso de rádio</span><button class="modal-close" onclick="fecharModal('modal-radio-uso')">✕</button></div>
+          <div class="modal-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Nº do rádio</label><select class="form-select" id="radio-uso-num"></select></div>
+              <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="radio-uso-tipo"><option value="Empréstimo">Empréstimo</option><option value="Devolução">Devolução</option></select></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Responsável</label><input class="form-input" id="radio-uso-resp"></div>
+              <div class="form-group"><label class="form-label">Fone?</label><select class="form-select" id="radio-uso-fone"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="radio-uso-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-radio-uso')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarRadioUso()">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL RÁDIO NOVO -->
+      <div class="modal-overlay" id="modal-radio-novo">
+        <div class="modal" style="max-width:380px">
+          <div class="modal-header"><span class="modal-title">Adicionar rádio</span><button class="modal-close" onclick="fecharModal('modal-radio-novo')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Número do rádio</label><input class="form-input" id="radio-novo-num" type="number" min="1" placeholder="Ex: 56"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="radio-novo-obs"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-radio-novo')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarRadioNovo()">Adicionar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL ALIMENTAÇÃO -->
+      <div class="modal-overlay" id="modal-alimentacao">
+        <div class="modal" style="max-width:480px">
+          <div class="modal-header"><span class="modal-title" id="modal-alim-titulo">Alimentação</span><button class="modal-close" onclick="fecharModal('modal-alimentacao')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="alim-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Dia</label><input class="form-input" id="alim-dia" type="date"></div>
+              <div class="form-group"><label class="form-label">Equipe/Setor</label><input class="form-input" id="alim-setor"></div>
+              <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="alim-forn"></div>
+              <div class="form-group"><label class="form-label">Valor voucher (R$)</label><input class="form-input" id="alim-valvoucher" type="number" min="0" step="0.01" oninput="calcTotalAlim()"></div>
+              <div class="form-group"><label class="form-label">Qtd vouchers</label><input class="form-input" id="alim-qtd" type="number" min="0" oninput="calcTotalAlim()"></div>
+              <div class="form-group"><label class="form-label">Total <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-total" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="alim-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-alimentacao')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarAlimentacao()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL SINALIZAÇÃO -->
+      <div class="modal-overlay" id="modal-sinalizacao">
+        <div class="modal" style="max-width:520px">
+          <div class="modal-header"><span class="modal-title" id="modal-sinal-titulo">Sinalização</span><button class="modal-close" onclick="fecharModal('modal-sinalizacao')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="sinal-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Item</label><input class="form-input" id="sinal-item"></div>
+              <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="sinal-forn"></div>
+              <div class="form-group"><label class="form-label">Status</label>
+                <select class="form-select" id="sinal-status">
+                  <option>Não iniciado</option><option>Arte pronta</option>
+                  <option>Em produção</option><option>Entregue</option><option>Posicionado</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" id="sinal-qtd" type="number" min="0"></div>
+              <div class="form-group"><label class="form-label">Dimensão</label><input class="form-input" id="sinal-dim" placeholder="Ex: 2x1m"></div>
+              <div class="form-group"><label class="form-label">Orçamento (R$)</label><input class="form-input" id="sinal-orc" type="number" min="0" step="0.01"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Descrição</label><input class="form-input" id="sinal-desc"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="sinal-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-sinalizacao')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarSinalizacao()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PINO MAPA -->
+      <div class="modal-overlay" id="modal-pino">
+        <div class="modal" style="max-width:380px">
+          <div class="modal-header"><span class="modal-title">Adicionar pino</span><button class="modal-close" onclick="fecharModal('modal-pino')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="pino-x"><input type="hidden" id="pino-y">
+            <div class="form-group"><label class="form-label">Tipo</label>
+              <select class="form-select" id="pino-tipo" onchange="atualizarListaPino()">
+                <option value="sinal">Sinalização</option><option value="equipe">Equipe</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Item</label><select class="form-select" id="pino-item"></select></div>
+            <div class="form-group"><label class="form-label">Referência/Descrição</label><input class="form-input" id="pino-ref"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-pino')">Cancelar</button>
+              <button class="btn btn-primary" onclick="confirmarPino()">Adicionar pino</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="page" id="page-receitas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📈</div><div class="empty-title">Receitas</div><div class="empty-sub">Bloco 10</div></div></div>
       <div class="page" id="page-bilheteria"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">🎟️</div><div class="empty-title">Bilheteria</div><div class="empty-sub">Bloco 10</div></div></div>
       <div class="page" id="page-documentos"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📁</div><div class="empty-title">Documentos</div><div class="empty-sub">Bloco 10</div></div></div>
@@ -1290,6 +1667,22 @@ function navegarProdSub(subId){
   Object.entries(PROD_SUB_IDS).forEach(([k,v])=>{const el=document.getElementById(v);if(el)el.classList.toggle('active',k===subId);});
   if(subId==='prod-planilha')renderProdPlanilha();
   if(subId==='prod-cronograma')renderGantt();
+  if(subId==='prod-equipe')carregarEquipe();
+  if(subId==='prod-hospedagem'){carregarEquipe().then(()=>carregarHospedagem());}
+  if(subId==='prod-transporte'){carregarEquipe().then(()=>carregarTransporte());}
+  if(subId==='prod-pulseiras')carregarPulseiras();
+  if(subId==='prod-radios')carregarRadios();
+  if(subId==='prod-alimentacao')carregarAlimentacao();
+  if(subId==='prod-sinalizacoes')carregarSinalizacoes();
+  if(subId==='prod-mapa'){
+    // Carrega dados para lista lateral e restaura URL/pinos salvos
+    Promise.all([carregarEquipe(),carregarSinalizacoes()]).then(()=>{
+      mapaCarregarLista();
+      const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
+      const url=cfg[prodCidadeAtiva];
+      if(url){document.getElementById('mapa-url-input').value=url;mapaCarregarImagem();}
+    });
+  }
 }
 
 /* ── MODAL ── */
@@ -1415,6 +1808,618 @@ function parseDateForInput(br){
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(br)){const[d,m,a]=br.split('/');return`${a}-${m}-${d}`;}
   return'';
 }
+
+/* ── BLOCO 9: SUB-ABAS ── */
+
+// ── Helper geral ──
+function abrirModal(id){ document.getElementById(id).classList.add('open'); }
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+function setupModalOverlay(id){ document.getElementById(id).addEventListener('click',function(e){if(e.target===this)fecharModal(id);}); }
+
+// Lê aba da PPP por nome
+async function lerAbaPPP(cidade, aba, range) {
+  const id = SHEET_IDS[cidade];
+  const rows = await sheetsRead(id, `${aba}!${range}`);
+  return rowsToObjects(rows);
+}
+async function gravarAbaPPP(cidade, aba, range, values) {
+  const id = SHEET_IDS[cidade];
+  delete sheetsCache[`${id}::${aba}!${range}`];
+  return await sheetsWrite(id, `${aba}!${range}`, values);
+}
+async function appendAbaPPP(cidade, aba, range, values) {
+  const id = SHEET_IDS[cidade];
+  return await sheetsAppend(id, `${aba}!${range}`, values);
+}
+
+function dataHoje() {
+  const d = new Date();
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+}
+function agora() {
+  const d = new Date();
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+/* ═══ EQUIPE ═══ */
+let equipeData = [];
+
+async function carregarEquipe() {
+  const tbody = document.getElementById('equipe-body');
+  tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Equipe!A:P`];
+    equipeData = await lerAbaPPP(prodCidadeAtiva, 'Equipe', 'A:P');
+    renderEquipe();
+  } catch(e) { console.error(e); showToast('Erro ao carregar equipe.','error'); }
+}
+
+function renderEquipe() {
+  const tbody = document.getElementById('equipe-body');
+  const podeEditar = currentUser.perfil === 'mestre' || currentUser.perfil === 'prod';
+  if (!equipeData.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum membro cadastrado</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = equipeData.map((r,i) => {
+    const ida = r['DATA IDA']||'', volta = r['DATA VOLTA']||'';
+    let diarias = '';
+    if (ida && volta) {
+      const d1 = new Date(parseDateForInput(ida)), d2 = new Date(parseDateForInput(volta));
+      if (!isNaN(d1) && !isNaN(d2)) diarias = Math.max(0, Math.ceil((d2-d1)/86400000));
+    }
+    const valdia = parseBRL(r['VALOR/DIA (R$)']||r['VALOR/DIA']);
+    const total = diarias && valdia ? formatBRL(diarias * valdia) : (r['TOTAL (R$)']||'—');
+    const st = (r['STATUS PAGAMENTO']||'Em aberto').trim();
+    const bCls = {'Em aberto':'badge-pendente','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago':'badge-pago'}[st]||'badge-pendente';
+    const eb = podeEditar ? `<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalMembro(${i})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : '';
+    return `<tr>
+      <td><strong>${r['NOME']||'—'}</strong></td>
+      <td class="muted">${r['FUNÇÃO']||r['FUNCAO']||'—'}</td>
+      <td class="muted">${r['EQUIPE/SETOR']||'—'}</td>
+      <td class="muted">${r['DATA IDA']||'—'}</td>
+      <td class="muted">${r['DATA VOLTA']||'—'}</td>
+      <td class="muted">${diarias||r['DIÁRIAS']||'—'}</td>
+      <td class="muted">${valdia>0?formatBRL(valdia):'—'}</td>
+      <td>${total}</td>
+      <td class="muted">${r['PRECISA HOSPEDAGEM?']||'Não'}</td>
+      <td class="muted">${r['PRECISA TRANSPORTE?']||'Não'}</td>
+      <td><span class="badge ${bCls}">${st}</span></td>
+      <td class="muted">${r['PIX']||r['CONTA']||'—'}</td>
+      <td style="padding:4px">${eb}</td>
+    </tr>`;
+  }).join('');
+}
+
+function calcMembroTotal() {
+  const ida = document.getElementById('membro-ida').value;
+  const volta = document.getElementById('membro-volta').value;
+  const valdia = parseFloat(document.getElementById('membro-valdia').value)||0;
+  if (ida && volta) {
+    const d = Math.max(0, Math.ceil((new Date(volta)-new Date(ida))/86400000));
+    document.getElementById('membro-total').value = d>0&&valdia>0 ? (d*valdia).toFixed(2) : '';
+  }
+}
+
+function abrirModalMembro(idx) {
+  const r = idx !== undefined ? equipeData[idx] : null;
+  document.getElementById('membro-row-idx').value = idx !== undefined ? idx : '';
+  document.getElementById('modal-membro-titulo').textContent = r ? `Editar — ${r['NOME']}` : 'Novo membro';
+  document.getElementById('membro-nome').value = r?.['NOME']||'';
+  document.getElementById('membro-funcao').value = r?.['FUNÇÃO']||r?.['FUNCAO']||'';
+  document.getElementById('membro-setor').value = r?.['EQUIPE/SETOR']||'';
+  document.getElementById('membro-ida').value = parseDateForInput(r?.['DATA IDA']||'');
+  document.getElementById('membro-volta').value = parseDateForInput(r?.['DATA VOLTA']||'');
+  document.getElementById('membro-valdia').value = parseBRL(r?.['VALOR/DIA (R$)']||r?.['VALOR/DIA'])||'';
+  document.getElementById('membro-total').value = parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
+  document.getElementById('membro-hosp').value = r?.['PRECISA HOSPEDAGEM?']||'Não';
+  document.getElementById('membro-transp').value = r?.['PRECISA TRANSPORTE?']||'Não';
+  document.getElementById('membro-banco').value = r?.['BANCO']||'';
+  document.getElementById('membro-agencia').value = r?.['AGÊNCIA']||r?.['AGENCIA']||'';
+  document.getElementById('membro-conta').value = r?.['CONTA']||'';
+  document.getElementById('membro-pix').value = r?.['PIX']||'';
+  document.getElementById('membro-status').value = r?.['STATUS PAGAMENTO']||'Em aberto';
+  document.getElementById('membro-obs').value = r?.['OBS']||'';
+  abrirModal('modal-membro');
+}
+
+async function salvarMembro() {
+  const nome = document.getElementById('membro-nome').value.trim();
+  if (!nome) { showToast('Informe o nome.','warn'); return; }
+  const ida = document.getElementById('membro-ida').value;
+  const volta = document.getElementById('membro-volta').value;
+  let diarias = '';
+  if (ida && volta) diarias = Math.max(0, Math.ceil((new Date(volta)-new Date(ida))/86400000));
+  const valdia = parseFloat(document.getElementById('membro-valdia').value)||0;
+  const total = diarias&&valdia ? diarias*valdia : parseFloat(document.getElementById('membro-total').value)||0;
+  // Cols: NOME|FUNÇÃO|EQUIPE/SETOR|DIÁRIAS|VALOR/DIA|TOTAL|BANCO|AGÊNCIA|CONTA|PIX|STATUS PAGAMENTO|OBS|DATA IDA|DATA VOLTA|PRECISA HOSPEDAGEM?|PRECISA TRANSPORTE?
+  const row = [[
+    nome,
+    document.getElementById('membro-funcao').value.trim(),
+    document.getElementById('membro-setor').value.trim(),
+    diarias, valdia>0?valdia:'', total>0?total:'',
+    document.getElementById('membro-banco').value.trim(),
+    document.getElementById('membro-agencia').value.trim(),
+    document.getElementById('membro-conta').value.trim(),
+    document.getElementById('membro-pix').value.trim(),
+    document.getElementById('membro-status').value,
+    document.getElementById('membro-obs').value.trim(),
+    ida ? formatDateBR(ida) : '',
+    volta ? formatDateBR(volta) : '',
+    document.getElementById('membro-hosp').value,
+    document.getElementById('membro-transp').value,
+  ]];
+  try {
+    const idxRaw = document.getElementById('membro-row-idx').value;
+    if (idxRaw === '') {
+      await appendAbaPPP(prodCidadeAtiva,'Equipe','A:P',row);
+      showToast('Membro adicionado!','success');
+    } else {
+      await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${parseInt(idxRaw)+2}:P${parseInt(idxRaw)+2}`,row);
+      showToast('Membro atualizado!','success');
+    }
+    fecharModal('modal-membro');
+    await carregarEquipe();
+  } catch(e) { console.error(e); showToast('Erro ao salvar.','error'); }
+}
+
+/* ═══ HOSPEDAGEM ═══ */
+let hospedagemData = [];
+async function carregarHospedagem() {
+  try {
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Hospedagem!A:I`];
+    hospedagemData = await lerAbaPPP(prodCidadeAtiva,'Hospedagem','A:I');
+    renderHospedagem();
+  } catch(e) { console.error(e); showToast('Erro ao carregar hospedagem.','error'); }
+}
+function renderHospedagem() {
+  const tbody = document.getElementById('hospedagem-body');
+  const podeEditar = currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+  if (!hospedagemData.length) { tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`; return; }
+  tbody.innerHTML = hospedagemData.map((r,i)=>{
+    const eb = podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+    const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
+    return `<tr><td>${r['LOCAL']||'—'}</td><td class="muted">${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</td><td>${r['PESSOA']||'—'}</td><td class="muted">${r['CHECK-IN']||'—'}</td><td class="muted">${r['CHECK-OUT']||'—'}</td><td class="muted">${r['DIÁRIAS']||r['DIARIAS']||'—'}</td><td class="muted">${parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])>0?formatBRL(parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])):'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+  }).join('');
+}
+function calcDiariasHosp() {
+  const ci=document.getElementById('hosp-checkin').value, co=document.getElementById('hosp-checkout').value;
+  if(ci&&co){ const d=Math.max(0,Math.ceil((new Date(co)-new Date(ci))/86400000)); document.getElementById('hosp-diarias').value=d; calcTotalHosp(); }
+}
+function calcTotalHosp() {
+  const d=parseInt(document.getElementById('hosp-diarias').value)||0;
+  const v=parseFloat(document.getElementById('hosp-valdiaria').value)||0;
+  document.getElementById('hosp-total').value=d&&v?(d*v).toFixed(2):'';
+}
+function abrirModalHospedagem(idx) {
+  // Popula datalist com membros que precisam hospedagem
+  const pessoas = equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim').map(r=>r['NOME']);
+  document.getElementById('hosp-pessoas-list').innerHTML=pessoas.map(p=>`<option value="${p}">`).join('');
+  const r = idx!==undefined ? hospedagemData[idx] : null;
+  document.getElementById('hosp-row-idx').value=idx!==undefined?idx:'';
+  document.getElementById('modal-hosp-titulo').textContent=r?`Editar hospedagem`:'Nova hospedagem';
+  document.getElementById('hosp-local').value=r?.['LOCAL']||'';
+  document.getElementById('hosp-comodo').value=r?.['CÔMODO/QUARTO']||r?.['COMODO/QUARTO']||'';
+  document.getElementById('hosp-pessoa').value=r?.['PESSOA']||'';
+  document.getElementById('hosp-checkin').value=parseDateForInput(r?.['CHECK-IN']||'');
+  document.getElementById('hosp-checkout').value=parseDateForInput(r?.['CHECK-OUT']||'');
+  document.getElementById('hosp-diarias').value=r?.['DIÁRIAS']||r?.['DIARIAS']||'';
+  document.getElementById('hosp-valdiaria').value=parseBRL(r?.['VALOR/DIÁRIA (R$)']||r?.['VALOR/DIARIA'])||'';
+  document.getElementById('hosp-total').value=parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
+  document.getElementById('hosp-obs').value=r?.['OBS']||'';
+  abrirModal('modal-hospedagem');
+}
+async function salvarHospedagem() {
+  const local=document.getElementById('hosp-local').value.trim();
+  if(!local){showToast('Informe o local.','warn');return;}
+  const ci=document.getElementById('hosp-checkin').value,co=document.getElementById('hosp-checkout').value;
+  const row=[[local,document.getElementById('hosp-comodo').value.trim(),document.getElementById('hosp-pessoa').value.trim(),ci?formatDateBR(ci):'',co?formatDateBR(co):'',document.getElementById('hosp-diarias').value,parseFloat(document.getElementById('hosp-valdiaria').value)||'',parseFloat(document.getElementById('hosp-total').value)||'',document.getElementById('hosp-obs').value.trim()]];
+  try {
+    const i=document.getElementById('hosp-row-idx').value;
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Hospedagem','A:I',row);showToast('Hospedagem adicionada!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Hospedagem',`A${parseInt(i)+2}:I${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    fecharModal('modal-hospedagem');await carregarHospedagem();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+/* ═══ TRANSPORTE ═══ */
+let transporteData=[];
+async function carregarTransporte(){
+  try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Transporte!A:H`];
+    transporteData=await lerAbaPPP(prodCidadeAtiva,'Transporte','A:H');
+    renderTransporte();
+  }catch(e){console.error(e);showToast('Erro ao carregar transporte.','error');}
+}
+function renderTransporte(){
+  const tbody=document.getElementById('transporte-body');
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+  if(!transporteData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;return;}
+  tbody.innerHTML=transporteData.map((r,i)=>{
+    const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalTransporte(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+    return `<tr><td>${r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'—'}</td><td class="muted">${r['TRAJETO']||'—'}</td><td class="muted">${r['VAGAS']||'—'}</td><td class="muted">${r['DATA PARTIDA']||'—'}</td><td class="muted">${r['HORÁRIO']||r['HORARIO']||'—'}</td><td>${r['PESSOA']||'—'}</td><td class="muted">${r['RETORNO']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+  }).join('');
+}
+function abrirModalTransporte(idx){
+  const pessoas=equipeData.filter(r=>(r['PRECISA TRANSPORTE?']||'').toLowerCase()==='sim').map(r=>r['NOME']);
+  document.getElementById('transp-pessoas-list').innerHTML=pessoas.map(p=>`<option value="${p}">`).join('');
+  const r=idx!==undefined?transporteData[idx]:null;
+  document.getElementById('transp-row-idx').value=idx!==undefined?idx:'';
+  document.getElementById('modal-transp-titulo').textContent=r?'Editar transporte':'Novo registro';
+  document.getElementById('transp-veiculo').value=r?.['CONDUÇÃO/VEÍCULO']||r?.['CONDUCAO/VEICULO']||'';
+  document.getElementById('transp-trajeto').value=r?.['TRAJETO']||'';
+  document.getElementById('transp-vagas').value=r?.['VAGAS']||'';
+  document.getElementById('transp-data').value=parseDateForInput(r?.['DATA PARTIDA']||'');
+  document.getElementById('transp-horario').value=r?.['HORÁRIO']||r?.['HORARIO']||'';
+  document.getElementById('transp-pessoa').value=r?.['PESSOA']||'';
+  document.getElementById('transp-retorno').value=r?.['RETORNO']||'';
+  document.getElementById('transp-obs').value=r?.['OBS']||'';
+  abrirModal('modal-transporte');
+}
+async function salvarTransporte(){
+  const veic=document.getElementById('transp-veiculo').value.trim();
+  if(!veic){showToast('Informe o veículo.','warn');return;}
+  const dp=document.getElementById('transp-data').value;
+  const row=[[veic,document.getElementById('transp-trajeto').value.trim(),document.getElementById('transp-vagas').value,dp?formatDateBR(dp):'',document.getElementById('transp-horario').value,document.getElementById('transp-pessoa').value.trim(),document.getElementById('transp-retorno').value.trim(),document.getElementById('transp-obs').value.trim()]];
+  try{
+    const i=document.getElementById('transp-row-idx').value;
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Transporte','A:H',row);showToast('Adicionado!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Transporte',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    fecharModal('modal-transporte');await carregarTransporte();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+/* ═══ PULSEIRAS ═══ */
+let pulseirasData=[];
+async function carregarPulseiras(){
+  try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Pulseiras!A:H`];
+    pulseirasData=await lerAbaPPP(prodCidadeAtiva,'Pulseiras','A:H');
+    renderPulseiras();
+  }catch(e){console.error(e);showToast('Erro ao carregar pulseiras.','error');}
+}
+function renderPulseiras(){
+  const tbody=document.getElementById('pulseiras-body');
+  const met=document.getElementById('pulseiras-metricas');
+  if(!pulseirasData.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;met.innerHTML='';return;}
+  const totalSaidas=pulseirasData.reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
+  const totalSaldo=pulseirasData.reduce((s,r)=>s+(parseInt(r['SALDO'])||0),0);
+  met.innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total saídas</div><div class="metric-value accent">${totalSaidas}</div></div>
+    <div class="metric-card"><div class="metric-label">Saldo atual</div><div class="metric-value green">${totalSaldo}</div></div>`;
+  tbody.innerHTML=pulseirasData.map((r,i)=>{
+    const saldo=parseInt(r['SALDO'])||0,contagem=parseInt(r['CONTAGEM REAL'])||0;
+    const diff=contagem-saldo;
+    const diffCls=diff!==0?'diff-pos':'diff-zero';
+    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['TIPO']||'—'}</td><td class="muted">${r['ESTOQUE INICIAL']||'—'}</td><td class="muted">${r['SAÍDAS']||r['SAIDAS']||'—'}</td><td>${saldo||'—'}</td><td class="muted">${r['CONTAGEM REAL']||'—'}</td><td class="${diffCls}">${r['CONTAGEM REAL']?diff:''}</td><td class="muted">${r['SOLICITANTE']||'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px"><button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalPulseira(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td></tr>`;
+  }).join('');
+}
+function calcSaldoPulseira(){
+  const est=parseInt(document.getElementById('puls-estoque').value)||0;
+  const sai=parseInt(document.getElementById('puls-saidas').value)||0;
+  document.getElementById('puls-saldo').value=Math.max(0,est-sai);
+}
+function abrirModalPulseira(idx){
+  const r=idx!==undefined?pulseirasData[idx]:null;
+  document.getElementById('puls-dia').value=parseDateForInput(r?.['DIA']||dataHoje());
+  document.getElementById('puls-tipo').value=r?.['TIPO']||'';
+  document.getElementById('puls-estoque').value=r?.['ESTOQUE INICIAL']||'';
+  document.getElementById('puls-saidas').value=r?.['SAÍDAS']||r?.['SAIDAS']||'';
+  document.getElementById('puls-saldo').value=r?.['SALDO']||'';
+  document.getElementById('puls-contagem').value=r?.['CONTAGEM REAL']||'';
+  document.getElementById('puls-solicitante').value=r?.['SOLICITANTE']||currentUser.nome;
+  document.getElementById('puls-obs').value=r?.['OBS']||'';
+  abrirModal('modal-pulseira');
+}
+async function salvarPulseira(){
+  const dia=document.getElementById('puls-dia').value;
+  const tipo=document.getElementById('puls-tipo').value.trim();
+  if(!tipo){showToast('Informe o tipo de pulseira.','warn');return;}
+  const est=parseInt(document.getElementById('puls-estoque').value)||0;
+  const sai=parseInt(document.getElementById('puls-saidas').value)||0;
+  const saldo=Math.max(0,est-sai);
+  const row=[[dia?formatDateBR(dia):'',tipo,est||'',sai||'',saldo||'',document.getElementById('puls-contagem').value||'',document.getElementById('puls-solicitante').value.trim(),agora(),document.getElementById('puls-obs').value.trim()]];
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Pulseiras','A:I',row);
+    showToast('Registrado!','success');fecharModal('modal-pulseira');await carregarPulseiras();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+/* ═══ RÁDIOS ═══ */
+let radiosData=[];
+let radiosHistorico=[];
+async function carregarRadios(){
+  const tbody=document.getElementById('radios-body');
+  tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
+  try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Rádios!A:H`];
+    radiosData=await lerAbaPPP(prodCidadeAtiva,'Rádios','A:H');
+    // Histórico na aba separada ou linhas sem status (implementação simples: últimas 20 linhas)
+    renderRadios();
+  }catch(e){console.error(e);showToast('Erro ao carregar rádios.','error');}
+}
+function renderRadios(){
+  const tbody=document.getElementById('radios-body');
+  const met=document.getElementById('radios-metricas');
+  const livres=radiosData.filter(r=>(r['STATUS (Livre/Em uso)']||r['STATUS']||'').toLowerCase().includes('livre')).length;
+  const emUso=radiosData.filter(r=>(r['STATUS (Livre/Em uso)']||r['STATUS']||'').toLowerCase().includes('uso')).length;
+  met.innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total</div><div class="metric-value">${radiosData.length}</div></div>
+    <div class="metric-card"><div class="metric-label">Livres</div><div class="metric-value green">${livres}</div></div>
+    <div class="metric-card"><div class="metric-label">Em uso</div><div class="metric-value amber">${emUso}</div></div>`;
+  if(!radiosData.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum rádio cadastrado</td></tr>`;return;}
+  tbody.innerHTML=radiosData.map((r,i)=>{
+    const st=(r['STATUS (Livre/Em uso)']||r['STATUS']||'Livre').trim();
+    const stCls=st.toLowerCase().includes('uso')?'badge-solicitado':'badge-aprovado';
+    return `<tr>
+      <td><strong>Rádio ${r['Nº']||r['N']||i+1}</strong></td>
+      <td>${r['RESPONSÁVEL ATUAL']||r['RESPONSAVEL ATUAL']||'—'}</td>
+      <td><span class="badge ${stCls}">${st}</span></td>
+      <td class="muted">${r['FONE?']||'—'}</td>
+      <td class="muted">${r['DATA ENTREGA']||'—'}</td>
+      <td class="muted">${r['DATA DEVOLUÇÃO']||r['DATA DEVOLUCAO']||'—'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+      <td style="padding:4px;white-space:nowrap">
+        <button class="btn btn-red btn-sm" onclick="excluirRadio(${i})" title="Excluir">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+  // Popula select de rádios no modal de uso
+  const sel=document.getElementById('radio-uso-num');
+  if(sel) sel.innerHTML=radiosData.map(r=>`<option value="${r['Nº']||r['N']||''}">Rádio ${r['Nº']||r['N']||''}</option>`).join('');
+}
+function abrirModalRadioUso(){ abrirModal('modal-radio-uso'); }
+function abrirModalRadioNovo(){ document.getElementById('radio-novo-num').value=''; document.getElementById('radio-novo-obs').value=''; abrirModal('modal-radio-novo'); }
+async function salvarRadioUso(){
+  const num=document.getElementById('radio-uso-num').value;
+  const tipo=document.getElementById('radio-uso-tipo').value;
+  const resp=document.getElementById('radio-uso-resp').value.trim();
+  if(!resp){showToast('Informe o responsável.','warn');return;}
+  const fone=document.getElementById('radio-uso-fone').value;
+  const obs=document.getElementById('radio-uso-obs').value.trim();
+  const ehEmprestimo=tipo==='Empréstimo';
+  // Atualiza status do rádio
+  const idx=radiosData.findIndex(r=>(r['Nº']||r['N']||'')===num);
+  if(idx===-1){showToast('Rádio não encontrado.','error');return;}
+  const novoStatus=ehEmprestimo?'Em uso':'Livre';
+  const linha=idx+2;
+  try{
+    await gravarAbaPPP(prodCidadeAtiva,'Rádios',`B${linha}:H${linha}`,[[ehEmprestimo?resp:'',novoStatus,ehEmprestimo?agora().split(' ')[0]:'',ehEmprestimo?'':agora().split(' ')[0],fone,`${agora()} - ${tipo} - ${resp}`,obs]]);
+    showToast(`${tipo} registrado!`,'success');fecharModal('modal-radio-uso');await carregarRadios();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+async function salvarRadioNovo(){
+  const num=document.getElementById('radio-novo-num').value;
+  const obs=document.getElementById('radio-novo-obs').value.trim();
+  if(!num){showToast('Informe o número.','warn');return;}
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Rádios','A:H',[[num,'','Livre','','','','',obs]]);
+    showToast('Rádio adicionado!','success');fecharModal('modal-radio-novo');await carregarRadios();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+async function excluirRadio(idx){
+  if(!confirm(`Excluir Rádio ${radiosData[idx]['Nº']||radiosData[idx]['N']||idx+1}?`))return;
+  // Limpa a linha (não deleta para manter histórico)
+  const linha=idx+2;
+  try{
+    await gravarAbaPPP(prodCidadeAtiva,'Rádios',`A${linha}:H${linha}`,[['','','','','','','','']]);
+    showToast('Rádio removido.','warn');await carregarRadios();
+  }catch(e){console.error(e);showToast('Erro.','error');}
+}
+
+/* ═══ ALIMENTAÇÃO ═══ */
+let alimentacaoData=[];
+async function carregarAlimentacao(){
+  try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Alimentação!A:H`];
+    alimentacaoData=await lerAbaPPP(prodCidadeAtiva,'Alimentação','A:H');
+    renderAlimentacao();
+  }catch(e){console.error(e);showToast('Erro ao carregar alimentação.','error');}
+}
+function renderAlimentacao(){
+  const tbody=document.getElementById('alim-body');
+  const met=document.getElementById('alim-metricas');
+  if(!alimentacaoData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;met.innerHTML='';return;}
+  const totalVouchers=alimentacaoData.reduce((s,r)=>s+(parseInt(r['QNT VOUCHERS']||r['QTD VOUCHERS'])||0),0);
+  const totalVal=alimentacaoData.reduce((s,r)=>s+(parseBRL(r['TOTAL (R$)']||r['TOTAL'])),0);
+  const fornSet=new Set(alimentacaoData.map(r=>r['FORNECEDOR']).filter(Boolean));
+  met.innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total vouchers</div><div class="metric-value accent">${totalVouchers}</div></div>
+    <div class="metric-card"><div class="metric-label">Valor total</div><div class="metric-value green">${formatBRL(totalVal)}</div></div>
+    <div class="metric-card"><div class="metric-label">Fornecedores</div><div class="metric-value blue">${fornSet.size}</div></div>`;
+  tbody.innerHTML=alimentacaoData.map((r,i)=>{
+    const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
+    const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalAlimentacao(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['EQUIPE/SETOR']||'—'}</td><td class="muted">${r['FORNECEDOR']||'—'}</td><td class="muted">${parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])>0?formatBRL(parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])):'—'}</td><td class="muted">${r['QNT VOUCHERS']||r['QTD VOUCHERS']||'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+  }).join('');
+}
+function calcTotalAlim(){
+  const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
+  const q=parseInt(document.getElementById('alim-qtd').value)||0;
+  document.getElementById('alim-total').value=v&&q?(v*q).toFixed(2):'';
+}
+function abrirModalAlimentacao(idx){
+  const r=idx!==undefined?alimentacaoData[idx]:null;
+  document.getElementById('alim-row-idx').value=idx!==undefined?idx:'';
+  document.getElementById('modal-alim-titulo').textContent=r?'Editar registro':'Novo registro';
+  document.getElementById('alim-dia').value=parseDateForInput(r?.['DIA']||dataHoje());
+  document.getElementById('alim-setor').value=r?.['EQUIPE/SETOR']||'';
+  document.getElementById('alim-forn').value=r?.['FORNECEDOR']||'';
+  document.getElementById('alim-valvoucher').value=parseBRL(r?.['VALOR VOUCHER (R$)']||r?.['VALOR VOUCHER'])||'';
+  document.getElementById('alim-qtd').value=r?.['QNT VOUCHERS']||r?.['QTD VOUCHERS']||'';
+  document.getElementById('alim-total').value=parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
+  document.getElementById('alim-obs').value=r?.['OBS']||'';
+  abrirModal('modal-alimentacao');
+}
+async function salvarAlimentacao(){
+  const setor=document.getElementById('alim-setor').value.trim();
+  if(!setor){showToast('Informe a equipe/setor.','warn');return;}
+  const dia=document.getElementById('alim-dia').value;
+  const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
+  const q=parseInt(document.getElementById('alim-qtd').value)||0;
+  const total=v&&q?v*q:parseFloat(document.getElementById('alim-total').value)||0;
+  const row=[[dia?formatDateBR(dia):'',setor,document.getElementById('alim-forn').value.trim(),v||'',q||'',total||'',agora(),document.getElementById('alim-obs').value.trim()]];
+  try{
+    const i=document.getElementById('alim-row-idx').value;
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Alimentação','A:H',row);showToast('Registrado!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Alimentação',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    fecharModal('modal-alimentacao');await carregarAlimentacao();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+/* ═══ SINALIZAÇÕES ═══ */
+let sinalizacoesData=[];
+async function carregarSinalizacoes(){
+  try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Sinalizações!A:H`];
+    sinalizacoesData=await lerAbaPPP(prodCidadeAtiva,'Sinalizações','A:H');
+    renderSinalizacoes();
+  }catch(e){console.error(e);showToast('Erro ao carregar sinalizações.','error');}
+}
+function renderSinalizacoes(){
+  const tbody=document.getElementById('sinalizacoes-body');
+  if(!sinalizacoesData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma sinalização</td></tr>`;return;}
+  const statusOrder=['Não iniciado','Arte pronta','Em produção','Entregue','Posicionado'];
+  const stCls={'Não iniciado':'badge-pendente','Arte pronta':'badge-orcado','Em produção':'badge-solicitado','Entregue':'badge-aprovado','Posicionado':'badge-pago'};
+  tbody.innerHTML=sinalizacoesData.map((r,i)=>{
+    const st=(r['STATUS']||'Não iniciado').trim();
+    const orc=parseBRL(r['ORÇAMENTO']||r['ORCAMENTO']);
+    const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalSinalizacao(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    return `<tr><td><strong>${r['ITEM']||'—'}</strong></td><td class="muted">${r['FORNECEDOR']||'—'}</td><td><span class="badge ${stCls[st]||'badge-pendente'}">${st}</span></td><td class="muted">${r['QNT']||'—'}</td><td class="muted">${r['DIMENSÃO']||r['DIMENSAO']||'—'}</td><td class="muted">${r['DESCRIÇÃO']||r['DESCRICAO']||'—'}</td><td class="muted">${orc>0?formatBRL(orc):'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+  }).join('');
+}
+function abrirModalSinalizacao(idx){
+  const r=idx!==undefined?sinalizacoesData[idx]:null;
+  document.getElementById('sinal-row-idx').value=idx!==undefined?idx:'';
+  document.getElementById('modal-sinal-titulo').textContent=r?`Editar — ${r['ITEM']}`:'Nova sinalização';
+  document.getElementById('sinal-item').value=r?.['ITEM']||'';
+  document.getElementById('sinal-forn').value=r?.['FORNECEDOR']||'';
+  document.getElementById('sinal-status').value=r?.['STATUS']||'Não iniciado';
+  document.getElementById('sinal-qtd').value=r?.['QNT']||'';
+  document.getElementById('sinal-dim').value=r?.['DIMENSÃO']||r?.['DIMENSAO']||'';
+  document.getElementById('sinal-desc').value=r?.['DESCRIÇÃO']||r?.['DESCRICAO']||'';
+  document.getElementById('sinal-orc').value=parseBRL(r?.['ORÇAMENTO']||r?.['ORCAMENTO'])||'';
+  document.getElementById('sinal-obs').value=r?.['OBS']||'';
+  abrirModal('modal-sinalizacao');
+}
+async function salvarSinalizacao(){
+  const item=document.getElementById('sinal-item').value.trim();
+  if(!item){showToast('Informe o item.','warn');return;}
+  const row=[[item,document.getElementById('sinal-forn').value.trim(),document.getElementById('sinal-status').value,document.getElementById('sinal-qtd').value,document.getElementById('sinal-dim').value.trim(),document.getElementById('sinal-desc').value.trim(),parseFloat(document.getElementById('sinal-orc').value)||'',document.getElementById('sinal-obs').value.trim()]];
+  try{
+    const i=document.getElementById('sinal-row-idx').value;
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Sinalizações','A:H',row);showToast('Adicionada!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Sinalizações',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizada!','success');}
+    fecharModal('modal-sinalizacao');await carregarSinalizacoes();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+/* ═══ MAPA ═══ */
+let mapaPinos=[];
+let mapaEditando=false;
+let mapaPinoTemp=null;
+
+function mapaCarregarImagem(){
+  const url=document.getElementById('mapa-url-input').value.trim();
+  if(!url){showToast('Cole a URL da imagem.','warn');return;}
+  const img=document.getElementById('mapa-img');
+  const placeholder=document.getElementById('mapa-placeholder');
+  img.onload=()=>{
+    placeholder.style.display='none';
+    img.style.display='block';
+    document.getElementById('btn-mapa-editar').style.display='';
+    mapaRestaurarPinos();
+  };
+  img.onerror=()=>showToast('Não foi possível carregar a imagem. Verifique se o link é público.','error');
+  img.src=url;
+  // Salva URL por cidade
+  const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
+  cfg[prodCidadeAtiva]=url;
+  localStorage.setItem('sj2026_mapa_urls',JSON.stringify(cfg));
+}
+
+function mapaToggleEdicao(){
+  mapaEditando=!mapaEditando;
+  const overlay=document.getElementById('mapa-overlay');
+  const hint=document.getElementById('mapa-edit-hint');
+  const btn=document.getElementById('btn-mapa-editar-txt');
+  overlay.style.display=mapaEditando?'block':'none';
+  hint.style.display=mapaEditando?'':'none';
+  btn.textContent=mapaEditando?'Sair do modo edição':'Modo edição';
+}
+
+function mapaAdicionarPino(e){
+  if(!mapaEditando)return;
+  const container=document.getElementById('mapa-container');
+  const rect=container.getBoundingClientRect();
+  const x=((e.clientX-rect.left)/rect.width*100).toFixed(2);
+  const y=((e.clientY-rect.top)/rect.height*100).toFixed(2);
+  document.getElementById('pino-x').value=x;
+  document.getElementById('pino-y').value=y;
+  atualizarListaPino();
+  abrirModal('modal-pino');
+}
+
+function atualizarListaPino(){
+  const tipo=document.getElementById('pino-tipo').value;
+  const sel=document.getElementById('pino-item');
+  let opcoes=[];
+  if(tipo==='sinal') opcoes=sinalizacoesData.map(r=>r['ITEM']).filter(Boolean);
+  else opcoes=equipeData.map(r=>r['NOME']).filter(Boolean);
+  sel.innerHTML=opcoes.map(o=>`<option value="${o}">${o}</option>`).join('');
+}
+
+function confirmarPino(){
+  const x=document.getElementById('pino-x').value;
+  const y=document.getElementById('pino-y').value;
+  const tipo=document.getElementById('pino-tipo').value;
+  const item=document.getElementById('pino-item').value;
+  const ref=document.getElementById('pino-ref').value.trim();
+  if(!item){showToast('Selecione um item.','warn');return;}
+  const pino={x,y,tipo,item,ref};
+  mapaPinos.push(pino);
+  mapaRenderizarPino(pino,mapaPinos.length-1);
+  // Salva no localStorage
+  const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
+  if(!cfg[prodCidadeAtiva])cfg[prodCidadeAtiva]=[];
+  cfg[prodCidadeAtiva].push(pino);
+  localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
+  fecharModal('modal-pino');
+}
+
+function mapaRenderizarPino(pino,idx){
+  const pinos=document.getElementById('mapa-pinos');
+  pinos.style.pointerEvents='all';
+  const el=document.createElement('div');
+  el.style.cssText=`position:absolute;left:${pino.x}%;top:${pino.y}%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform 0.15s;z-index:10;`;
+  el.style.background=pino.tipo==='sinal'?'#f0a830':'#5cb8f0';
+  el.style.color=pino.tipo==='sinal'?'#0e0f0e':'#0e0f0e';
+  el.textContent=pino.tipo==='sinal'?'S':'E';
+  el.title=`${pino.item}${pino.ref?' — '+pino.ref:''}`;
+  el.addEventListener('mouseenter',()=>el.style.transform='translate(-50%,-50%) scale(1.3)');
+  el.addEventListener('mouseleave',()=>el.style.transform='translate(-50%,-50%) scale(1)');
+  el.addEventListener('click',e=>{e.stopPropagation();if(confirm(`Remover pino "${pino.item}"?`)){el.remove();mapaPinos.splice(idx,1);const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');cfg[prodCidadeAtiva]=mapaPinos.slice();localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));}});
+  pinos.appendChild(el);
+}
+
+function mapaRestaurarPinos(){
+  mapaPinos=[];
+  document.getElementById('mapa-pinos').innerHTML='';
+  const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
+  const pinos=cfg[prodCidadeAtiva]||[];
+  pinos.forEach((p,i)=>{mapaPinos.push(p);mapaRenderizarPino(p,i);});
+}
+
+function mapaCarregarLista(){
+  const lista=document.getElementById('mapa-lista');
+  const sinais=sinalizacoesData.filter(r=>r['ITEM']);
+  const equipe=equipeData.filter(r=>r['NOME']);
+  lista.innerHTML=`
+    ${sinais.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Sinalizações</div>${sinais.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['ITEM']}</div>`).join('')}`:''}
+    ${equipe.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px">Equipe</div>${equipe.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['NOME']}</div>`).join('')}`:''}
+  `;
+}
+
 
 /* ── BLOCO 8: GANTT ── */
 let ganttDragState = null;
@@ -2312,6 +3317,14 @@ function iconBell(){return`<svg width="14" height="14" viewBox="0 0 24 24" fill=
 function iconGear(){return`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;}
 
 /* ── INIT ── */
+// Setup modal overlays para sub-abas
+['modal-membro','modal-hospedagem','modal-transporte','modal-pulseira',
+ 'modal-radio-uso','modal-radio-novo','modal-alimentacao','modal-sinalizacao','modal-pino']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('click', function(e){ if(e.target===this) fecharModal(id); });
+  });
+
 restoreSession();
 </script>
 </body>
