@@ -218,6 +218,25 @@ tbody td.muted{color:var(--text2);font-family:var(--font-mono);font-size:12px}
 .sol-resumo-label{color:var(--text3);font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;flex-shrink:0}
 .sol-resumo-val{color:var(--text);font-weight:500;text-align:right}
 
+/* BLOCO 8 — GANTT */
+.gantt-table { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+.gantt-table th, .gantt-table td { white-space: nowrap; }
+.gantt-sticky { position: sticky; left: 0; background: var(--surface2); z-index: 2; }
+.gantt-sticky2 { position: sticky; left: 160px; background: var(--surface2); z-index: 2; border-right: 1px solid var(--border); }
+.gantt-head-item { background: var(--surface2) !important; padding: 8px 12px; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); border-bottom: 1px solid var(--border); }
+.gantt-head-date { background: var(--surface2) !important; padding: 6px 4px; font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-align: center; border-bottom: 1px solid var(--border); min-width: 32px; border-left: 1px solid var(--border2); }
+.gantt-head-date.today { color: var(--accent); background: var(--accent-dim) !important; }
+.gantt-row td { padding: 6px 0; border-bottom: 1px solid var(--border2); vertical-align: middle; }
+.gantt-row:hover td { background: var(--surface3); }
+.gantt-row .gantt-sticky { padding: 6px 12px; min-width: 160px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.gantt-row .gantt-sticky2 { padding: 6px 10px; min-width: 80px; font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+.gantt-cell { min-width: 32px; height: 32px; padding: 3px 2px; border-left: 1px solid var(--border2); position: relative; }
+.gantt-cell.today-col { background: rgba(212,240,74,0.05); border-left: 1px solid rgba(212,240,74,0.3); }
+.gantt-bar { height: 20px; border-radius: 4px; background: var(--accent); opacity: 0.85; cursor: grab; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 600; color: #0e0f0e; white-space: nowrap; overflow: hidden; transition: opacity 0.15s; position: absolute; top: 6px; }
+.gantt-bar:hover { opacity: 1; }
+.gantt-bar.dragging { opacity: 0.6; cursor: grabbing; }
+.gantt-cat-row td { background: var(--surface3) !important; color: var(--accent); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 12px !important; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
 /* BLOCO 4 */
 .prod-sub{display:none}
 .prod-sub.active{display:block}
@@ -395,7 +414,17 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </table>
           </div>
         </div>
-        <div id="prod-sub-cronograma" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">📅</div><div class="empty-title">Cronograma (Gantt)</div><div class="empty-sub">Bloco 8</div></div></div>
+        <div id="prod-sub-cronograma" class="prod-sub">
+          <div class="section-header" style="margin-bottom:12px">
+            <span class="section-title" id="gantt-titulo">Cronograma</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3)">Hoje em destaque</span>
+            </div>
+          </div>
+          <div id="gantt-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)">
+            <div class="empty-state" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Carregando cronograma…</div></div>
+          </div>
+        </div>
         <div id="prod-sub-equipe" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">👥</div><div class="empty-title">Equipe</div><div class="empty-sub">Bloco 9</div></div></div>
         <div id="prod-sub-hospedagem" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🏨</div><div class="empty-title">Hospedagem</div><div class="empty-sub">Bloco 9</div></div></div>
         <div id="prod-sub-transporte" class="prod-sub"><div class="empty-state" style="padding:60px 24px"><div class="empty-icon">🚐</div><div class="empty-title">Transporte</div><div class="empty-sub">Bloco 9</div></div></div>
@@ -960,17 +989,27 @@ function setupCityFilter(){
   const isProd=currentUser.perfil==='prod', isVend=currentUser.perfil==='vend';
   const df=document.getElementById('city-filter-desktop');
   const mf=document.getElementById('city-filter-mobile');
-  if(isProd||isVend){df.style.display='none';mf.style.display='none';}
-  else{df.style.display='flex';mf.style.display='flex';}
+  // desktop: flex quando visível; mobile: deixa CSS (@media) controlar
+  if(isProd||isVend){
+    df.style.display='none';
+    mf.style.display='none';
+  } else {
+    df.style.display='flex';
+    mf.style.display=''; // deixa o CSS decidir (só aparece em mobile via @media)
+  }
   [df,mf].forEach(wrap=>{
+    // Limpa e recria pills sem duplicar listeners
+    const cities=[{v:'todas',l:'Todas'},{v:'irece',l:'Irecê'},{v:'jequie',l:'Jequié'},{v:'serrinha',l:'Serrinha'}];
+    wrap.innerHTML=cities.map(x=>`<button class="city-pill${x.v===currentCity?' active':''}" data-city="${x.v}">${x.l}</button>`).join('');
     wrap.querySelectorAll('.city-pill').forEach(pill=>{
-      pill.classList.toggle('active',pill.dataset.city===currentCity);
-      const c=pill.cloneNode(true);pill.parentNode.replaceChild(c,pill);
-      c.addEventListener('click',()=>{
-        currentCity=c.dataset.city;
+      pill.addEventListener('click',()=>{
+        currentCity=pill.dataset.city;
         localStorage.setItem('sj2026_city',currentCity);
-        document.querySelectorAll('[data-city]').forEach(p=>p.classList.toggle('active',p.dataset.city===currentCity));
-        if(appData&&Object.keys(appData.pppData).length>0)renderDashboard();
+        document.querySelectorAll('.city-pill[data-city]').forEach(p=>p.classList.toggle('active',p.dataset.city===currentCity));
+        if(appData&&Object.keys(appData.pppData).length>0){
+          renderDashboard();
+          if(despSolicitacoes.length>0)renderDespesas();
+        }
       });
     });
   });
@@ -1250,6 +1289,7 @@ function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdPlanilha();}
 function navegarProdSub(subId){
   Object.entries(PROD_SUB_IDS).forEach(([k,v])=>{const el=document.getElementById(v);if(el)el.classList.toggle('active',k===subId);});
   if(subId==='prod-planilha')renderProdPlanilha();
+  if(subId==='prod-cronograma')renderGantt();
 }
 
 /* ── MODAL ── */
@@ -1376,6 +1416,192 @@ function parseDateForInput(br){
   return'';
 }
 
+/* ── BLOCO 8: GANTT ── */
+let ganttDragState = null;
+
+function renderGantt() {
+  const cidade = prodCidadeAtiva;
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const wrap = document.getElementById('gantt-wrap');
+  const nm = {irece:'Irecê', serrinha:'Serrinha', jequie:'Jequié'};
+  document.getElementById('gantt-titulo').textContent = `Cronograma — ${nm[cidade]||cidade}`;
+
+  // Coleta itens com data e dias
+  const itens = [];
+  prod.forEach((row, idx) => {
+    const item = (row['ITEM']||'').trim();
+    if (!item) return;
+    const dataRaw = (row['DATA INÍCIO']||'').trim();
+    const dias = parseInt(row['DIAS']) || 0;
+    if (!dataRaw || !dias) return;
+    let dataInicio = null;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataRaw)) {
+      const [d,m,a] = dataRaw.split('/');
+      dataInicio = new Date(`${a}-${m}-${d}`);
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dataRaw)) {
+      dataInicio = new Date(dataRaw);
+    }
+    if (!dataInicio || isNaN(dataInicio)) return;
+    itens.push({ row, idx, item, cat: (row['CATEGORIA']||'').trim(), dataInicio, dias, status: (row['STATUS']||'Pendente').trim() });
+  });
+
+  if (!itens.length) {
+    wrap.innerHTML = `<div class="empty-state" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-title">Nenhum item com data e duração definidos</div><div class="empty-sub">Preencha DATA INÍCIO e DIAS na aba Planilha</div></div>`;
+    return;
+  }
+
+  // Range de datas: 7 dias antes do primeiro item até 7 dias após o último
+  const datas = itens.map(i => [i.dataInicio, new Date(i.dataInicio.getTime() + (i.dias-1)*86400000)]).flat();
+  const minDate = new Date(Math.min(...datas.map(d=>d.getTime())));
+  const maxDate = new Date(Math.max(...datas.map(d=>d.getTime())));
+  minDate.setDate(minDate.getDate() - 3);
+  maxDate.setDate(maxDate.getDate() + 7);
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const totalDias = Math.ceil((maxDate - minDate) / 86400000) + 1;
+
+  // Gera array de datas do range
+  const rangeDates = [];
+  for (let i = 0; i < totalDias; i++) {
+    const d = new Date(minDate.getTime() + i * 86400000);
+    rangeDates.push(d);
+  }
+
+  // Meses para cabeçalho agrupado
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  // Cabeçalho de meses
+  let mesHeader = '';
+  let mesAtual = null, mesCount = 0;
+  rangeDates.forEach((d, i) => {
+    const mes = d.getMonth();
+    if (mes !== mesAtual) {
+      if (mesAtual !== null) mesHeader += `<th colspan="${mesCount}" style="text-align:center;padding:4px;font-family:var(--font-mono);font-size:10px;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border2);border-left:1px solid var(--border)">${meses[mesAtual]}</th>`;
+      mesAtual = mes; mesCount = 1;
+    } else { mesCount++; }
+    if (i === rangeDates.length - 1) mesHeader += `<th colspan="${mesCount}" style="text-align:center;padding:4px;font-family:var(--font-mono);font-size:10px;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border2);border-left:1px solid var(--border)">${meses[mesAtual]}</th>`;
+  });
+
+  // Cabeçalho de dias
+  const diasHeader = rangeDates.map(d => {
+    const isToday = d.getTime() === hoje.getTime();
+    const dom = d.getDay();
+    const isWeekend = dom === 0 || dom === 6;
+    return `<th class="gantt-head-date${isToday?' today':''}" style="${isWeekend?'opacity:0.5':''}">${d.getDate()}</th>`;
+  }).join('');
+
+  // Linhas
+  let catAtual = null;
+  let rowsHtml = '';
+  const podeEditar = currentUser.perfil === 'mestre' || currentUser.perfil === 'prod';
+
+  itens.forEach(item => {
+    // Linha de categoria
+    if (item.cat !== catAtual) {
+      catAtual = item.cat;
+      rowsHtml += `<tr class="gantt-cat-row"><td class="gantt-sticky" colspan="2">▸ ${item.cat}</td>${rangeDates.map(()=>'<td style="padding:0;height:24px"></td>').join('')}</tr>`;
+    }
+
+    const status = item.status;
+    const barColor = {
+      'Pendente':'#5a5c55', 'Orçado':'#5cb8f0',
+      'Pagamento solicitado':'#f0a830','Pagamento aprovado':'#a78bfa',
+      'Pago parcial':'#4cdb8a','Pago':'#d4f04a',
+    }[status] || '#5a5c55';
+
+    // Calcula quais células cobrir
+    const itemStart = item.dataInicio.getTime();
+    const itemEnd = itemStart + (item.dias - 1) * 86400000;
+
+    // Célula de início da barra
+    const startIdx = rangeDates.findIndex(d => d.getTime() === itemStart);
+    const barWidth = item.dias * 32; // px por dia
+
+    const cells = rangeDates.map((d, ci) => {
+      const isToday = d.getTime() === hoje.getTime();
+      const isStart = d.getTime() === itemStart;
+      const inRange = d.getTime() >= itemStart && d.getTime() <= itemEnd;
+      let inner = '';
+      if (isStart) {
+        inner = `<div class="gantt-bar" data-idx="${item.idx}" style="width:${barWidth}px;background:${barColor};left:2px"
+          draggable="${podeEditar}"
+          ondragstart="ganttDragStart(event,${item.idx})"
+          title="${item.item} — ${item.dias} dias">
+          ${item.dias > 3 ? item.item.substring(0,16) : ''}
+        </div>`;
+      }
+      return `<td class="gantt-cell${isToday?' today-col':''}">${inner}</td>`;
+    }).join('');
+
+    rowsHtml += `<tr class="gantt-row">
+      <td class="gantt-sticky" title="${item.item}"><strong style="font-size:12px">${item.item.length>20?item.item.substring(0,18)+'…':item.item}</strong></td>
+      <td class="gantt-sticky2">${item.dias}d</td>
+      ${cells}
+    </tr>`;
+  });
+
+  // Drop zones — cada célula do header vira drop target
+  const dropHeader = rangeDates.map((d, ci) => {
+    const isToday = d.getTime() === hoje.getTime();
+    return `<th class="gantt-head-date${isToday?' today':''}"
+      ondragover="event.preventDefault()"
+      ondrop="ganttDrop(event,${d.getTime()})">
+      ${d.getDate()}
+    </th>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="gantt-table">
+    <thead>
+      <tr>
+        <th class="gantt-sticky gantt-head-item" rowspan="3" style="min-width:160px;max-width:160px">Item</th>
+        <th class="gantt-sticky2 gantt-head-item" rowspan="3" style="min-width:80px">Dur.</th>
+        ${mesHeader}
+      </tr>
+      <tr>${dropHeader}</tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>`;
+
+  // Scroll para o dia atual
+  setTimeout(() => {
+    const todayEl = wrap.querySelector('.today-col');
+    if (todayEl) {
+      const rect = todayEl.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      wrap.scrollLeft = todayEl.offsetLeft - wrapRect.width / 2;
+    }
+  }, 50);
+}
+
+function ganttDragStart(e, idx) {
+  ganttDragState = { idx };
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+async function ganttDrop(e, timestampMs) {
+  if (!ganttDragState) return;
+  e.preventDefault();
+  const { idx } = ganttDragState;
+  ganttDragState = null;
+  const cidade = prodCidadeAtiva;
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const row = prod[idx];
+  if (!row) return;
+  const novaData = new Date(timestampMs);
+  const novaDataBR = formatDateBR(`${novaData.getFullYear()}-${(novaData.getMonth()+1).toString().padStart(2,'0')}-${novaData.getDate().toString().padStart(2,'0')}`);
+  try {
+    const linha = idx + 2;
+    await sheetsWrite(SHEET_IDS[cidade], `Produção!E${linha}`, [[novaDataBR]]);
+    delete sheetsCache[`${SHEET_IDS[cidade]}::Produção!A:O`];
+    await loadPPP(cidade);
+    renderGantt();
+    showToast(`Data de "${row['ITEM']}" atualizada.`, 'success');
+  } catch(err) {
+    console.error('ganttDrop:', err);
+    showToast('Erro ao atualizar data.', 'error');
+  }
+}
+
 /* ── BLOCO 7: DESPESAS ── */
 let despSolicitacoes = [];
 let despPagIdx = null;
@@ -1398,16 +1624,18 @@ function renderDespesas() {
   const wrap = document.getElementById('desp-table-wrap');
   const filtroStatus = document.getElementById('desp-filtro-status').value;
   const u = currentUser;
+  const nm = {irece:'Irecê', serrinha:'Serrinha', jequie:'Jequié'};
 
   let rows = despSolicitacoes;
 
   // Filtro por perfil
   if (u.perfil === 'prod') {
-    // Produtor vê só as suas (cidade + solicitante)
-    rows = rows.filter(r =>
-      (r['CIDADE']||'').toLowerCase().includes(u.cidade) ||
-      (r['SOLICITANTE']||'').toLowerCase() === u.nome.toLowerCase()
-    );
+    const cidadeNome = nm[u.cidade] || u.cidade;
+    rows = rows.filter(r => (r['CIDADE']||'').trim() === cidadeNome);
+  } else if (currentCity && currentCity !== 'todas') {
+    // Filtro de cidade global para Mestre/Financeiro/Sócio
+    const cidadeNome = nm[currentCity] || currentCity;
+    rows = rows.filter(r => (r['CIDADE']||'').trim() === cidadeNome);
   }
 
   // Filtro por status
@@ -1425,6 +1653,8 @@ function renderDespesas() {
 
   const linhas = rows.map(r => {
     const realIdx = despSolicitacoes.indexOf(r);
+    const rowId = `desp-row-${realIdx}`;
+    const detId = `desp-det-${realIdx}`;
     const status = (r['STATUS']||'').trim();
     const bCls = {
       'Em aberto':           'badge-pendente',
@@ -1439,15 +1669,34 @@ function renderDespesas() {
     const valPago = parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
     const comp    = r['OBS / COMPROVANTE'] || r['OBS/COMPROVANTE'] || '';
     const compHtml = comp && comp.startsWith('http')
-      ? `<a href="${comp}" target="_blank" style="color:var(--blue);font-size:11px">Ver</a>`
-      : comp ? `<span style="font-size:11px;color:var(--text3)">${comp.substring(0,20)}…</span>`
+      ? `<a href="${comp}" target="_blank" style="color:var(--blue);font-size:11px">↗ Ver</a>`
+      : comp ? `<span style="font-size:11px;color:var(--text3)">${comp.substring(0,30)}</span>`
       : `<span style="color:var(--text3);font-size:11px">—</span>`;
 
     const pagarBtn = podePagar && status === 'Pagamento aprovado'
-      ? `<button class="btn btn-primary btn-sm" onclick="abrirModalPagamento(${realIdx})">Registrar pgto</button>`
+      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();abrirModalPagamento(${realIdx})">Registrar pgto</button>`
       : '';
 
-    return `<tr>
+    // Linha de detalhe expandida
+    const detRow = `<tr id="${detId}" class="desp-detail" style="display:none">
+      <td colspan="11" style="padding:0">
+        <div style="padding:12px 16px;background:var(--surface3);border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Favorecido</span><div style="font-size:13px;margin-top:3px">${r['FAVORECIDO']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Banco</span><div style="font-size:13px;margin-top:3px">${r['BANCO']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Agência</span><div style="font-size:13px;margin-top:3px">${r['AGÊNCIA']||r['AGENCIA']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Conta</span><div style="font-size:13px;margin-top:3px">${r['CONTA']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">PIX</span><div style="font-size:13px;margin-top:3px">${r['PIX']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">WhatsApp</span><div style="font-size:13px;margin-top:3px">${r['WHATSAPP']||'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Custo orçado 2026</span><div style="font-size:13px;margin-top:3px">${parseBRL(r['CUSTO 2026 (R$)']||r['CUSTO 2026'])>0?formatBRL(parseBRL(r['CUSTO 2026 (R$)']||r['CUSTO 2026'])):'—'}</div></div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Valor pago</span><div style="font-size:13px;margin-top:3px;color:var(--green)">${valPago>0?formatBRL(valPago):'—'}</div></div>
+          <div style="grid-column:1/-1"><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Descrição / Justificativa</span><div style="font-size:13px;margin-top:3px;color:var(--text2)">${r['DESCRIÇÃO / JUSTIFICATIVA']||r['DESCRICAO']||'—'}</div></div>
+          ${comp?`<div style="grid-column:1/-1"><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Comprovante</span><div style="margin-top:3px">${compHtml}</div></div>`:''}
+          ${pagarBtn?`<div style="grid-column:1/-1">${pagarBtn}</div>`:''}
+        </div>
+      </td>
+    </tr>`;
+
+    return `<tr id="${rowId}" style="cursor:pointer" onclick="toggleDespDetalhe('${detId}')">
       <td class="muted">${r['DATA']||'—'}</td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
@@ -1457,16 +1706,15 @@ function renderDespesas() {
       <td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r['FAVORECIDO']||'—'}</td>
       <td class="muted">${r['PIX']||r['CONTA']||'—'}</td>
       <td class="muted">${r['APROVADO POR']||'—'}</td>
-      <td>${compHtml}</td>
-      <td style="padding:4px;white-space:nowrap">${pagarBtn}</td>
-    </tr>`;
+      <td><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="desp-chevron" id="chev-${detId}"><path d="M6 9l6 6 6-6"/></svg></td>
+    </tr>${detRow}`;
   }).join('');
 
   wrap.innerHTML = `<div class="table-wrap"><table>
     <thead><tr>
       <th>Data</th><th>Cidade</th><th>Item</th><th>Parcelas</th>
       <th>Valor</th><th>Status</th><th>Favorecido</th>
-      <th>PIX/Conta</th><th>Aprovado por</th><th>Comprovante</th><th></th>
+      <th>PIX/Conta</th><th>Aprovado por</th><th style="width:28px"></th>
     </tr></thead>
     <tbody>${linhas}</tbody>
   </table></div>`;
@@ -1562,6 +1810,15 @@ async function atualizarValorPagoPPP(solRow, totalPago) {
   // Col J = VALOR PAGO (10ª coluna)
   await sheetsWrite(sheetId, `Produção!J${linha}`, [[totalPago]]);
   delete sheetsCache[`${sheetId}::Produção!A:O`];
+}
+
+function toggleDespDetalhe(detId) {
+  const det = document.getElementById(detId);
+  if (!det) return;
+  const visible = det.style.display !== 'none';
+  det.style.display = visible ? 'none' : 'table-row';
+  const chev = document.getElementById('chev-' + detId);
+  if (chev) chev.style.transform = visible ? '' : 'rotate(180deg)';
 }
 
 /* ── BLOCO 6: APROVAÇÕES ── */
