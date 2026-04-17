@@ -376,6 +376,11 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div id="alerts-container"><div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-title">Nenhum alerta</div></div></div>
           </div>
         </div>
+        <!-- Resumo PPP -->
+        <div class="card" style="margin-top:16px" id="dash-resumo-wrap">
+          <div class="section-header"><span class="section-title">Resumo PPP</span></div>
+          <div id="dash-resumo"></div>
+        </div>
       </div>
 
       <!-- PRODUÇÃO -->
@@ -1586,25 +1591,46 @@ function setupCountdown(){
 }
 
 /* ── DASHBOARD ── */
-function parseBRLSheet(s){return parseBRL((s||'').toString().replace('R$','').replace(/\./g,'').replace(',','.').trim());}
+// Converte valor formatado do Sheets (ex: "R$ 30.000,00") para número
+function parseBRLSheet(s){
+  if(!s) return 0;
+  const clean = s.toString()
+    .replace(/R\$\s*/g,'')   // remove R$
+    .replace(/\./g,'')        // remove pontos de milhar
+    .replace(',','.')         // vírgula decimal → ponto
+    .trim();
+  const n = parseFloat(clean);
+  return isNaN(n) ? 0 : n;
+}
 
 function renderDashboard(){
   const cidade=currentUser.cidade||(currentCity==='todas'?null:currentCity);
   const cidades=cidade?[cidade]:['irece','serrinha','jequie'];
 
-  // Tenta usar aba Resumo (B8=Total Geral Previsto, C8=Total Geral Pago)
-  let orcTotal=0,pagoTotal=0,temResumo=false;
+  // Métricas do Resumo por cidade (B3:D6 = Produção/Equipe/Hospedagem/Alimentação, B8=Total Geral)
+  // Estrutura: linha 3=Produção, 4=Equipe, 5=Hospedagem, 6=Alimentação, 8=Total Geral
+  // Colunas: A=label, B=Previsto, C=Pago, D=Diferença
+  let orcTotal=0, pagoTotal=0, temResumo=false;
+  const resumoPorCidade = {};
+
   cidades.forEach(c=>{
     const resumo=(appData.pppData[c]&&appData.pppData[c].resumo)||[];
+    // Log detalhado para debug
+    console.log(`[dash] ${c} resumo length=${resumo.length}`);
+    resumo.forEach((row,ri)=>{ if(row&&row.length>0) console.log(`[dash] ${c} linha ${ri+1}:`, JSON.stringify(row)); });
     if(resumo.length>=8){
-      const prev=resumo[7]&&resumo[7][1]?parseBRLSheet(resumo[7][1]):0;
-      const pago=resumo[7]&&resumo[7][2]?parseBRLSheet(resumo[7][2]):0;
-      if(prev>0){orcTotal+=prev;temResumo=true;}
+      const totalRow = resumo[7] || [];
+      console.log(`[dash] ${c} TOTAL GERAL row[7]:`, JSON.stringify(totalRow));
+      console.log(`[dash] ${c} B8 raw="${totalRow[1]}" → parseBRLSheet=${parseBRLSheet(totalRow[1])}`);
+      const prev = parseBRLSheet(totalRow[1]);
+      const pago = parseBRLSheet(totalRow[2]);
+      if(prev>0){ orcTotal+=prev; temResumo=true; }
       pagoTotal+=pago;
+      resumoPorCidade[c] = resumo;
     }
   });
 
-  // Fallback: soma linha a linha da Produção
+  // Fallback linha a linha se Resumo não carregou
   if(!temResumo){
     cidades.forEach(c=>{
       const prod=(appData.pppData[c]&&appData.pppData[c].producao)||[];
@@ -1627,8 +1653,62 @@ function renderDashboard(){
   setMetric('m-realizado',pagoTotal>0?formatBRL(pagoTotal):'R$ —');
   setMetric('m-custo2025',c2025>0?formatBRL(c2025):'R$ —');
   setMetric('m-receitas','R$ —');
+
   renderDashboardAlerts(cidades);
   renderBudgetChart(cidades);
+  renderDashboardResumo(resumoPorCidade, cidades);
+}
+
+function renderDashboardResumo(resumoPorCidade, cidades) {
+  const wrap = document.getElementById('dash-resumo');
+  if (!wrap) return;
+  const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  // Linhas do resumo: índice 2=Produção, 3=Equipe, 4=Hospedagem, 5=Alimentação, 7=Total Geral
+  const linhas = [
+    {idx:2, label:'Produção', cor:'var(--accent)'},
+    {idx:3, label:'Equipe',   cor:'var(--blue)'},
+    {idx:4, label:'Hospedagem', cor:'var(--amber)'},
+    {idx:5, label:'Alimentação', cor:'var(--green)'},
+    {idx:7, label:'TOTAL GERAL', cor:'var(--text)', bold:true},
+  ];
+  // Determina se mostra uma cidade ou todas
+  const cidadesComDados = cidades.filter(c=>resumoPorCidade[c]);
+  if(!cidadesComDados.length){
+    wrap.innerHTML='';return;
+  }
+  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr>
+      <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)">Categoria</th>
+      ${cidadesComDados.map(c=>`
+        <th colspan="2" style="padding:8px 12px;text-align:center;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border);background:var(--surface2)">${nm[c]||c}</th>
+      `).join('')}
+    </tr>
+    <tr>
+      <th style="padding:4px 12px;background:var(--surface2);border-bottom:1px solid var(--border)"></th>
+      ${cidadesComDados.map(()=>`
+        <th style="padding:4px 8px;text-align:right;font-family:var(--font-mono);font-size:9px;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border)">Previsto</th>
+        <th style="padding:4px 8px;text-align:right;font-family:var(--font-mono);font-size:9px;color:var(--green);background:var(--surface2);border-bottom:1px solid var(--border)">Pago</th>
+      `).join('')}
+    </tr></thead>
+    <tbody>`;
+  linhas.forEach(({idx,label,cor,bold})=>{
+    const isTot = bold;
+    const rowStyle = isTot ? 'border-top:2px solid var(--border);background:var(--surface3)' : 'border-bottom:1px solid var(--border2)';
+    html += `<tr style="${rowStyle}">
+      <td style="padding:9px 12px;color:${cor};${bold?'font-weight:700':''}${isTot?';font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase':''}">${label}</td>
+      ${cidadesComDados.map(c=>{
+        const resumo=resumoPorCidade[c]||[];
+        const row=resumo[idx]||[];
+        const prev=parseBRLSheet(row[1]);
+        const pago=parseBRLSheet(row[2]);
+        const diff=prev>0&&pago>0?((pago/prev)*100):0;
+        return `<td style="padding:9px 8px;text-align:right;color:var(--text);${bold?'font-weight:700':''}">${prev>0?formatBRL(prev):'—'}</td>
+                <td style="padding:9px 8px;text-align:right;color:var(--green);${bold?'font-weight:700':''}">${pago>0?formatBRL(pago):'—'}${pago>0&&prev>0?`<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">${diff.toFixed(0)}%</div>`:''}</td>`;
+      }).join('')}
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
 }
 function setMetric(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 
@@ -2076,31 +2156,27 @@ async function solicitarPagamentoMembro() {
   const r=equipeData[parseInt(idxRaw)];
   if(!r)return;
   const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
-  // Atualiza status na planilha para "Pagamento solicitado"
-  try {
-    await gravarAbaPPP(prodCidadeAtiva,'Equipe',`K${parseInt(idxRaw)+2}`,[['Pagamento solicitado']]);
-    // Cria item na Produção para aparecer no dashboard
-    const catEquipe='OPERAÇÃO', subEquipe='PRODUÇÃO | STAFF';
-    await appendAbaPPP(prodCidadeAtiva,'Produção','A:N',[[catEquipe,r['NOME'],1,parseInt(r['DIÁRIAS']||r['DIARIAS'])||1,'',parseBRL(r['VALOR/DIA (R$)']||r['VALOR/DIA'])||'',0,total||'',total||'',0,'Pagamento solicitado',r['NOME'],`Pagamento equipe — ${r['FUNÇÃO']||r['FUNCAO']||''}`,subEquipe]]);
-    // Invalida caches
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Equipe!A:P`];
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Produção!A:O`];
-    fecharModal('modal-membro');
-    // Navega para Solicitação com dados pré-preenchidos
-    solDadosPreenchidos = {
-      cidade: prodCidadeAtiva,
-      categoria: catEquipe,
-      item: r['NOME'],
-      descricao: `Pagamento de equipe — ${r['FUNÇÃO']||r['FUNCAO']||''} — ${r['DIÁRIAS']||r['DIARIAS']||''} diárias`,
-      custoOrcado: total,
-      favorecido: r['NOME'],
-      banco: r['BANCO']||'', agencia: r['AGÊNCIA']||r['AGENCIA']||'',
-      conta: r['CONTA']||'', pix: r['PIX']||'',
-      whatsapp: r['WHATSAPP']||'',
-    };
-    navigateTo('solicitacao');
-    showToast('Pré-preenchendo solicitação de pagamento…','success');
-  }catch(e){console.error(e);showToast('Erro ao solicitar pagamento.','error');}
+  const setor=r['EQUIPE/SETOR']||'';
+  const item=setor?`${setor} — ${r['NOME']}`:r['NOME'];
+  // NÃO atualiza status aqui — só atualiza quando a solicitação for enviada com sucesso
+  // Guarda o índice para atualizar depois
+  solDadosPreenchidos = {
+    cidade: prodCidadeAtiva,
+    categoria: 'EQUIPE',
+    item: item,
+    descricao: `Pagamento de equipe — ${r['FUNÇÃO']||r['FUNCAO']||''} — ${r['DIÁRIAS']||r['DIARIAS']||''} diárias`,
+    custoOrcado: total,
+    favorecido: r['NOME'],
+    banco: r['BANCO']||'', agencia: r['AGÊNCIA']||r['AGENCIA']||'',
+    conta: r['CONTA']||'', pix: r['PIX']||'',
+    whatsapp: r['WHATSAPP']||'',
+    // Para atualizar status na equipe após envio bem-sucedido
+    _equipeIdx: parseInt(idxRaw),
+    _equipeCidade: prodCidadeAtiva,
+  };
+  fecharModal('modal-membro');
+  navigateTo('solicitacao');
+  showToast('Preencha e confirme a solicitação de pagamento.','info');
 }
 
 /* ═══════════════════════════════════════
@@ -2121,16 +2197,23 @@ async function carregarHospedagem() {
   }catch(e){console.error(e);showToast('Erro ao carregar hospedagem.','error');}
 }
 
-function renderHospedagem() {
-  const tbody=document.getElementById('hospedagem-body');
-  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+function getDiasBetween(ci, co) {
+  // Retorna array de strings YYYY-MM-DD entre ci e co
+  if(!ci||!co) return [];
+  const start=new Date(parseDateForInput(ci)), end=new Date(parseDateForInput(co));
+  if(isNaN(start)||isNaN(end)) return [];
+  const dias=[];
+  const cur=new Date(start);
+  while(cur<end){dias.push(cur.toISOString().split('T')[0]);cur.setDate(cur.getDate()+1);}
+  return dias;
+}
 
-  // Alerta: quem precisa de hospedagem mas não está alocado
+function renderHospedagem() {
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
   const precisam=equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim');
   const alocados=new Set(hospAlocData.map(r=>(r['PESSOA']||'').trim()));
-  const semAloc=precisam.filter(r=>!(alocados.has((r['NOME']||'').trim())));
+  const semAloc=precisam.filter(r=>!alocados.has((r['NOME']||'').trim()));
 
-  // Métricas simples no topo
   const totalComodos=hospedagemData.length;
   const totalVagas=hospedagemData.reduce((s,r)=>s+(parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0),0);
   document.getElementById('hosp-metricas').innerHTML=`
@@ -2138,18 +2221,15 @@ function renderHospedagem() {
     <div class="metric-card"><div class="metric-label">Vagas totais</div><div class="metric-value blue">${totalVagas}</div></div>
     <div class="metric-card"><div class="metric-label">Precisam hosp.</div><div class="metric-value">${precisam.length}</div></div>
     <div class="metric-card"><div class="metric-label">Sem alocação</div><div class="metric-value ${semAloc.length?'amber':''}">${semAloc.length}</div></div>`;
+  document.getElementById('hosp-alerta').innerHTML=semAloc.length
+    ?`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>Sem alocação: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`:'';
 
-  if(semAloc.length){
-    document.getElementById('hosp-alerta').innerHTML=`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>${semAloc.length} pessoa(s) sem alocação: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`;
-  } else {
-    document.getElementById('hosp-alerta').innerHTML='';
-  }
-
+  const tbody=document.getElementById('hospedagem-body');
   if(!hospedagemData.length){
-    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum cômodo cadastrado</td></tr>`;return;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum cômodo cadastrado</td></tr>`;return;
   }
 
-  // Agrupa por local
+  // Agrupa por local e exibe grade de dias por cômodo
   const byLocal={};
   hospedagemData.forEach((r,i)=>{
     const loc=r['LOCAL']||'Sem local';
@@ -2159,29 +2239,85 @@ function renderHospedagem() {
 
   let html='';
   Object.entries(byLocal).forEach(([loc,items])=>{
-    html+=`<tr class="cat-row"><td colspan="10"><span style="opacity:0.5;margin-right:6px">▸</span>${loc}</td></tr>`;
+    html+=`<tr class="cat-row"><td colspan="9"><span style="opacity:0.5;margin-right:6px">▸</span>${loc}</td></tr>`;
     items.forEach(({r,i})=>{
       const cap=parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0;
-      const alocNesteCom=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
-      const ocup=alocNesteCom.length;
+      const dias=getDiasBetween(r['CHECK-IN'],r['CHECK-OUT']);
       const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
-      const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';;
-      const alocBtn=podeEditar&&ocup<cap?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocHosp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
-      const pessoasAloc=alocNesteCom.map(a=>`<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);padding:1px 6px;border-radius:10px;margin-right:3px">${a['PESSOA']||''}</span>`).join('');
+      const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+      const alocBtn=podeEditar?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocHosp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
+
+      // Grade de alocações: linhas=vagas, colunas=dias
+      let gradeHtml='';
+      if(dias.length>0&&cap>0){
+        gradeHtml=`<div style="overflow-x:auto;margin-top:8px"><table style="border-collapse:collapse;font-size:11px">
+          <thead><tr>
+            <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);white-space:nowrap;border:1px solid var(--border2)">Vaga</th>
+            ${dias.map(d=>{
+              const dd=d.split('-');
+              const isHoje=d===new Date().toISOString().split('T')[0];
+              return `<th style="padding:3px 6px;background:${isHoje?'var(--accent-dim)':'var(--surface3)'};color:${isHoje?'var(--accent)':'var(--text3)'};font-family:var(--font-mono);font-size:9px;border:1px solid var(--border2);white-space:nowrap">${parseInt(dd[2])}/${parseInt(dd[1])}</th>`;
+            }).join('')}
+            <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);border:1px solid var(--border2)"></th>
+          </tr></thead><tbody>`;
+        for(let v=0;v<cap;v++){
+          gradeHtml+=`<tr>
+            <td style="padding:3px 8px;background:var(--surface2);font-family:var(--font-mono);font-size:10px;color:var(--text3);border:1px solid var(--border2);white-space:nowrap">Vaga ${v+1}</td>`;
+          dias.forEach(d=>{
+            const aloc=hospAlocData.find(a=>
+              (a['LOCAL']||'')===(r['LOCAL']||'')&&
+              (a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'')&&
+              (a['DATA']||'')==d&&
+              (parseInt(a['VAGA']||'0')===v||(a['VAGA']===''&&hospAlocData.filter(x=>(x['LOCAL']||'')===(r['LOCAL']||'')&&(x['CÔMODO']||x['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'')&&(x['DATA']||'')==d).indexOf(a)===v))
+            );
+            const pessoa=aloc?aloc['PESSOA']:'';
+            gradeHtml+=`<td style="padding:3px 6px;border:1px solid var(--border2);min-width:80px;background:${pessoa?'var(--blue-dim)':'var(--surface)'};color:${pessoa?'var(--blue)':'var(--text3)'};font-size:11px">${pessoa||''}</td>`;
+          });
+          // Botão remover alocação
+          const alocsDia=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
+          gradeHtml+=`<td style="border:1px solid var(--border2);padding:2px"></td></tr>`;
+        }
+        gradeHtml+='</tbody></table></div>';
+
+        // Lista de alocações com botão remover
+        const alocNeste=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
+        if(alocNeste.length&&podeEditar){
+          gradeHtml+=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">`;
+          alocNeste.forEach((a,ai)=>{
+            const realIdx=hospAlocData.indexOf(a);
+            gradeHtml+=`<span style="font-size:11px;background:var(--blue-dim);color:var(--blue);padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px">${a['PESSOA']||''} <span style="color:var(--red);cursor:pointer;font-weight:700" onclick="removerAlocHosp(${realIdx})">×</span></span>`;
+          });
+          gradeHtml+='</div>';
+        }
+      } else {
+        // Sem datas definidas — alocação simples
+        const alocNeste=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
+        const pessoasAloc=alocNeste.map((a,ai)=>{
+          const realIdx=hospAlocData.indexOf(a);
+          return `<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);padding:1px 6px;border-radius:10px;margin-right:3px;display:inline-flex;align-items:center;gap:4px">${a['PESSOA']||''} ${podeEditar?`<span style="color:var(--red);cursor:pointer" onclick="removerAlocHosp(${realIdx})">×</span>`:''}</span>`}).join('');
+        gradeHtml=pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>';
+      }
+
       html+=`<tr>
-        <td>${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</td>
-        <td class="muted">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'}</td>
-        <td class="muted">${r['DIÁRIAS']||r['DIARIAS']||'—'}</td>
-        <td class="muted">${parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])>0?formatBRL(parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])):'—'}</td>
-        <td>${total>0?formatBRL(total):'—'}</td>
-        <td><span style="font-family:var(--font-mono);font-size:11px">${ocup}/${cap}</span></td>
-        <td>${pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>'}</td>
-        <td class="muted">${r['OBS']||'—'}</td>
-        <td style="padding:4px;white-space:nowrap">${eb}${alocBtn}</td>
+        <td style="vertical-align:top">
+          <strong>${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</strong>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'} · ${cap} vagas · ${total>0?formatBRL(total):'—'}</div>
+          ${gradeHtml}
+        </td>
+        <td style="padding:4px;vertical-align:top;white-space:nowrap">${eb}${alocBtn}</td>
       </tr>`;
     });
   });
   tbody.innerHTML=html;
+}
+
+async function removerAlocHosp(realIdx){
+  if(!confirm('Remover esta alocação?'))return;
+  const linha=realIdx+2;
+  try{
+    await gravarAbaPPP(prodCidadeAtiva,'Alocações Hosp',`A${linha}:E${linha}`,[['','','','','']]);
+    showToast('Alocação removida.','warn');await carregarHospedagem();
+  }catch(e){console.error(e);showToast('Erro ao remover.','error');}
 }
 
 function calcDiariasHosp(){
@@ -3518,6 +3654,8 @@ async function confirmarRejeicao() {
     );
     // Atualiza PPP
     await atualizarStatusPPP(row, 'Pendente');
+    // Se item é da equipe, reverte status na aba Equipe
+    await reverterStatusEquipeSeNecessario(row);
 
     showToast('Solicitação rejeitada.', 'warn');
     fecharModalRejeitar();
@@ -3527,6 +3665,25 @@ async function confirmarRejeicao() {
     showToast('Erro ao rejeitar.', 'error');
   }
   btn.disabled = false; btn.textContent = 'Confirmar rejeição';
+}
+
+async function reverterStatusEquipeSeNecessario(solRow) {
+  // Verifica se o item da solicitação corresponde a um membro da equipe
+  const nm = {Irecê:'irece', Serrinha:'serrinha', Jequié:'jequie'};
+  const cidade = nm[(solRow['CIDADE']||'').trim()];
+  if(!cidade) return;
+  const itemNome = (solRow['ITEM']||'').trim();
+  // Item de equipe tem formato "[SETOR] — [NOME]" ou apenas "[NOME]"
+  // Tenta encontrar pelo NOME
+  await loadPPP(cidade);
+  const equipe = (appData.pppData[cidade]&&appData.pppData[cidade].equipe)||[];
+  const nomes = itemNome.includes('—') ? itemNome.split('—').map(s=>s.trim()) : [itemNome];
+  const membroIdx = equipe.findIndex(r=>nomes.some(n=>(r['NOME']||'').trim()===n));
+  if(membroIdx===-1) return;
+  try{
+    await gravarAbaPPP(cidade,'Equipe',`K${membroIdx+2}`,[['Em aberto']]);
+    delete sheetsCache[`${SHEET_IDS[cidade]}::Equipe!A:P`];
+  }catch(e){console.error('reverterStatusEquipe:',e);}
 }
 
 async function tentarNotificarAprovacao(row) {
@@ -3793,8 +3950,14 @@ async function solEnviar() {
     await sheetsAppend(SHEET_IDS.geral, 'Solicitações!A:V', row);
     // Tenta notificar WhatsApp (silencia erro se não configurado)
     await tentarNotificarWhatsApp(solDados);
+    // Se veio de pagamento de equipe, atualiza status AGORA (após envio bem-sucedido)
+    if(solDados._equipeIdx!==undefined&&solDados._equipeCidade){
+      try{
+        await gravarAbaPPP(solDados._equipeCidade,'Equipe',`K${solDados._equipeIdx+2}`,[['Pagamento solicitado']]);
+        delete sheetsCache[`${SHEET_IDS[solDados._equipeCidade]}::Equipe!A:P`];
+      }catch(e){console.error('update equipe status:',e);}
+    }
     solMostrarPasso(5);
-    // Invalida cache de solicitações
     delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
   } catch(err) {
     console.error('solEnviar:', err);
