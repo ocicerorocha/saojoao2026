@@ -463,8 +463,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div id="hosp-alerta"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Cômodo</th><th>Check-in → Check-out</th><th>Diárias</th>
-              <th>Valor/diária</th><th>Total</th><th>Ocupação</th><th>Pessoas</th><th>OBS</th><th style="width:100px"></th>
+              <th>Cômodo / Grade de alocação</th><th style="width:80px"></th>
             </tr></thead>
             <tbody id="hospedagem-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
@@ -484,7 +483,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div id="transp-alerta"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Veículo</th><th>Trajeto</th><th>Partida</th><th>Horário</th><th>Retorno</th><th>Ocupação</th><th>Pessoas</th><th>OBS</th><th style="width:100px"></th>
+              <th>Veículo / Passageiros</th><th style="width:80px"></th>
             </tr></thead>
             <tbody id="transporte-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
@@ -582,7 +581,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div class="section-header">
             <span class="section-title" id="mapa-titulo">Mapa</span>
             <div style="display:flex;gap:8px">
-              <input class="form-input" id="mapa-url-input" placeholder="URL da imagem (Google Drive, link público…)" style="width:320px;min-height:32px;font-size:12px;padding:4px 10px">
+              <input class="form-input" id="mapa-url-input" placeholder="Google Photos: abra a foto → 3 pontos → Copiar link" style="width:320px;min-height:32px;font-size:12px;padding:4px 10px">
               <button class="btn btn-ghost btn-sm" onclick="mapaCarregarImagem()">Carregar</button>
             </div>
           </div>
@@ -999,14 +998,26 @@ tbody tr:hover .btn-edit-row{opacity:1}
 
       <!-- MODAL ALOCAR HOSPEDAGEM -->
       <div class="modal-overlay" id="modal-aloc-hosp">
-        <div class="modal" style="max-width:400px">
+        <div class="modal" style="max-width:420px">
           <div class="modal-header"><span class="modal-title">Alocar pessoa</span><button class="modal-close" onclick="fecharModal('modal-aloc-hosp')">✕</button></div>
           <div class="modal-body">
             <input type="hidden" id="aloc-hosp-comodo-idx">
             <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
               <strong id="aloc-hosp-local"></strong> — <span id="aloc-hosp-comodo"></span>
             </p>
-            <div class="form-group"><label class="form-label">Pessoa</label><select class="form-select" id="aloc-hosp-pessoa"></select></div>
+            <div class="form-group"><label class="form-label">Pessoa</label><select class="form-select" id="aloc-hosp-pessoa" onchange="alimDatasEquipe()"></select></div>
+            <div class="form-group">
+              <label class="form-label">Alocar pelas diárias da pessoa?</label>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="aloc-hosp-modo" id="aloc-hosp-modo-auto" value="auto" checked> Sim (datas da equipe)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="aloc-hosp-modo" id="aloc-hosp-modo-manual" value="manual"> Manual
+                </label>
+              </div>
+            </div>
+            <div id="aloc-hosp-datas-info" style="font-family:var(--font-mono);font-size:11px;color:var(--text3);padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:8px"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-aloc-hosp')">Cancelar</button>
               <button class="btn btn-primary" onclick="salvarAlocHosp()">Alocar</button>
@@ -1095,6 +1106,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div class="modal-header"><span class="modal-title">Contagem real</span><button class="modal-close" onclick="fecharModal('modal-contagem-pulseira')">✕</button></div>
           <div class="modal-body">
             <div class="form-group"><label class="form-label">Tipo de pulseira</label><select class="form-select" id="puls-cont-tipo"></select></div>
+            <div class="form-group"><label class="form-label">Data</label><input class="form-input" id="puls-cont-data" type="date"></div>
             <div class="form-group"><label class="form-label">Quantidade real restante</label><input class="form-input" id="puls-cont-qtd" type="number" min="0"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-contagem-pulseira')">Cancelar</button>
@@ -1615,13 +1627,8 @@ function renderDashboard(){
 
   cidades.forEach(c=>{
     const resumo=(appData.pppData[c]&&appData.pppData[c].resumo)||[];
-    // Log detalhado para debug
-    console.log(`[dash] ${c} resumo length=${resumo.length}`);
-    resumo.forEach((row,ri)=>{ if(row&&row.length>0) console.log(`[dash] ${c} linha ${ri+1}:`, JSON.stringify(row)); });
     if(resumo.length>=8){
       const totalRow = resumo[7] || [];
-      console.log(`[dash] ${c} TOTAL GERAL row[7]:`, JSON.stringify(totalRow));
-      console.log(`[dash] ${c} B8 raw="${totalRow[1]}" → parseBRLSheet=${parseBRLSheet(totalRow[1])}`);
       const prev = parseBRLSheet(totalRow[1]);
       const pago = parseBRLSheet(totalRow[2]);
       if(prev>0){ orcTotal+=prev; temResumo=true; }
@@ -2363,17 +2370,31 @@ async function salvarHospedagem(){
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
+function alimDatasEquipe(){
+  const sel=document.getElementById('aloc-hosp-pessoa');
+  const pessoa=sel.value;
+  const membro=equipeData.find(r=>(r['NOME']||'')===pessoa);
+  const info=document.getElementById('aloc-hosp-datas-info');
+  if(membro&&(membro['DATA IDA']||membro['DATA VOLTA'])){
+    info.textContent=`Datas da equipe: ${membro['DATA IDA']||'?'} → ${membro['DATA VOLTA']||'?'}`;
+  } else {
+    info.textContent='Sem datas definidas para esta pessoa.';
+  }
+}
+
 function abrirModalAlocHosp(idxComodo){
   const comodo=hospedagemData[idxComodo];
   document.getElementById('aloc-hosp-comodo-idx').value=idxComodo;
   document.getElementById('aloc-hosp-local').textContent=comodo?.['LOCAL']||'';
   document.getElementById('aloc-hosp-comodo').textContent=comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'';
-  // Pessoas que precisam hospedagem e ainda não estão alocadas neste cômodo
   const jaAloc=hospAlocData.filter(a=>(a['LOCAL']||'')===(comodo?.['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'')).map(a=>a['PESSOA']);
   const disponiveis=equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim'&&!jaAloc.includes(r['NOME'])).map(r=>r['NOME']);
   const sel=document.getElementById('aloc-hosp-pessoa');
-  sel.innerHTML=disponiveis.map(p=>`<option value="${p}">${p}</option>`).join('');
-  if(!disponiveis.length) sel.innerHTML='<option value="">— sem pessoas disponíveis —</option>';
+  sel.innerHTML=disponiveis.length
+    ? disponiveis.map(p=>`<option value="${p}">${p}</option>`).join('')
+    : '<option value="">— sem pessoas disponíveis —</option>';
+  document.getElementById('aloc-hosp-modo-auto').checked=true;
+  alimDatasEquipe();
   abrirModal('modal-aloc-hosp');
 }
 
@@ -2382,11 +2403,22 @@ async function salvarAlocHosp(){
   const pessoa=document.getElementById('aloc-hosp-pessoa').value;
   if(!pessoa){showToast('Selecione uma pessoa.','warn');return;}
   const comodo=hospedagemData[idxComodo];
-  // LOCAL|CÔMODO|DATA|VAGA|PESSOA
-  const row=[[comodo?.['LOCAL']||'',comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'',agora().split(' ')[0],'',pessoa]];
+  const modo=document.getElementById('aloc-hosp-modo-auto').checked?'auto':'manual';
+  const membro=equipeData.find(r=>(r['NOME']||'')===pessoa);
+
+  let dias=[];
+  if(modo==='auto'&&membro&&membro['DATA IDA']&&membro['DATA VOLTA']){
+    dias=getDiasBetween(membro['DATA IDA'],membro['DATA VOLTA']);
+  }
+  if(!dias.length) dias=[agora().split(' ')[0]]; // fallback: apenas hoje
+
+  // Grava uma linha por dia
+  const rows=dias.map(d=>[comodo?.['LOCAL']||'',comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'',d,'',pessoa]);
   try{
-    await appendAbaPPP(prodCidadeAtiva,'Alocações Hosp','A:E',row);
-    showToast(`${pessoa} alocado(a)!`,'success');
+    for(const row of rows){
+      await appendAbaPPP(prodCidadeAtiva,'Alocações Hosp','A:E',[row]);
+    }
+    showToast(`${pessoa} alocado(a) em ${dias.length} dia(s)!`,'success');
     fecharModal('modal-aloc-hosp');await carregarHospedagem();
   }catch(e){console.error(e);showToast('Erro ao alocar.','error');}
 }
@@ -2421,34 +2453,54 @@ function renderTransporte(){
     <div class="metric-card"><div class="metric-label">Precisam transp.</div><div class="metric-value">${precisam.length}</div></div>
     <div class="metric-card"><div class="metric-label">Sem alocação</div><div class="metric-value ${semAloc.length?'amber':''}">${semAloc.length}</div></div>`;
 
-  if(semAloc.length){
-    document.getElementById('transp-alerta').innerHTML=`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>${semAloc.length} pessoa(s) sem transporte: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`;
-  } else {
-    document.getElementById('transp-alerta').innerHTML='';
-  }
+  document.getElementById('transp-alerta').innerHTML=semAloc.length
+    ?`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>Sem transporte: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`:'';
 
   if(!transporteData.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum veículo cadastrado</td></tr>`;return;
+    tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum veículo cadastrado</td></tr>`;return;
   }
+
   tbody.innerHTML=transporteData.map((r,i)=>{
     const vagas=parseInt(r['VAGAS'])||0;
-    const alocNeste=transpAlocData.filter(a=>(a['VEÍCULO']||a['VEICULO']||'')===(r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'')&&(a['DATA']||'')===(r['DATA PARTIDA']||''));
+    const veicNome=r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'';
+    const dataP=r['DATA PARTIDA']||'';
+    const alocNeste=transpAlocData.filter(a=>(a['VEÍCULO']||a['VEICULO']||'')===veicNome);
     const ocup=alocNeste.length;
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalTransporte(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
-    const alocBtn=podeEditar&&ocup<vagas?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocTransp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
-    const pessoasAloc=alocNeste.map(a=>`<span style="font-size:10px;background:var(--green-dim);color:var(--green);padding:1px 6px;border-radius:10px;margin-right:3px">${a['PESSOA']||''}</span>`).join('');
+    const alocBtn=podeEditar?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocTransp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
+
+    // Lista de passageiros com botão remover
+    let passHtml='';
+    if(alocNeste.length){
+      passHtml=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">`;
+      alocNeste.forEach(a=>{
+        const realIdx=transpAlocData.indexOf(a);
+        passHtml+=`<span style="font-size:11px;background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px">${a['PESSOA']||''} ${podeEditar?`<span style="color:var(--red);cursor:pointer;font-weight:700" onclick="removerAlocTransp(${realIdx})">×</span>`:''}</span>`;
+      });
+      passHtml+=`</div>`;
+    } else {
+      passHtml=`<div style="font-size:11px;color:var(--text3);margin-top:4px">Nenhum passageiro alocado</div>`;
+    }
+
     return `<tr>
-      <td><strong>${r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'—'}</strong></td>
-      <td class="muted">${r['TRAJETO']||'—'}</td>
-      <td class="muted">${r['DATA PARTIDA']||'—'}</td>
-      <td class="muted">${r['HORÁRIO']||r['HORARIO']||'—'}</td>
-      <td class="muted">${r['RETORNO']||'—'}</td>
-      <td><span style="font-family:var(--font-mono);font-size:11px">${ocup}/${vagas}</span></td>
-      <td>${pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>'}</td>
-      <td class="muted">${r['OBS']||'—'}</td>
-      <td style="padding:4px;white-space:nowrap">${eb}${alocBtn}</td>
+      <td style="vertical-align:top">
+        <strong>${veicNome}</strong>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['TRAJETO']||'—'} · ${dataP||'—'} ${r['HORÁRIO']||r['HORARIO']||''} · ${ocup}/${vagas} vagas</div>
+        ${r['RETORNO']?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">Retorno: ${r['RETORNO']}</div>`:''}
+        ${passHtml}
+      </td>
+      <td style="padding:4px;vertical-align:top;white-space:nowrap">${eb}${alocBtn}</td>
     </tr>`;
   }).join('');
+}
+
+async function removerAlocTransp(realIdx){
+  if(!confirm('Remover esta alocação?'))return;
+  const linha=realIdx+2;
+  try{
+    await gravarAbaPPP(prodCidadeAtiva,'Alocações Trans',`A${linha}:E${linha}`,[['','','','','']]);
+    showToast('Alocação removida.','warn');await carregarTransporte();
+  }catch(e){console.error(e);showToast('Erro ao remover.','error');}
 }
 
 function abrirModalTransporte(idx){
@@ -2525,47 +2577,87 @@ async function carregarPulseiras(){
 
 function renderPulseiras(){
   const tbody=document.getElementById('pulseiras-body');
-  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
 
-  // Métricas por tipo
+  // ── Métricas agrupadas por tipo (todas as datas) ──
   const met=document.getElementById('pulseiras-metricas');
-  met.innerHTML=pulsTiposData.map(t=>{
-    const saidas=pulseirasData.filter(r=>(r['TIPO']||'')===(t['TIPO']||'')).reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
-    const estoque=parseInt(t['QUANTIDADE INICIAL']||t['QTDE INICIAL']||t['QUANTIDADE'])||0;
-    const saldo=Math.max(0,estoque-saidas);
-    return `<div class="metric-card"><div class="metric-label">${t['TIPO']||'Pulseira'} <span style="font-size:9px;color:var(--text3)">${t['DATA']||''}</span></div><div class="metric-value ${saldo<10?'amber':''}">${saldo}</div><div class="metric-sub">saldo / ${estoque} inicial</div></div>`;
+  const tiposUnicos=[...new Set(pulsTiposData.map(t=>t['TIPO']||'').filter(Boolean))];
+  met.innerHTML=tiposUnicos.map(tipo=>{
+    const tiposDestipoData=pulsTiposData.filter(t=>(t['TIPO']||'')===tipo);
+    const estoqueTotal=tiposDestipoData.reduce((s,t)=>s+(parseInt(t['QUANTIDADE INICIAL']||t['QUANTIDADE'])||0),0);
+    const saidasTipo=pulseirasData.filter(r=>(r['TIPO']||'')===tipo).reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
+    const saldo=Math.max(0,estoqueTotal-saidasTipo);
+    const pct=estoqueTotal>0?Math.round((saldo/estoqueTotal)*100):0;
+    return `<div class="metric-card">
+      <div class="metric-label">${tipo}</div>
+      <div class="metric-value ${saldo<estoqueTotal*0.2?'amber':''}">${saldo}</div>
+      <div class="metric-sub">saldo de ${estoqueTotal} · ${saidasTipo} saídas (${pct}% restante)</div>
+    </div>`;
   }).join('');
 
-  // Filtros
-  const filtros=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <select class="form-select" id="puls-filtro-tipo" onchange="renderPulseiras()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
-      <option value="">Todos os tipos</option>
-      ${pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''}</option>`).join('')}
-    </select>
-  </div>`;
-  document.getElementById('puls-filtros').innerHTML=filtros;
+  // ── Filtros ──
+  const tiposOpts=tiposUnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const diasSet=new Set(pulseirasData.map(r=>r['DIA']).filter(Boolean));
+  const diasOpts=[...diasSet].sort().map(d=>`<option value="${d}">${d}</option>`).join('');
 
+  document.getElementById('puls-filtros').innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select class="form-select" id="puls-filtro-tipo" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os tipos</option>${tiposOpts}
+      </select>
+      <select class="form-select" id="puls-filtro-dia" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os dias</option>${diasOpts}
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="aplicarFiltrosPulseiras()">Filtrar</button>
+    </div>`;
+
+  aplicarFiltrosPulseiras();
+}
+
+function aplicarFiltrosPulseiras(){
+  const tbody=document.getElementById('pulseiras-body');
   const filtroTipo=document.getElementById('puls-filtro-tipo')?.value||'';
+  const filtroDia=document.getElementById('puls-filtro-dia')?.value||'';
   let rows=pulseirasData;
-  if(filtroTipo) rows=rows.filter(r=>(r['TIPO']||'')==filtroTipo);
+  if(filtroTipo) rows=rows.filter(r=>(r['TIPO']||'')===filtroTipo);
+  if(filtroDia)  rows=rows.filter(r=>(r['DIA']||'')===filtroDia);
 
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma movimentação registrada</td></tr>`;return;}
-  tbody.innerHTML=rows.map((r,i)=>{
-    const sai=parseInt(r['SAÍDAS']||r['SAIDAS'])||0;
-    const cont=parseInt(r['CONTAGEM REAL']||'');
-    const diffVal=!isNaN(cont)?cont-sai:null;
-    const diffHtml=diffVal!==null?`<span style="color:${diffVal<0?'var(--red)':diffVal>0?'var(--amber)':'var(--green)'}">${diffVal>=0?'+':''}${diffVal}</span>`:'—';
-    return `<tr>
-      <td class="muted">${r['DIA']||'—'}</td>
-      <td><strong>${r['TIPO']||'—'}</strong></td>
-      <td class="muted">${sai}</td>
-      <td class="muted">${r['CONTAGEM REAL']||'—'}</td>
-      <td>${diffHtml}</td>
-      <td class="muted">${r['SOLICITANTE']||'—'}</td>
-      <td class="muted">${r['DATA/HORA']||'—'}</td>
-      <td class="muted">${r['OBS']||'—'}</td>
-    </tr>`;
-  }).join('');
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma movimentação encontrada</td></tr>`;
+    return;
+  }
+
+  // Agrupa por tipo para exibição
+  const byTipo={};
+  rows.forEach(r=>{
+    const t=r['TIPO']||'—';
+    if(!byTipo[t])byTipo[t]=[];
+    byTipo[t].push(r);
+  });
+
+  let html='';
+  Object.entries(byTipo).forEach(([tipo,tRows])=>{
+    html+=`<tr class="cat-row"><td colspan="8"><span style="opacity:0.5;margin-right:6px">▸</span>${tipo}</td></tr>`;
+    tRows.forEach(r=>{
+      const sai=parseInt(r['SAÍDAS']||r['SAIDAS'])||0;
+      const cont=r['CONTAGEM REAL']!==undefined&&r['CONTAGEM REAL']!==''?parseInt(r['CONTAGEM REAL']):null;
+      const diffVal=cont!==null?cont-sai:null;
+      const diffHtml=diffVal!==null
+        ?`<span style="color:${diffVal<0?'var(--red)':diffVal>0?'var(--amber)':'var(--green)'};font-weight:600">${diffVal>=0?'+':''}${diffVal}</span>`
+        :'—';
+      const isContagem=(r['OBS']||'').includes('Contagem real');
+      html+=`<tr style="${isContagem?'background:var(--surface3)':''}">
+        <td class="muted">${r['DIA']||'—'}</td>
+        <td><strong>${r['TIPO']||'—'}</strong>${isContagem?'<span style="font-family:var(--font-mono);font-size:9px;color:var(--blue);margin-left:6px">CONTAGEM</span>':''}</td>
+        <td class="muted">${sai||'—'}</td>
+        <td class="muted">${cont!==null?cont:'—'}</td>
+        <td>${diffHtml}</td>
+        <td class="muted">${r['SOLICITANTE']||'—'}</td>
+        <td class="muted">${r['DATA/HORA']||'—'}</td>
+        <td class="muted">${r['OBS']||'—'}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML=html;
 }
 
 function abrirModalTipoPulseira(){
@@ -2612,17 +2704,19 @@ async function salvarSaida(){
 
 function abrirModalContagemReal(){
   const sel=document.getElementById('puls-cont-tipo');
-  sel.innerHTML=pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''}</option>`).join('');
+  sel.innerHTML=pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''} (${t['DATA']||''})</option>`).join('');
   document.getElementById('puls-cont-qtd').value='';
+  document.getElementById('puls-cont-data').value=dataHoje();
   abrirModal('modal-contagem-pulseira');
 }
 async function salvarContagemReal(){
   const tipo=document.getElementById('puls-cont-tipo').value;
   const qtd=document.getElementById('puls-cont-qtd').value;
-  if(!tipo||qtd===''){showToast('Preencha todos os campos.','warn');return;}
-  // Adiciona linha de contagem real
-  const row=[[agora().split(' ')[0],tipo,'','',,currentUser.nome,agora(),'Contagem real','','']];
-  row[0][3]=qtd;
+  const dataC=document.getElementById('puls-cont-data').value;
+  if(!tipo||qtd===''){showToast('Preencha tipo e quantidade.','warn');return;}
+  const diaFmt=dataC?formatDateBR(dataC):agora().split(' ')[0];
+  // DIA|TIPO|SAÍDAS|CONTAGEM REAL|DIFERENÇA|SOLICITANTE|DATA/HORA|OBS|...|...
+  const row=[[diaFmt,tipo,'',qtd,'',currentUser.nome,agora(),'Contagem real','','']];
   try{
     await appendAbaPPP(prodCidadeAtiva,'Pulseiras','A:J',row);
     showToast('Contagem registrada!','success');fecharModal('modal-contagem-pulseira');await carregarPulseiras();
@@ -2970,9 +3064,17 @@ let mapaEditando=false;
 function mapaCarregarImagem(){
   let url=document.getElementById('mapa-url-input').value.trim();
   if(!url){showToast('Cole a URL da imagem.','warn');return;}
-  // Converte link do Google Drive para link direto
+
+  // Tenta converter links do Google Drive ou Google Photos para URL direta
+  // Google Drive: /d/ID/ → thumbnail
   const gdMatch=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(gdMatch) url=`https://drive.google.com/uc?export=view&id=${gdMatch[1]}`;
+  if(gdMatch){
+    // thumbnail funciona mesmo com link de visualização
+    url=`https://drive.google.com/thumbnail?id=${gdMatch[1]}&sz=w2000`;
+  }
+  // Google Photos: lnk.google.com/photos/photo/ID → tentar URL direta
+  // Para Google Photos, o usuário deve usar o link direto da foto (botão "Copiar link da foto")
+
   const img=document.getElementById('mapa-img');
   img.onload=()=>{
     document.getElementById('mapa-placeholder').style.display='none';
@@ -2980,7 +3082,16 @@ function mapaCarregarImagem(){
     document.getElementById('btn-mapa-editar').style.display='';
     mapaRestaurarPinos();
   };
-  img.onerror=()=>showToast('Não foi possível carregar a imagem. Use um link público ou o link de compartilhamento do Google Drive.','error',5000);
+  img.onerror=()=>{
+    // Tenta fallback sem conversão
+    if(url.includes('thumbnail')&&gdMatch){
+      const fallback=`https://lh3.googleusercontent.com/d/${gdMatch[1]}`;
+      img.onerror=()=>showToast('Não foi possível carregar. Use Google Photos: abra a foto, clique nos 3 pontos → "Copiar link"','error',6000);
+      img.src=fallback;
+    } else {
+      showToast('Não foi possível carregar. Use Google Photos: abra a foto, clique nos 3 pontos → "Copiar link"','error',6000);
+    }
+  };
   img.src=url;
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
   cfg[prodCidadeAtiva]=url;
