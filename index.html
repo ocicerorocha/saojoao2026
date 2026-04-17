@@ -1240,11 +1240,265 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
-      <div class="page" id="page-receitas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📈</div><div class="empty-title">Receitas</div><div class="empty-sub">Bloco 10</div></div></div>
-      <div class="page" id="page-bilheteria"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">🎟️</div><div class="empty-title">Bilheteria</div><div class="empty-sub">Bloco 10</div></div></div>
-      <div class="page" id="page-documentos"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">📁</div><div class="empty-title">Documentos</div><div class="empty-sub">Bloco 10</div></div></div>
-      <div class="page" id="page-alertas"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">🚨</div><div class="empty-title">Alertas &amp; Histórico</div><div class="empty-sub">Bloco 10</div></div></div>
-      <div class="page" id="page-configuracoes"><div class="empty-state" style="padding:80px 24px"><div class="empty-icon">⚙️</div><div class="empty-title">Configurações</div><div class="empty-sub">Bloco 11</div></div></div>
+      <!-- RECEITAS — Bloco 10 -->
+      <div class="page" id="page-receitas">
+        <div class="section-header">
+          <span class="section-title">Receitas</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="carregarReceitas()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Atualizar
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalReceita()">+ Nova receita</button>
+          </div>
+        </div>
+        <div class="metric-grid" id="rec-metricas" style="margin-bottom:16px"></div>
+        <div id="rec-filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div id="rec-table-wrap"></div>
+      </div>
+
+      <!-- BILHETERIA — Bloco 10 -->
+      <div class="page" id="page-bilheteria">
+        <div class="section-header">
+          <span class="section-title">Bilheteria</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" onclick="carregarBilheteria()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Atualizar
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('pdv-file-input').click()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Importar PDV (.xls)
+            </button>
+            <input type="file" id="pdv-file-input" accept=".xls,.xlsx" style="display:none" onchange="importarPDV(this)">
+          </div>
+        </div>
+        <div class="metric-grid" id="bil-metricas" style="margin-bottom:16px"></div>
+        <div id="bil-filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div id="bil-table-wrap"><div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-title">Nenhum registro</div><div class="empty-sub">Importe um relatório PDV ou carregue os dados</div></div></div>
+        <!-- Modal confirmação PDV -->
+        <div class="modal-overlay" id="modal-pdv">
+          <div class="modal" style="max-width:560px">
+            <div class="modal-header"><span class="modal-title">Confirmar importação PDV</span><button class="modal-close" onclick="fecharModal('modal-pdv')">✕</button></div>
+            <div class="modal-body">
+              <div id="pdv-preview"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+                <div class="form-group">
+                  <label class="form-label">Cidade / Evento</label>
+                  <select class="form-select" id="pdv-cidade">
+                    <option value="Irecê">Irecê</option>
+                    <option value="Serrinha">Serrinha</option>
+                    <option value="Jequié">Jequié</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Canal</label>
+                  <input class="form-input" id="pdv-canal" placeholder="Ex: MeuBilhete" value="MeuBilhete">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">OBS</label>
+                  <input class="form-input" id="pdv-obs" placeholder="Observações…">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+                <button class="btn btn-ghost" onclick="fecharModal('modal-pdv')">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmarImportPDV()">Salvar na planilha</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTOS — Bloco 10 -->
+      <div class="page" id="page-documentos">
+        <div class="section-header">
+          <span class="section-title">Documentos</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="carregarDocumentos()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Atualizar
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalDocumento()">+ Novo documento</button>
+          </div>
+        </div>
+        <div id="doc-filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div id="doc-table-wrap"></div>
+      </div>
+
+      <!-- ALERTAS & HISTÓRICO — Bloco 10 -->
+      <div class="page" id="page-alertas">
+        <div class="section-header">
+          <span class="section-title">Alertas & Histórico</span>
+          <button class="btn btn-ghost btn-sm" onclick="carregarAlertas()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+            Atualizar
+          </button>
+        </div>
+        <div id="alert-filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div id="alert-table-wrap"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Carregando…</div></div></div>
+      </div>
+
+      <!-- CONFIGURAÇÕES — Bloco 11 -->
+      <div class="page" id="page-configuracoes">
+        <div style="max-width:720px">
+          <!-- Evento ativo -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-header"><span class="section-title">Evento ativo</span></div>
+            <div id="cfg-evento-lista" style="margin-bottom:12px"></div>
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalEvento()">+ Novo evento</button>
+          </div>
+          <!-- Produtores -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-header">
+              <span class="section-title">Produtores</span>
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalProdutor()">+ Adicionar</button>
+            </div>
+            <div id="cfg-produtores-lista"></div>
+          </div>
+          <!-- Integração Worker -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-header"><span class="section-title">Worker / API</span></div>
+            <div class="form-group">
+              <label class="form-label">Worker URL</label>
+              <input class="form-input" id="cfg-worker-url" placeholder="https://…workers.dev">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="salvarCfgWorker()">Salvar</button>
+          </div>
+          <!-- WhatsApp / Twilio -->
+          <div class="card">
+            <div class="section-header"><span class="section-title">WhatsApp (Twilio)</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Account SID</label><input class="form-input" id="cfg-twilio-sid" placeholder="ACxxxxxxx"></div>
+              <div class="form-group"><label class="form-label">Auth Token</label><input class="form-input" id="cfg-twilio-token" type="password" placeholder="••••••••"></div>
+              <div class="form-group"><label class="form-label">Número FROM (WhatsApp)</label><input class="form-input" id="cfg-twilio-from" placeholder="whatsapp:+14155238886"></div>
+              <div class="form-group"><label class="form-label">WhatsApp Aprovador</label><input class="form-input" id="cfg-wpp-aprov" placeholder="+5571999999999"></div>
+              <div class="form-group"><label class="form-label">WhatsApp Pagador</label><input class="form-input" id="cfg-wpp-pag" placeholder="+5571999999999"></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="salvarCfgTwilio()">Salvar</button>
+            <div id="cfg-twilio-status" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text3)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL RECEITA -->
+      <div class="modal-overlay" id="modal-receita">
+        <div class="modal" style="max-width:500px">
+          <div class="modal-header"><span class="modal-title" id="modal-rec-titulo">Nova receita</span><button class="modal-close" onclick="fecharModal('modal-receita')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="rec-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Data</label><input class="form-input" id="rec-data" type="date"></div>
+              <div class="form-group"><label class="form-label">Cidade</label>
+                <select class="form-select" id="rec-cidade">
+                  <option value="Irecê">Irecê</option><option value="Serrinha">Serrinha</option><option value="Jequié">Jequié</option><option value="Todas">Todas</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Categoria</label>
+                <select class="form-select" id="rec-categoria"></select>
+              </div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Descrição</label><input class="form-input" id="rec-desc" placeholder="Descreva a receita…"></div>
+              <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" id="rec-valor" type="number" min="0" step="0.01"></div>
+              <div class="form-group"><label class="form-label">Status</label>
+                <select class="form-select" id="rec-status">
+                  <option>Previsto</option><option>Confirmado</option><option>Recebido</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="rec-resp" placeholder="Nome…"></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="rec-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-receita')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL DOCUMENTO -->
+      <div class="modal-overlay" id="modal-documento">
+        <div class="modal" style="max-width:500px">
+          <div class="modal-header"><span class="modal-title" id="modal-doc-titulo">Novo documento</span><button class="modal-close" onclick="fecharModal('modal-documento')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="doc-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Data</label><input class="form-input" id="doc-data" type="date"></div>
+              <div class="form-group"><label class="form-label">Tipo</label>
+                <input class="form-input" id="doc-tipo" list="doc-tipos-list" placeholder="Ex: Contrato, NF, Ofício…">
+                <datalist id="doc-tipos-list">
+                  <option value="Contrato"><option value="Nota Fiscal"><option value="Autorização"><option value="Ofício"><option value="Projeto"><option value="Orçamento"><option value="Comprovante"><option value="Outro">
+                </datalist>
+              </div>
+              <div class="form-group"><label class="form-label">Cidade</label>
+                <select class="form-select" id="doc-cidade">
+                  <option value="Todas">Todas</option><option value="Irecê">Irecê</option><option value="Serrinha">Serrinha</option><option value="Jequié">Jequié</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Título</label><input class="form-input" id="doc-titulo-campo" placeholder="Nome do documento"></div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Link Google Drive</label>
+                <input class="form-input" id="doc-link" placeholder="https://drive.google.com/…">
+              </div>
+              <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="doc-resp"></div>
+              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="doc-obs"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-documento')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarDocumento()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL EVENTO -->
+      <div class="modal-overlay" id="modal-evento">
+        <div class="modal" style="max-width:480px">
+          <div class="modal-header"><span class="modal-title" id="modal-evento-titulo">Novo evento</span><button class="modal-close" onclick="fecharModal('modal-evento')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="evt-row-idx">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Nome do evento</label><input class="form-input" id="evt-nome" placeholder="Ex: São João 2026 — Serrinha"></div>
+              <div class="form-group"><label class="form-label">Data início</label><input class="form-input" id="evt-inicio" type="date"></div>
+              <div class="form-group"><label class="form-label">Data fim</label><input class="form-input" id="evt-fim" type="date"></div>
+              <div class="form-group"><label class="form-label">Cidade</label>
+                <select class="form-select" id="evt-cidade">
+                  <option value="Todas">Todas</option><option value="Irecê">Irecê</option><option value="Serrinha">Serrinha</option><option value="Jequié">Jequié</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Status</label>
+                <select class="form-select" id="evt-status">
+                  <option>Planejamento</option><option>Em produção</option><option>Ativo</option><option>Encerrado</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-evento')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarEvento()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PRODUTOR -->
+      <div class="modal-overlay" id="modal-produtor">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header"><span class="modal-title">Produtor</span><button class="modal-close" onclick="fecharModal('modal-produtor')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="prod-cfg-idx">
+            <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="prod-cfg-nome"></div>
+            <div class="form-group"><label class="form-label">Cidade</label>
+              <select class="form-select" id="prod-cfg-cidade">
+                <option value="Irecê">Irecê</option><option value="Serrinha">Serrinha</option><option value="Jequié">Jequié</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-input" id="prod-cfg-wpp" type="tel" placeholder="+5571999999999"></div>
+            <div class="form-group"><label class="form-label">Código de acesso</label><input class="form-input" id="prod-cfg-codigo" placeholder="Ex: IRECE01" style="font-family:var(--font-mono)"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-produtor')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarProdutor()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   </main>
@@ -1448,6 +1702,21 @@ function navigateTo(pageId){
     setupCityFilter();
   }else if(mainId==='despesas'){
     if(currentUser&&appData)carregarDespesas();
+    setupCityFilter();
+  }else if(mainId==='receitas'){
+    if(currentUser&&appData)carregarReceitas();
+    setupCityFilter();
+  }else if(mainId==='bilheteria'){
+    if(currentUser&&appData)carregarBilheteria();
+    setupCityFilter();
+  }else if(mainId==='documentos'){
+    if(currentUser&&appData)carregarDocumentos();
+    setupCityFilter();
+  }else if(mainId==='alertas'){
+    if(currentUser&&appData)carregarAlertas();
+    setupCityFilter();
+  }else if(mainId==='configuracoes'){
+    if(currentUser&&appData)carregarConfiguracoes();
     setupCityFilter();
   }else{
     setupCityFilter();
@@ -3816,6 +4085,601 @@ Valor: ${formatBRL(val)}
       body: JSON.stringify({ to:cfg.whatsappPagador, from:cfg.twilioFrom, body:msg, sid:cfg.twilioSid, token:cfg.twilioToken }),
     });
   } catch(_) {}
+}
+
+/* ── BLOCO 10: RECEITAS ── */
+let receitasData = [];
+let recCategoriasData = [];
+
+async function carregarReceitas() {
+  document.getElementById('rec-table-wrap').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Receitas!A:H`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Receitas!A:H');
+    receitasData = rowsToObjects(rows);
+    // Tenta carregar categorias de uma cidade (serrinha como padrão)
+    const cidadeCat = currentUser.cidade || 'serrinha';
+    try {
+      delete sheetsCache[`${SHEET_IDS[cidadeCat]}::Categorias Receita!A:B`];
+      recCategoriasData = await lerAbaPPP(cidadeCat, 'Categorias Receita', 'A:B');
+    } catch(_) { recCategoriasData = []; }
+    renderReceitas();
+  } catch(e) { console.error(e); showToast('Erro ao carregar receitas.','error'); }
+}
+
+function renderReceitas() {
+  // Métricas
+  const total = receitasData.reduce((s,r)=>s+parseBRL(r['VALOR (R$)']||r['VALOR']),0);
+  const recebido = receitasData.filter(r=>(r['STATUS']||'')==='Recebido').reduce((s,r)=>s+parseBRL(r['VALOR (R$)']||r['VALOR']),0);
+  const confirmado = receitasData.filter(r=>(r['STATUS']||'')==='Confirmado').reduce((s,r)=>s+parseBRL(r['VALOR (R$)']||r['VALOR']),0);
+  const previsto = receitasData.filter(r=>(r['STATUS']||'')==='Previsto').reduce((s,r)=>s+parseBRL(r['VALOR (R$)']||r['VALOR']),0);
+  document.getElementById('rec-metricas').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Total previsto</div><div class="metric-value accent">${formatBRL(total)}</div></div>
+    <div class="metric-card"><div class="metric-label">Recebido</div><div class="metric-value green">${formatBRL(recebido)}</div></div>
+    <div class="metric-card"><div class="metric-label">Confirmado</div><div class="metric-value blue">${formatBRL(confirmado)}</div></div>
+    <div class="metric-card"><div class="metric-label">Previsto</div><div class="metric-value">${formatBRL(previsto)}</div></div>`;
+
+  // Filtros
+  const cats=[...new Set(receitasData.map(r=>r['CATEGORIA']).filter(Boolean))];
+  const cidades=[...new Set(receitasData.map(r=>r['CIDADE']).filter(Boolean))];
+  document.getElementById('rec-filtros').innerHTML = `
+    <select class="form-select" id="rec-f-cidade" onchange="renderRecTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todas as cidades</option>${cidades.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select>
+    <select class="form-select" id="rec-f-cat" onchange="renderRecTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todas as categorias</option>${cats.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select>
+    <select class="form-select" id="rec-f-status" onchange="renderRecTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todos os status</option>
+      <option>Previsto</option><option>Confirmado</option><option>Recebido</option>
+    </select>`;
+  renderRecTabela();
+}
+
+function renderRecTabela() {
+  const wrap = document.getElementById('rec-table-wrap');
+  const fCidade = document.getElementById('rec-f-cidade')?.value||'';
+  const fCat    = document.getElementById('rec-f-cat')?.value||'';
+  const fStatus = document.getElementById('rec-f-status')?.value||'';
+  let rows = receitasData;
+  if(fCidade) rows=rows.filter(r=>(r['CIDADE']||'')==fCidade);
+  if(fCat)    rows=rows.filter(r=>(r['CATEGORIA']||'')==fCat);
+  if(fStatus) rows=rows.filter(r=>(r['STATUS']||'')==fStatus);
+  if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">Nenhuma receita encontrada</div></div>`; return; }
+  const stCls={'Previsto':'badge-pendente','Confirmado':'badge-aprovado','Recebido':'badge-pago'};
+  const linhas = rows.map(r=>{
+    const idx=receitasData.indexOf(r);
+    const val=parseBRL(r['VALOR (R$)']||r['VALOR']);
+    const st=(r['STATUS']||'Previsto').trim();
+    return `<tr>
+      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${r['CIDADE']||'—'}</td>
+      <td><strong>${r['CATEGORIA']||'—'}</strong></td>
+      <td>${r['DESCRIÇÃO']||r['DESCRICAO']||'—'}</td>
+      <td>${val>0?formatBRL(val):'—'}</td>
+      <td><span class="badge ${stCls[st]||'badge-pendente'}">${st}</span></td>
+      <td class="muted">${r['RESPONSÁVEL']||r['RESPONSAVEL']||'—'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+      <td style="padding:4px"><button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalReceita(${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Cidade</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Responsável</th><th>OBS</th><th style="width:36px"></th></tr></thead>
+    <tbody>${linhas}</tbody></table></div>`;
+}
+
+function abrirModalReceita(idx) {
+  const r = idx!==undefined ? receitasData[idx] : null;
+  document.getElementById('rec-row-idx').value = idx!==undefined?idx:'';
+  document.getElementById('modal-rec-titulo').textContent = r?'Editar receita':'Nova receita';
+  document.getElementById('rec-data').value = parseDateForInput(r?.['DATA']||'') || dataHoje();
+  document.getElementById('rec-cidade').value = r?.['CIDADE']||'Irecê';
+  document.getElementById('rec-desc').value = r?.['DESCRIÇÃO']||r?.['DESCRICAO']||'';
+  document.getElementById('rec-valor').value = parseBRL(r?.['VALOR (R$)']||r?.['VALOR'])||'';
+  document.getElementById('rec-status').value = r?.['STATUS']||'Previsto';
+  document.getElementById('rec-resp').value = r?.['RESPONSÁVEL']||r?.['RESPONSAVEL']||currentUser.nome;
+  document.getElementById('rec-obs').value = r?.['OBS']||'';
+  // Popula categorias
+  const sel = document.getElementById('rec-categoria');
+  const cats = recCategoriasData.map(c=>c['CATEGORIA']||'').filter(Boolean);
+  sel.innerHTML = `<option value="">— selecione —</option>`+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
+  abrirModal('modal-receita');
+}
+
+async function salvarReceita() {
+  const data = document.getElementById('rec-data').value;
+  const cat  = document.getElementById('rec-categoria').value;
+  const desc = document.getElementById('rec-desc').value.trim();
+  const val  = parseFloat(document.getElementById('rec-valor').value)||0;
+  if(!cat||!desc||!val){ showToast('Preencha categoria, descrição e valor.','warn'); return; }
+  const row = [[data?formatDateBR(data):'', cat, document.getElementById('rec-cidade').value,
+    desc, val, document.getElementById('rec-status').value,
+    document.getElementById('rec-resp').value.trim(), document.getElementById('rec-obs').value.trim()]];
+  try {
+    const idx = document.getElementById('rec-row-idx').value;
+    if(idx==='') { await sheetsAppend(SHEET_IDS.geral,'Receitas!A:H',row); showToast('Receita adicionada!','success'); }
+    else { await sheetsWrite(SHEET_IDS.geral,`Receitas!A${parseInt(idx)+2}:H${parseInt(idx)+2}`,row); showToast('Atualizado!','success'); }
+    delete sheetsCache[`${SHEET_IDS.geral}::Receitas!A:H`];
+    fecharModal('modal-receita'); await carregarReceitas();
+  } catch(e){ console.error(e); showToast('Erro ao salvar.','error'); }
+}
+
+/* ── BLOCO 10: BILHETERIA ── */
+let bileiteriaData = [];
+let pdvParsed = null;
+
+async function carregarBilheteria() {
+  document.getElementById('bil-table-wrap').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Bilheteria!A:N`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Bilheteria!A:N');
+    bileiteriaData = rowsToObjects(rows);
+    renderBilheteria();
+  } catch(e){ console.error(e); showToast('Erro ao carregar bilheteria.','error'); }
+}
+
+function renderBilheteria() {
+  if(!bileiteriaData.length){ document.getElementById('bil-table-wrap').innerHTML=`<div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-title">Nenhum registro</div><div class="empty-sub">Importe um relatório PDV</div></div>`; return; }
+  // Métricas
+  const totalVendidos = bileiteriaData.reduce((s,r)=>s+(parseInt(r['INGRESSOS VENDIDOS'])||0),0);
+  const totalReceita  = bileiteriaData.reduce((s,r)=>s+parseBRL(r['RECEITA TOTAL (R$)']||r['RECEITA TOTAL']),0);
+  const totalPix      = bileiteriaData.reduce((s,r)=>s+parseBRL(r['PIX (R$)']||r['PIX']),0);
+  const totalCred     = bileiteriaData.reduce((s,r)=>s+parseBRL(r['CRÉDITO (R$)']||r['CREDITO']),0);
+  const ticketMedio   = totalVendidos>0 ? totalReceita/totalVendidos : 0;
+  document.getElementById('bil-metricas').innerHTML=`
+    <div class="metric-card"><div class="metric-label">Ingressos vendidos</div><div class="metric-value accent">${totalVendidos}</div></div>
+    <div class="metric-card"><div class="metric-label">Receita total</div><div class="metric-value green">${formatBRL(totalReceita)}</div></div>
+    <div class="metric-card"><div class="metric-label">PIX</div><div class="metric-value blue">${formatBRL(totalPix)}</div></div>
+    <div class="metric-card"><div class="metric-label">Crédito</div><div class="metric-value">${formatBRL(totalCred)}</div></div>
+    <div class="metric-card"><div class="metric-label">Ticket médio</div><div class="metric-value amber">${formatBRL(ticketMedio)}</div></div>`;
+  // Filtros
+  const cidades=[...new Set(bileiteriaData.map(r=>r['CIDADE / EVENTO']||r['CIDADE']).filter(Boolean))];
+  const canais=[...new Set(bileiteriaData.map(r=>r['CANAL']).filter(Boolean))];
+  document.getElementById('bil-filtros').innerHTML=`
+    <select class="form-select" id="bil-f-cidade" onchange="renderBilTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todas as cidades</option>${cidades.map(c=>`<option>${c}</option>`).join('')}
+    </select>
+    <select class="form-select" id="bil-f-canal" onchange="renderBilTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todos os canais</option>${canais.map(c=>`<option>${c}</option>`).join('')}
+    </select>`;
+  renderBilTabela();
+}
+
+function renderBilTabela() {
+  const wrap = document.getElementById('bil-table-wrap');
+  const fCidade = document.getElementById('bil-f-cidade')?.value||'';
+  const fCanal  = document.getElementById('bil-f-canal')?.value||'';
+  let rows = bileiteriaData;
+  if(fCidade) rows=rows.filter(r=>(r['CIDADE / EVENTO']||r['CIDADE']||'')==fCidade);
+  if(fCanal)  rows=rows.filter(r=>(r['CANAL']||'')==fCanal);
+  if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-title">Nenhum registro</div></div>`; return; }
+  const linhas=rows.map(r=>{
+    const rec=parseBRL(r['RECEITA TOTAL (R$)']||r['RECEITA TOTAL']);
+    const ticket=parseBRL(r['TICKET MÉDIO (R$)']||r['TICKET MEDIO']);
+    return `<tr>
+      <td class="muted">${r['DATA UPLOAD']||'—'}</td>
+      <td><strong>${r['CIDADE / EVENTO']||r['CIDADE']||'—'}</strong></td>
+      <td class="muted">${r['INGRESSOS VENDIDOS']||'—'}</td>
+      <td class="muted">${r['MEIA-ENTRADA']||'—'}</td>
+      <td class="muted">${r['CAMAROTE']||'—'}</td>
+      <td>${rec>0?formatBRL(rec):'—'}</td>
+      <td class="muted">${r['CRÉDITO QTD']||r['CREDITO QTD']||'—'}</td>
+      <td class="muted">${parseBRL(r['CRÉDITO (R$)']||r['CREDITO'])>0?formatBRL(parseBRL(r['CRÉDITO (R$)']||r['CREDITO'])):'—'}</td>
+      <td class="muted">${r['PIX QTD']||'—'}</td>
+      <td class="muted">${parseBRL(r['PIX (R$)']||r['PIX'])>0?formatBRL(parseBRL(r['PIX (R$)']||r['PIX'])):'—'}</td>
+      <td class="muted">${ticket>0?formatBRL(ticket):'—'}</td>
+      <td class="muted">${r['Nº PEDIDOS']||r['N PEDIDOS']||'—'}</td>
+      <td class="muted">${r['CANAL']||'—'}</td>
+      <td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${r['OBS']||'—'}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Upload</th><th>Cidade/Evento</th><th>Vendidos</th><th>Meia</th><th>Camarote</th>
+      <th>Receita</th><th>Cred. Qtd</th><th>Cred. R$</th><th>Pix Qtd</th><th>Pix R$</th>
+      <th>Ticket</th><th>Pedidos</th><th>Canal</th><th>OBS</th>
+    </tr></thead>
+    <tbody>${linhas}</tbody></table></div>`;
+}
+
+// PDV parser — lê arquivo .xls/.xlsx do browser via SheetJS
+function importarPDV(input) {
+  const file = input.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      // SheetJS via CDN
+      if(!window.XLSX){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload=res; s.onerror=rej;
+          document.head.appendChild(s);
+        });
+      }
+      const wb = window.XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = window.XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      // Encontra linha de cabeçalho real
+      const headerIdx = rows.findIndex(r=>r.some(c=>/ingresso/i.test(String(c))));
+      if(headerIdx===-1){ showToast('Formato PDV não reconhecido.','error'); return; }
+      const dataRows = rows.slice(headerIdx+1).filter(r=>r[0]&&String(r[0]).trim()&&!String(r[0]).toLowerCase().includes('total'));
+      // Extrai totais
+      const totalRow = rows.find(r=>String(r[0]).toLowerCase().includes('total bilhetes') && !String(r[0]).toLowerCase().includes('pagar'));
+      const credRow  = rows.find(r=>String(r[0]).toLowerCase().includes('crédito')||String(r[0]).toLowerCase().includes('credito'));
+      const pixRow   = rows.find(r=>String(r[0]).toLowerCase().includes('pix'));
+      const pedRow   = rows.find(r=>String(r[0]).toLowerCase().includes('pedidos'));
+      const totalQtd  = totalRow?parseInt(totalRow[3])||0:0;
+      const totalVal  = totalRow?parseFloat(totalRow[4])||0:0;
+      const credQtd   = credRow?parseInt(credRow[3])||0:0;
+      const credVal   = credRow?parseFloat(credRow[4])||0:0;
+      const pixQtd    = pixRow?parseInt(pixRow[3])||0:0;
+      const pixVal    = pixRow?parseFloat(pixRow[4])||0:0;
+      const pedidos   = pedRow?parseInt(pedRow[4])||0:0;
+      const ticket    = totalQtd>0 ? (totalVal/totalQtd).toFixed(2) : 0;
+      pdvParsed = { totalQtd, totalVal, credQtd, credVal, pixQtd, pixVal, pedidos, ticket };
+      // Preview
+      document.getElementById('pdv-preview').innerHTML=`
+        <div style="background:var(--surface2);border-radius:var(--radius);padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">INGRESSOS</span><div style="font-weight:700;color:var(--accent)">${totalQtd}</div></div>
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">RECEITA TOTAL</span><div style="font-weight:700;color:var(--green)">${formatBRL(totalVal)}</div></div>
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">CRÉDITO</span><div>${credQtd} · ${formatBRL(credVal)}</div></div>
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">PIX</span><div>${pixQtd} · ${formatBRL(pixVal)}</div></div>
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">PEDIDOS</span><div>${pedidos}</div></div>
+          <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">TICKET MÉDIO</span><div>${formatBRL(ticket)}</div></div>
+        </div>`;
+      abrirModal('modal-pdv');
+    } catch(err){ console.error(err); showToast('Erro ao ler arquivo PDV.','error'); }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+async function confirmarImportPDV() {
+  if(!pdvParsed){ showToast('Nenhum dado PDV carregado.','error'); return; }
+  const cidade  = document.getElementById('pdv-cidade').value;
+  const canal   = document.getElementById('pdv-canal').value.trim();
+  const obs     = document.getElementById('pdv-obs').value.trim();
+  const dataUp  = formatDateBR(dataHoje());
+  // DATA UPLOAD | CIDADE/EVENTO | INGRESSOS VENDIDOS | MEIA-ENTRADA | CAMAROTE | RECEITA TOTAL | CRÉDITO QTD | CRÉDITO R$ | PIX QTD | PIX R$ | TICKET MÉDIO | Nº PEDIDOS | CANAL | OBS
+  const row = [[dataUp, cidade, pdvParsed.totalQtd, '', '', pdvParsed.totalVal,
+    pdvParsed.credQtd, pdvParsed.credVal, pdvParsed.pixQtd, pdvParsed.pixVal,
+    pdvParsed.ticket, pdvParsed.pedidos, canal, obs]];
+  try {
+    await sheetsAppend(SHEET_IDS.geral,'Bilheteria!A:N',row);
+    delete sheetsCache[`${SHEET_IDS.geral}::Bilheteria!A:N`];
+    showToast('Importado com sucesso!','success');
+    fecharModal('modal-pdv'); pdvParsed=null;
+    await carregarBilheteria();
+  } catch(e){ console.error(e); showToast('Erro ao salvar.','error'); }
+}
+
+/* ── BLOCO 10: DOCUMENTOS ── */
+let documentosData = [];
+
+async function carregarDocumentos() {
+  document.getElementById('doc-table-wrap').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Documentos!A:H`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Documentos!A:H');
+    documentosData = rowsToObjects(rows);
+    renderDocumentos();
+  } catch(e){ console.error(e); showToast('Erro ao carregar documentos.','error'); }
+}
+
+function renderDocumentos() {
+  const tipos=[...new Set(documentosData.map(r=>r['TIPO']).filter(Boolean))];
+  const cidades=[...new Set(documentosData.map(r=>r['CIDADE']).filter(Boolean))];
+  document.getElementById('doc-filtros').innerHTML=`
+    <select class="form-select" id="doc-f-tipo" onchange="renderDocTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todos os tipos</option>${tipos.map(t=>`<option>${t}</option>`).join('')}
+    </select>
+    <select class="form-select" id="doc-f-cidade" onchange="renderDocTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todas as cidades</option>${cidades.map(c=>`<option>${c}</option>`).join('')}
+    </select>
+    <input class="form-input" id="doc-f-busca" oninput="renderDocTabela()" placeholder="Buscar por título…" style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">`;
+  renderDocTabela();
+}
+
+function renderDocTabela() {
+  const wrap=document.getElementById('doc-table-wrap');
+  const fTipo=document.getElementById('doc-f-tipo')?.value||'';
+  const fCidade=document.getElementById('doc-f-cidade')?.value||'';
+  const fBusca=(document.getElementById('doc-f-busca')?.value||'').toLowerCase();
+  let rows=documentosData;
+  if(fTipo)   rows=rows.filter(r=>(r['TIPO']||'')==fTipo);
+  if(fCidade) rows=rows.filter(r=>(r['CIDADE']||'')==fCidade);
+  if(fBusca)  rows=rows.filter(r=>(r['TÍTULO']||r['TITULO']||'').toLowerCase().includes(fBusca));
+  if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Nenhum documento encontrado</div></div>`; return; }
+  const linhas=rows.map(r=>{
+    const idx=documentosData.indexOf(r);
+    const link=r['LINK DRIVE']||r['LINK'];
+    const linkHtml=link?`<a href="${link}" target="_blank" style="color:var(--blue);font-size:12px">↗ Abrir</a>`:'—';
+    return `<tr>
+      <td class="muted">${r['DATA']||'—'}</td>
+      <td><span class="badge badge-pendente">${r['TIPO']||'—'}</span></td>
+      <td class="muted">${r['CIDADE']||'—'}</td>
+      <td><strong>${r['TÍTULO']||r['TITULO']||'—'}</strong></td>
+      <td>${linkHtml}</td>
+      <td class="muted">${r['RESPONSÁVEL']||r['RESPONSAVEL']||'—'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+      <td style="padding:4px"><button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalDocumento(${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Tipo</th><th>Cidade</th><th>Título</th><th>Link</th><th>Responsável</th><th>OBS</th><th style="width:36px"></th></tr></thead>
+    <tbody>${linhas}</tbody></table></div>`;
+}
+
+function abrirModalDocumento(idx) {
+  const r=idx!==undefined?documentosData[idx]:null;
+  document.getElementById('doc-row-idx').value=idx!==undefined?idx:'';
+  document.getElementById('modal-doc-titulo').textContent=r?'Editar documento':'Novo documento';
+  document.getElementById('doc-data').value=parseDateForInput(r?.['DATA']||'')||dataHoje();
+  document.getElementById('doc-tipo').value=r?.['TIPO']||'';
+  document.getElementById('doc-cidade').value=r?.['CIDADE']||'Todas';
+  document.getElementById('doc-titulo-campo').value=r?.['TÍTULO']||r?.['TITULO']||'';
+  document.getElementById('doc-link').value=r?.['LINK DRIVE']||r?.['LINK']||'';
+  document.getElementById('doc-resp').value=r?.['RESPONSÁVEL']||r?.['RESPONSAVEL']||currentUser.nome;
+  document.getElementById('doc-obs').value=r?.['OBS']||'';
+  abrirModal('modal-documento');
+}
+
+async function salvarDocumento() {
+  const titulo=document.getElementById('doc-titulo-campo').value.trim();
+  if(!titulo){ showToast('Informe o título.','warn'); return; }
+  const data=document.getElementById('doc-data').value;
+  const row=[[data?formatDateBR(data):'', document.getElementById('doc-tipo').value.trim(),
+    document.getElementById('doc-cidade').value, titulo,
+    document.getElementById('doc-link').value.trim(),
+    document.getElementById('doc-resp').value.trim(),
+    document.getElementById('doc-obs').value.trim()]];
+  try {
+    const i=document.getElementById('doc-row-idx').value;
+    if(i===''){ await sheetsAppend(SHEET_IDS.geral,'Documentos!A:G',row); showToast('Documento adicionado!','success'); }
+    else{ await sheetsWrite(SHEET_IDS.geral,`Documentos!A${parseInt(i)+2}:G${parseInt(i)+2}`,row); showToast('Atualizado!','success'); }
+    delete sheetsCache[`${SHEET_IDS.geral}::Documentos!A:H`];
+    fecharModal('modal-documento'); await carregarDocumentos();
+  } catch(e){ console.error(e); showToast('Erro ao salvar.','error'); }
+}
+
+/* ── BLOCO 10: ALERTAS & HISTÓRICO ── */
+let alertasHistData = [];
+
+async function carregarAlertas() {
+  document.getElementById('alert-table-wrap').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Alertas & Histórico!A:I`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Alertas & Histórico!A:I');
+    alertasHistData = rowsToObjects(rows);
+    renderAlertas();
+  } catch(e){ console.error(e); showToast('Erro ao carregar alertas.','error'); }
+}
+
+function renderAlertas() {
+  const tipos=[...new Set(alertasHistData.map(r=>r['TIPO']).filter(Boolean))];
+  const cidades=[...new Set(alertasHistData.map(r=>r['CIDADE']).filter(Boolean))];
+  document.getElementById('alert-filtros').innerHTML=`
+    <select class="form-select" id="alt-f-cidade" onchange="renderAlertTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todas as cidades</option>${cidades.map(c=>`<option>${c}</option>`).join('')}
+    </select>
+    <select class="form-select" id="alt-f-tipo" onchange="renderAlertTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todos os tipos</option>${tipos.map(t=>`<option>${t}</option>`).join('')}
+    </select>`;
+  renderAlertTabela();
+}
+
+function renderAlertTabela() {
+  const wrap=document.getElementById('alert-table-wrap');
+  const fCidade=document.getElementById('alt-f-cidade')?.value||'';
+  const fTipo=document.getElementById('alt-f-tipo')?.value||'';
+  let rows=alertasHistData;
+  if(fCidade) rows=rows.filter(r=>(r['CIDADE']||'')==fCidade);
+  if(fTipo)   rows=rows.filter(r=>(r['TIPO']||'')==fTipo);
+  if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum alerta registrado</div></div>`; return; }
+  const linhas=rows.map(r=>{
+    const varPct=parseFloat(r['VARIAÇÃO (%)']||r['VARIACAO']||'0');
+    const varCls=varPct>0?'var(--red)':varPct<0?'var(--green)':'var(--text2)';
+    const varHtml=varPct!==0?`<span style="color:${varCls};font-weight:600">${varPct>0?'+':''}${varPct.toFixed(1)}%</span>`:'—';
+    return `<tr>
+      <td class="muted" style="white-space:nowrap">${r['DATA / HORA']||r['DATA/HORA']||'—'}</td>
+      <td class="muted">${r['USUÁRIO']||r['USUARIO']||'—'}</td>
+      <td><strong>${r['ITEM']||'—'}</strong></td>
+      <td class="muted">${r['CIDADE']||'—'}</td>
+      <td class="muted">${parseBRL(r['VALOR ANTERIOR (R$)']||r['VALOR ANTERIOR'])>0?formatBRL(parseBRL(r['VALOR ANTERIOR (R$)']||r['VALOR ANTERIOR'])):'—'}</td>
+      <td>${parseBRL(r['NOVO VALOR (R$)']||r['NOVO VALOR'])>0?formatBRL(parseBRL(r['NOVO VALOR (R$)']||r['NOVO VALOR'])):'—'}</td>
+      <td>${varHtml}</td>
+      <td class="muted">${r['TIPO']||'—'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Item</th><th>Cidade</th><th>Valor anterior</th><th>Novo valor</th><th>Variação</th><th>Tipo</th><th>OBS</th></tr></thead>
+    <tbody>${linhas}</tbody></table></div>`;
+}
+
+// Registra alerta ao salvar item da Produção com mudança de valor
+async function registrarAlertaValor(cidade, item, valorAnt, novoVal, tipo='Alteração manual') {
+  if(Math.abs(novoVal - valorAnt) < 0.01) return; // sem mudança real
+  const pct = valorAnt > 0 ? (((novoVal - valorAnt) / valorAnt) * 100).toFixed(1) : '—';
+  const nm = {irece:'Irecê', serrinha:'Serrinha', jequie:'Jequié'};
+  const row = [[agora(), currentUser.nome, item, nm[cidade]||cidade, valorAnt, novoVal, pct, tipo, '']];
+  try { await sheetsAppend(SHEET_IDS.geral,'Alertas & Histórico!A:I', row); }
+  catch(e){ console.error('registrarAlertaValor:', e); }
+}
+
+/* ── BLOCO 11: CONFIGURAÇÕES ── */
+let eventosData = [];
+let produtoresCfg = [];
+
+async function carregarConfiguracoes() {
+  // Carrega eventos da Geral
+  try {
+    delete sheetsCache[`${SHEET_IDS.geral}::Eventos!A:G`];
+    const rows = await sheetsRead(SHEET_IDS.geral, 'Eventos!A:G');
+    eventosData = rowsToObjects(rows);
+  } catch(e){ eventosData = []; }
+
+  // Produtores do localStorage
+  produtoresCfg = JSON.parse(localStorage.getItem('sj2026_produtores')||'[]');
+
+  // Worker URL
+  const cfg = JSON.parse(localStorage.getItem('sj2026_config')||'{}');
+  document.getElementById('cfg-worker-url').value = cfg.workerUrl || WORKER_URL;
+
+  // Twilio
+  document.getElementById('cfg-twilio-sid').value   = cfg.twilioSid||'';
+  document.getElementById('cfg-twilio-token').value = cfg.twilioToken||'';
+  document.getElementById('cfg-twilio-from').value  = cfg.twilioFrom||'';
+  document.getElementById('cfg-wpp-aprov').value    = cfg.whatsappAprovador||'';
+  document.getElementById('cfg-wpp-pag').value      = cfg.whatsappPagador||'';
+
+  renderCfgEventos();
+  renderCfgProdutores();
+}
+
+function renderCfgEventos() {
+  const wrap = document.getElementById('cfg-evento-lista');
+  if(!eventosData.length){ wrap.innerHTML='<p style="font-size:13px;color:var(--text3)">Nenhum evento cadastrado.</p>'; return; }
+  wrap.innerHTML = eventosData.map((e,i)=>{
+    const isAtivo = (e['STATUS']||'').toLowerCase().includes('produção')||(e['STATUS']||'').toLowerCase().includes('ativo');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${e['NOME DO EVENTO']||e['NOME']||'—'} <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">${e['CIDADE']||''}</span></div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">${e['DATA INÍCIO']||'—'} → ${e['DATA FIM']||'—'}</div>
+      </div>
+      <span class="badge ${isAtivo?'badge-aprovado':'badge-pendente'}">${e['STATUS']||'—'}</span>
+      <button class="btn btn-ghost btn-sm" onclick="abrirModalEvento(${i})">Editar</button>
+      ${!isAtivo?`<button class="btn btn-ghost btn-sm" onclick="definirEventoAtivo(${i})" style="color:var(--accent)">Tornar ativo</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderCfgProdutores() {
+  const wrap = document.getElementById('cfg-produtores-lista');
+  if(!produtoresCfg.length){ wrap.innerHTML='<p style="font-size:13px;color:var(--text3)">Nenhum produtor cadastrado.</p>'; return; }
+  wrap.innerHTML = produtoresCfg.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+      <div class="avatar avatar-prod" style="width:28px;height:28px;font-size:11px">${(p.nome||'P').charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${p.nome||'—'} <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">${p.cidade||''}</span></div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">${p.codigo||'—'} · ${p.whatsapp||'—'}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="editarProdutor(${i})">Editar</button>
+      <button class="btn btn-red btn-sm" onclick="removerProdutor(${i})">✕</button>
+    </div>`).join('');
+}
+
+function abrirModalEvento(idx) {
+  const e = idx!==undefined ? eventosData[idx] : null;
+  document.getElementById('evt-row-idx').value = idx!==undefined?idx:'';
+  document.getElementById('modal-evento-titulo').textContent = e?'Editar evento':'Novo evento';
+  document.getElementById('evt-nome').value   = e?.['NOME DO EVENTO']||e?.['NOME']||'';
+  document.getElementById('evt-inicio').value = parseDateForInput(e?.['DATA INÍCIO']||e?.['DATA INICIO']||'');
+  document.getElementById('evt-fim').value    = parseDateForInput(e?.['DATA FIM']||'');
+  document.getElementById('evt-cidade').value = e?.['CIDADE']||'Todas';
+  document.getElementById('evt-status').value = e?.['STATUS']||'Planejamento';
+  abrirModal('modal-evento');
+}
+
+async function salvarEvento() {
+  const nome = document.getElementById('evt-nome').value.trim();
+  if(!nome){ showToast('Informe o nome do evento.','warn'); return; }
+  const ini = document.getElementById('evt-inicio').value;
+  const fim = document.getElementById('evt-fim').value;
+  const row = [[nome, document.getElementById('evt-cidade').value,
+    ini?formatDateBR(ini):'', fim?formatDateBR(fim):'',
+    document.getElementById('evt-status').value,'','']];
+  try {
+    const i = document.getElementById('evt-row-idx').value;
+    if(i===''){ await sheetsAppend(SHEET_IDS.geral,'Eventos!A:G',row); showToast('Evento criado!','success'); }
+    else{ await sheetsWrite(SHEET_IDS.geral,`Eventos!A${parseInt(i)+2}:G${parseInt(i)+2}`,row); showToast('Atualizado!','success'); }
+    delete sheetsCache[`${SHEET_IDS.geral}::Eventos!A:G`];
+    fecharModal('modal-evento');
+    // Recarrega eventos
+    const rows=await sheetsRead(SHEET_IDS.geral,'Eventos!A:G');
+    eventosData=rowsToObjects(rows);
+    renderCfgEventos();
+  } catch(e){ console.error(e); showToast('Erro ao salvar.','error'); }
+}
+
+async function definirEventoAtivo(idx) {
+  const e = eventosData[idx];
+  if(!confirm(`Tornar "${e['NOME DO EVENTO']||e['NOME']}" o evento ativo?`)) return;
+  try {
+    // Atualiza status de todos para não-ativo, e este para Em produção
+    for(let i=0;i<eventosData.length;i++){
+      const st = i===idx?'Em produção':'Encerrado';
+      await sheetsWrite(SHEET_IDS.geral,`Eventos!E${i+2}`,[[st]]);
+    }
+    delete sheetsCache[`${SHEET_IDS.geral}::Eventos!A:G`];
+    const rows=await sheetsRead(SHEET_IDS.geral,'Eventos!A:G');
+    eventosData=rowsToObjects(rows);
+    // Atualiza countdown
+    appData.eventoAtivo=eventosData[idx];
+    setupCountdown();
+    renderCfgEventos();
+    showToast('Evento ativo atualizado!','success');
+  } catch(e){ console.error(e); showToast('Erro.','error'); }
+}
+
+function abrirModalProdutor(idx) {
+  const p = idx!==undefined ? produtoresCfg[idx] : null;
+  document.getElementById('prod-cfg-idx').value = idx!==undefined?idx:'';
+  document.getElementById('prod-cfg-nome').value   = p?.nome||'';
+  document.getElementById('prod-cfg-cidade').value = p?.cidade||'Irecê';
+  document.getElementById('prod-cfg-wpp').value    = p?.whatsapp||'';
+  document.getElementById('prod-cfg-codigo').value = p?.codigo||'';
+  abrirModal('modal-produtor');
+}
+
+function editarProdutor(idx){ abrirModalProdutor(idx); }
+
+function salvarProdutor() {
+  const nome   = document.getElementById('prod-cfg-nome').value.trim();
+  const cidade = document.getElementById('prod-cfg-cidade').value;
+  const wpp    = document.getElementById('prod-cfg-wpp').value.trim();
+  const codigo = document.getElementById('prod-cfg-codigo').value.trim().toUpperCase();
+  if(!nome||!codigo){ showToast('Informe nome e código.','warn'); return; }
+  const i = document.getElementById('prod-cfg-idx').value;
+  const novo = {nome, cidade, whatsapp:wpp, codigo};
+  if(i===''){ produtoresCfg.push(novo); }
+  else{ produtoresCfg[parseInt(i)] = novo; }
+  localStorage.setItem('sj2026_produtores', JSON.stringify(produtoresCfg));
+  fecharModal('modal-produtor');
+  renderCfgProdutores();
+  showToast('Produtor salvo!','success');
+}
+
+function removerProdutor(idx) {
+  if(!confirm('Remover este produtor?')) return;
+  produtoresCfg.splice(idx,1);
+  localStorage.setItem('sj2026_produtores', JSON.stringify(produtoresCfg));
+  renderCfgProdutores();
+}
+
+function salvarCfgWorker() {
+  const url = document.getElementById('cfg-worker-url').value.trim();
+  if(!url){ showToast('Informe a URL.','warn'); return; }
+  const cfg = JSON.parse(localStorage.getItem('sj2026_config')||'{}');
+  cfg.workerUrl = url;
+  localStorage.setItem('sj2026_config', JSON.stringify(cfg));
+  showToast('Worker URL salvo!','success');
+}
+
+function salvarCfgTwilio() {
+  const cfg = JSON.parse(localStorage.getItem('sj2026_config')||'{}');
+  cfg.twilioSid         = document.getElementById('cfg-twilio-sid').value.trim();
+  cfg.twilioToken       = document.getElementById('cfg-twilio-token').value.trim();
+  cfg.twilioFrom        = document.getElementById('cfg-twilio-from').value.trim();
+  cfg.whatsappAprovador = document.getElementById('cfg-wpp-aprov').value.trim();
+  cfg.whatsappPagador   = document.getElementById('cfg-wpp-pag').value.trim();
+  localStorage.setItem('sj2026_config', JSON.stringify(cfg));
+  document.getElementById('cfg-twilio-status').textContent = cfg.twilioSid ? '✓ Credenciais salvas' : '';
+  showToast('Configurações WhatsApp salvas!','success');
 }
 
 /* ── BLOCO 5: SOLICITAÇÃO ── */
