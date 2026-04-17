@@ -438,7 +438,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <table><thead><tr>
               <th>Nome</th><th>Função</th><th>Setor</th><th>Data ida</th><th>Data volta</th>
               <th>Diárias</th><th>Valor/dia</th><th>Total</th>
-              <th>Hospedagem</th><th>Transporte</th><th>Status pgto</th><th>PIX/Conta</th><th style="width:36px"></th>
+              <th>Hosp.</th><th>Transp.</th><th>Status pgto</th><th>PIX/Conta</th><th style="width:36px"></th>
             </tr></thead>
             <tbody id="equipe-body"><tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
@@ -451,15 +451,17 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <span class="section-title">Hospedagem</span>
             <button class="btn btn-primary btn-sm" onclick="abrirModalHospedagem()">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nova hospedagem
+              + Cômodo
             </button>
           </div>
+          <div class="metric-grid" id="hosp-metricas" style="margin-bottom:12px"></div>
+          <div id="hosp-alerta"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Local</th><th>Cômodo/Quarto</th><th>Pessoa</th>
-              <th>Check-in</th><th>Check-out</th><th>Diárias</th><th>Valor/diária</th><th>Total</th><th>OBS</th><th style="width:36px"></th>
+              <th>Cômodo</th><th>Check-in → Check-out</th><th>Diárias</th>
+              <th>Valor/diária</th><th>Total</th><th>Ocupação</th><th>Pessoas</th><th>OBS</th><th style="width:100px"></th>
             </tr></thead>
-            <tbody id="hospedagem-body"><tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            <tbody id="hospedagem-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -470,12 +472,14 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <span class="section-title">Transporte</span>
             <button class="btn btn-primary btn-sm" onclick="abrirModalTransporte()">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Novo registro
+              + Veículo
             </button>
           </div>
+          <div class="metric-grid" id="transp-metricas" style="margin-bottom:12px"></div>
+          <div id="transp-alerta"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Veículo</th><th>Trajeto</th><th>Vagas</th><th>Data partida</th><th>Horário</th><th>Pessoa</th><th>Retorno</th><th>OBS</th><th style="width:36px"></th>
+              <th>Veículo</th><th>Trajeto</th><th>Partida</th><th>Horário</th><th>Retorno</th><th>Ocupação</th><th>Pessoas</th><th>OBS</th><th style="width:100px"></th>
             </tr></thead>
             <tbody id="transporte-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
@@ -486,17 +490,19 @@ tbody tr:hover .btn-edit-row{opacity:1}
         <div id="prod-sub-pulseiras" class="prod-sub">
           <div class="section-header">
             <span class="section-title">Pulseiras</span>
-            <button class="btn btn-primary btn-sm" onclick="abrirModalPulseira()">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Registrar movimentação
-            </button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalTipoPulseira()">Cadastrar tipo</button>
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalContagemReal()">Contagem real</button>
+              <button class="btn btn-primary btn-sm" onclick="abrirModalSaida()">+ Registrar saída</button>
+            </div>
           </div>
-          <div class="metric-grid" id="pulseiras-metricas" style="margin-bottom:16px"></div>
+          <div class="metric-grid" id="pulseiras-metricas" style="margin-bottom:12px"></div>
+          <div id="puls-filtros"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Dia</th><th>Tipo</th><th>Estoque inicial</th><th>Saídas</th><th>Saldo</th><th>Contagem real</th><th>Diferença</th><th>Solicitante</th><th>Data/Hora</th><th>OBS</th><th style="width:36px"></th>
+              <th>Dia</th><th>Tipo</th><th>Saídas</th><th>Contagem real</th><th>Diferença</th><th>Solicitante</th><th>Data/Hora</th><th>OBS</th>
             </tr></thead>
-            <tbody id="pulseiras-body"><tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            <tbody id="pulseiras-body"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -531,15 +537,16 @@ tbody tr:hover .btn-edit-row{opacity:1}
         <div id="prod-sub-alimentacao" class="prod-sub">
           <div class="section-header">
             <span class="section-title">Alimentação</span>
-            <button class="btn btn-primary btn-sm" onclick="abrirModalAlimentacao()">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Registrar
-            </button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="abrirModalFornAlim()">+ Fornecedor</button>
+              <button class="btn btn-primary btn-sm" onclick="abrirModalAlimentacao()">+ Registrar</button>
+            </div>
           </div>
-          <div class="metric-grid" id="alim-metricas" style="margin-bottom:16px"></div>
+          <div class="metric-grid" id="alim-metricas" style="margin-bottom:12px"></div>
+          <div id="alim-filtros"></div>
           <div class="table-wrap">
             <table><thead><tr>
-              <th>Dia</th><th>Equipe/Setor</th><th>Fornecedor</th><th>Valor voucher</th><th>Qtd vouchers</th><th>Total</th><th>Data/Hora</th><th>OBS</th><th style="width:36px"></th>
+              <th>Dia</th><th>Equipe/Setor</th><th>Fornecedor</th><th>Valor voucher</th><th>Qtd</th><th>Total</th><th>Data/Hora</th><th>OBS</th><th style="width:36px"></th>
             </tr></thead>
             <tbody id="alim-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
@@ -555,6 +562,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
               Nova sinalização
             </button>
           </div>
+          <div id="sinal-filtros"></div>
           <div class="table-wrap">
             <table><thead><tr>
               <th>Item</th><th>Fornecedor</th><th>Status</th><th>Qtd</th><th>Dimensão</th><th>Descrição</th><th>Orçamento</th><th>OBS</th><th style="width:36px"></th>
@@ -920,7 +928,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
 
       <!-- MODAL MEMBRO EQUIPE -->
       <div class="modal-overlay" id="modal-membro">
-        <div class="modal" style="max-width:600px">
+        <div class="modal" style="max-width:620px">
           <div class="modal-header"><span class="modal-title" id="modal-membro-titulo">Membro da equipe</span><button class="modal-close" onclick="fecharModal('modal-membro')">✕</button></div>
           <div class="modal-body">
             <input type="hidden" id="membro-row-idx">
@@ -928,8 +936,9 @@ tbody tr:hover .btn-edit-row{opacity:1}
               <div class="form-group" style="grid-column:1/-1"><label class="form-label">Nome completo</label><input class="form-input" id="membro-nome"></div>
               <div class="form-group"><label class="form-label">Função</label><input class="form-input" id="membro-funcao"></div>
               <div class="form-group"><label class="form-label">Equipe/Setor</label><input class="form-input" id="membro-setor"></div>
-              <div class="form-group"><label class="form-label">Data ida</label><input class="form-input" id="membro-ida" type="date"></div>
-              <div class="form-group"><label class="form-label">Data volta</label><input class="form-input" id="membro-volta" type="date"></div>
+              <div class="form-group"><label class="form-label">Data ida</label><input class="form-input" id="membro-ida" type="date" oninput="calcMembroTotal()"></div>
+              <div class="form-group"><label class="form-label">Data volta</label><input class="form-input" id="membro-volta" type="date" oninput="calcMembroTotal()"></div>
+              <div class="form-group"><label class="form-label">Diárias <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="membro-diarias" readonly style="opacity:0.7;cursor:default"></div>
               <div class="form-group"><label class="form-label">Valor/dia (R$)</label><input class="form-input" id="membro-valdia" type="number" min="0" step="0.01" oninput="calcMembroTotal()"></div>
               <div class="form-group"><label class="form-label">Total (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="membro-total" readonly style="opacity:0.7;cursor:default"></div>
               <div class="form-group"><label class="form-label">Precisa hospedagem?</label><select class="form-select" id="membro-hosp"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
@@ -938,27 +947,36 @@ tbody tr:hover .btn-edit-row{opacity:1}
               <div class="form-group"><label class="form-label">Agência</label><input class="form-input" id="membro-agencia"></div>
               <div class="form-group"><label class="form-label">Conta</label><input class="form-input" id="membro-conta"></div>
               <div class="form-group"><label class="form-label">PIX</label><input class="form-input" id="membro-pix"></div>
-              <div class="form-group"><label class="form-label">Status pagamento</label><select class="form-select" id="membro-status"><option>Em aberto</option><option>Pagamento solicitado</option><option>Pagamento aprovado</option><option>Pago</option></select></div>
-              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="membro-obs"></div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Status pagamento</label>
+                <div class="form-input" id="membro-status" style="display:flex;align-items:center;opacity:0.7;cursor:default;min-height:40px">Em aberto</div>
+              </div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="membro-obs"></div>
             </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-              <button class="btn btn-ghost" onclick="fecharModal('modal-membro')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarMembro()">Salvar</button>
+            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="btn-solicitar-pgto-membro" onclick="solicitarPagamentoMembro()" style="display:none;color:var(--accent);border-color:rgba(212,240,74,0.3)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Solicitar pagamento
+              </button>
+              <div style="display:flex;gap:8px;margin-left:auto">
+                <button class="btn btn-ghost" onclick="fecharModal('modal-membro')">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarMembro()">Salvar</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- MODAL HOSPEDAGEM -->
+      <!-- MODAL HOSPEDAGEM (CÔMODO) -->
       <div class="modal-overlay" id="modal-hospedagem">
         <div class="modal" style="max-width:520px">
-          <div class="modal-header"><span class="modal-title" id="modal-hosp-titulo">Hospedagem</span><button class="modal-close" onclick="fecharModal('modal-hospedagem')">✕</button></div>
+          <div class="modal-header"><span class="modal-title" id="modal-hosp-titulo">Novo cômodo</span><button class="modal-close" onclick="fecharModal('modal-hospedagem')">✕</button></div>
           <div class="modal-body">
             <input type="hidden" id="hosp-row-idx">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Local</label><input class="form-input" id="hosp-local"></div>
-              <div class="form-group"><label class="form-label">Cômodo/Quarto</label><input class="form-input" id="hosp-comodo"></div>
-              <div class="form-group"><label class="form-label">Pessoa</label><input class="form-input" id="hosp-pessoa" list="hosp-pessoas-list"><datalist id="hosp-pessoas-list"></datalist></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Local (ex: Hotel São João)</label><input class="form-input" id="hosp-local" placeholder="Nome do local"></div>
+              <div class="form-group"><label class="form-label">Cômodo/Quarto</label><input class="form-input" id="hosp-comodo" placeholder="Ex: Quarto 101"></div>
+              <div class="form-group"><label class="form-label">Capacidade (pessoas)</label><input class="form-input" id="hosp-cap" type="number" min="1"></div>
               <div class="form-group"><label class="form-label">Check-in</label><input class="form-input" id="hosp-checkin" type="date" oninput="calcDiariasHosp()"></div>
               <div class="form-group"><label class="form-label">Check-out</label><input class="form-input" id="hosp-checkout" type="date" oninput="calcDiariasHosp()"></div>
               <div class="form-group"><label class="form-label">Diárias <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="hosp-diarias" readonly style="opacity:0.7;cursor:default"></div>
@@ -974,21 +992,38 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
-      <!-- MODAL TRANSPORTE -->
+      <!-- MODAL ALOCAR HOSPEDAGEM -->
+      <div class="modal-overlay" id="modal-aloc-hosp">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Alocar pessoa</span><button class="modal-close" onclick="fecharModal('modal-aloc-hosp')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="aloc-hosp-comodo-idx">
+            <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
+              <strong id="aloc-hosp-local"></strong> — <span id="aloc-hosp-comodo"></span>
+            </p>
+            <div class="form-group"><label class="form-label">Pessoa</label><select class="form-select" id="aloc-hosp-pessoa"></select></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-aloc-hosp')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarAlocHosp()">Alocar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL TRANSPORTE (VEÍCULO) -->
       <div class="modal-overlay" id="modal-transporte">
-        <div class="modal" style="max-width:520px">
-          <div class="modal-header"><span class="modal-title" id="modal-transp-titulo">Transporte</span><button class="modal-close" onclick="fecharModal('modal-transporte')">✕</button></div>
+        <div class="modal" style="max-width:480px">
+          <div class="modal-header"><span class="modal-title" id="modal-transp-titulo">Novo veículo</span><button class="modal-close" onclick="fecharModal('modal-transporte')">✕</button></div>
           <div class="modal-body">
             <input type="hidden" id="transp-row-idx">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label class="form-label">Veículo/Condução</label><input class="form-input" id="transp-veiculo"></div>
-              <div class="form-group"><label class="form-label">Trajeto</label><input class="form-input" id="transp-trajeto"></div>
-              <div class="form-group"><label class="form-label">Vagas</label><input class="form-input" id="transp-vagas" type="number" min="1"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Veículo/Condução</label><input class="form-input" id="transp-veiculo" placeholder="Ex: Van Sprinter, Ônibus"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Trajeto</label><input class="form-input" id="transp-trajeto" placeholder="Ex: Salvador → Serrinha"></div>
+              <div class="form-group"><label class="form-label">Vagas (capacidade)</label><input class="form-input" id="transp-vagas" type="number" min="1"></div>
               <div class="form-group"><label class="form-label">Data partida</label><input class="form-input" id="transp-data" type="date"></div>
               <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="transp-horario" type="time"></div>
-              <div class="form-group"><label class="form-label">Pessoa</label><input class="form-input" id="transp-pessoa" list="transp-pessoas-list"><datalist id="transp-pessoas-list"></datalist></div>
               <div class="form-group"><label class="form-label">Retorno</label><input class="form-input" id="transp-retorno"></div>
-              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="transp-obs"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="transp-obs"></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-transporte')">Cancelar</button>
@@ -998,24 +1033,67 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
-      <!-- MODAL PULSEIRA -->
-      <div class="modal-overlay" id="modal-pulseira">
-        <div class="modal" style="max-width:460px">
-          <div class="modal-header"><span class="modal-title">Registrar movimentação</span><button class="modal-close" onclick="fecharModal('modal-pulseira')">✕</button></div>
+      <!-- MODAL ALOCAR TRANSPORTE -->
+      <div class="modal-overlay" id="modal-aloc-transp">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Alocar pessoa</span><button class="modal-close" onclick="fecharModal('modal-aloc-transp')">✕</button></div>
           <div class="modal-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group"><label class="form-label">Dia</label><input class="form-input" id="puls-dia" type="date"></div>
-              <div class="form-group"><label class="form-label">Tipo de pulseira</label><input class="form-input" id="puls-tipo" placeholder="Ex: VIP, Pista, Camarote"></div>
-              <div class="form-group"><label class="form-label">Estoque inicial</label><input class="form-input" id="puls-estoque" type="number" min="0"></div>
-              <div class="form-group"><label class="form-label">Saídas</label><input class="form-input" id="puls-saidas" type="number" min="0" oninput="calcSaldoPulseira()"></div>
-              <div class="form-group"><label class="form-label">Saldo <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="puls-saldo" readonly style="opacity:0.7;cursor:default"></div>
-              <div class="form-group"><label class="form-label">Contagem real</label><input class="form-input" id="puls-contagem" type="number" min="0"></div>
-              <div class="form-group"><label class="form-label">Solicitante</label><input class="form-input" id="puls-solicitante"></div>
-              <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="puls-obs"></div>
-            </div>
+            <input type="hidden" id="aloc-transp-veic-idx">
+            <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Veículo: <strong id="aloc-transp-veic"></strong></p>
+            <div class="form-group"><label class="form-label">Pessoa</label><select class="form-select" id="aloc-transp-pessoa"></select></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-              <button class="btn btn-ghost" onclick="fecharModal('modal-pulseira')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarPulseira()">Salvar</button>
+              <button class="btn btn-ghost" onclick="fecharModal('modal-aloc-transp')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarAlocTransp()">Alocar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL TIPO PULSEIRA -->
+      <div class="modal-overlay" id="modal-tipo-pulseira">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Cadastrar tipo de pulseira</span><button class="modal-close" onclick="fecharModal('modal-tipo-pulseira')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Tipo (ex: VIP, Pista, Camarote)</label><input class="form-input" id="puls-tipo-nome"></div>
+            <div class="form-group"><label class="form-label">Data do evento</label><input class="form-input" id="puls-tipo-data" type="date"></div>
+            <div class="form-group"><label class="form-label">Quantidade inicial</label><input class="form-input" id="puls-tipo-qtd" type="number" min="1"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="puls-tipo-obs"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-tipo-pulseira')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarTipoPulseira()">Cadastrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL SAÍDA PULSEIRA -->
+      <div class="modal-overlay" id="modal-saida-pulseira">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Registrar saída de pulseiras</span><button class="modal-close" onclick="fecharModal('modal-saida-pulseira')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Tipo de pulseira</label><select class="form-select" id="puls-saida-tipo"></select></div>
+            <div class="form-group"><label class="form-label">Quantidade saindo</label><input class="form-input" id="puls-saida-qtd" type="number" min="1"></div>
+            <div class="form-group"><label class="form-label">Solicitante</label><input class="form-input" id="puls-saida-sol"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="puls-saida-obs"></div>
+            <p style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px">Data e hora preenchidos automaticamente no momento do registro.</p>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-saida-pulseira')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarSaida()">Registrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL CONTAGEM REAL PULSEIRA -->
+      <div class="modal-overlay" id="modal-contagem-pulseira">
+        <div class="modal" style="max-width:380px">
+          <div class="modal-header"><span class="modal-title">Contagem real</span><button class="modal-close" onclick="fecharModal('modal-contagem-pulseira')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Tipo de pulseira</label><select class="form-select" id="puls-cont-tipo"></select></div>
+            <div class="form-group"><label class="form-label">Quantidade real restante</label><input class="form-input" id="puls-cont-qtd" type="number" min="0"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-contagem-pulseira')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarContagemReal()">Registrar</button>
             </div>
           </div>
         </div>
@@ -1056,19 +1134,35 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
+      <!-- MODAL FORNECEDOR ALIMENTAÇÃO -->
+      <div class="modal-overlay" id="modal-forn-alim">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Cadastrar fornecedor</span><button class="modal-close" onclick="fecharModal('modal-forn-alim')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Nome do fornecedor</label><input class="form-input" id="forn-alim-nome"></div>
+            <div class="form-group"><label class="form-label">Valor do voucher (R$)</label><input class="form-input" id="forn-alim-val" type="number" min="0" step="0.01"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="forn-alim-obs"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-forn-alim')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarFornAlim()">Cadastrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL ALIMENTAÇÃO -->
       <div class="modal-overlay" id="modal-alimentacao">
         <div class="modal" style="max-width:480px">
-          <div class="modal-header"><span class="modal-title" id="modal-alim-titulo">Alimentação</span><button class="modal-close" onclick="fecharModal('modal-alimentacao')">✕</button></div>
+          <div class="modal-header"><span class="modal-title" id="modal-alim-titulo">Registrar alimentação</span><button class="modal-close" onclick="fecharModal('modal-alimentacao')">✕</button></div>
           <div class="modal-body">
             <input type="hidden" id="alim-row-idx">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="form-group"><label class="form-label">Dia</label><input class="form-input" id="alim-dia" type="date"></div>
-              <div class="form-group"><label class="form-label">Equipe/Setor</label><input class="form-input" id="alim-setor"></div>
-              <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="alim-forn"></div>
-              <div class="form-group"><label class="form-label">Valor voucher (R$)</label><input class="form-input" id="alim-valvoucher" type="number" min="0" step="0.01" oninput="calcTotalAlim()"></div>
+              <div class="form-group"><label class="form-label">Equipe/Setor</label><select class="form-select" id="alim-setor"></select></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Fornecedor</label><select class="form-select" id="alim-forn" onchange="autoPreencherVoucher()"></select></div>
+              <div class="form-group"><label class="form-label">Valor voucher (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-valvoucher" type="number" min="0" step="0.01" oninput="calcTotalAlim()"></div>
               <div class="form-group"><label class="form-label">Qtd vouchers</label><input class="form-input" id="alim-qtd" type="number" min="0" oninput="calcTotalAlim()"></div>
-              <div class="form-group"><label class="form-label">Total <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-total" readonly style="opacity:0.7;cursor:default"></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Total (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-total" readonly style="opacity:0.7;cursor:default"></div>
               <div class="form-group" style="grid-column:1/-1"><label class="form-label">OBS</label><input class="form-input" id="alim-obs"></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
@@ -1108,7 +1202,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
-      <!-- MODAL PINO MAPA -->
+            <!-- MODAL PINO MAPA -->
       <div class="modal-overlay" id="modal-pino">
         <div class="modal" style="max-width:380px">
           <div class="modal-header"><span class="modal-title">Adicionar pino</span><button class="modal-close" onclick="fecharModal('modal-pino')">✕</button></div>
@@ -1464,10 +1558,15 @@ async function loadAppData(){
 async function loadPPP(cidade){
   const id=SHEET_IDS[cidade];if(!id)return;
   try{
-    const[pR,eR]=await Promise.all([sheetsRead(id,'Produção!A:O'),sheetsRead(id,'Equipe!A:P')]);
+    const[pR,eR,rR]=await Promise.all([
+      sheetsRead(id,'Produção!A:O'),
+      sheetsRead(id,'Equipe!A:P'),
+      sheetsRead(id,'Resumo!A:D'),
+    ]);
     if(!appData.pppData[cidade])appData.pppData[cidade]={};
     appData.pppData[cidade].producao=rowsToObjects(pR);
     appData.pppData[cidade].equipe=rowsToObjects(eR);
+    appData.pppData[cidade].resumo=rR||[];
   }catch(err){console.error(`loadPPP(${cidade}):`,err);}
 }
 
@@ -1487,21 +1586,45 @@ function setupCountdown(){
 }
 
 /* ── DASHBOARD ── */
+function parseBRLSheet(s){return parseBRL((s||'').toString().replace('R$','').replace(/\./g,'').replace(',','.').trim());}
+
 function renderDashboard(){
   const cidade=currentUser.cidade||(currentCity==='todas'?null:currentCity);
   const cidades=cidade?[cidade]:['irece','serrinha','jequie'];
-  let orc=0,pago=0,c2025=0;
+
+  // Tenta usar aba Resumo (B8=Total Geral Previsto, C8=Total Geral Pago)
+  let orcTotal=0,pagoTotal=0,temResumo=false;
+  cidades.forEach(c=>{
+    const resumo=(appData.pppData[c]&&appData.pppData[c].resumo)||[];
+    if(resumo.length>=8){
+      const prev=resumo[7]&&resumo[7][1]?parseBRLSheet(resumo[7][1]):0;
+      const pago=resumo[7]&&resumo[7][2]?parseBRLSheet(resumo[7][2]):0;
+      if(prev>0){orcTotal+=prev;temResumo=true;}
+      pagoTotal+=pago;
+    }
+  });
+
+  // Fallback: soma linha a linha da Produção
+  if(!temResumo){
+    cidades.forEach(c=>{
+      const prod=(appData.pppData[c]&&appData.pppData[c].producao)||[];
+      prod.forEach(r=>{
+        if(!r['ITEM'])return;
+        orcTotal+=parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)']);
+        pagoTotal+=parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
+      });
+    });
+  }
+
+  // Custo 2025 sempre da Produção
+  let c2025=0;
   cidades.forEach(c=>{
     const prod=(appData.pppData[c]&&appData.pppData[c].producao)||[];
-    prod.forEach(r=>{
-      if(!r['ITEM'])return;
-      orc+=parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)']);
-      pago+=parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
-      c2025+=parseBRL(r['CUSTO 2025 (R$)']||r['CUSTO 2025']);
-    });
+    prod.forEach(r=>{if(!r['ITEM'])return;c2025+=parseBRL(r['CUSTO 2025 (R$)']||r['CUSTO 2025']);});
   });
-  setMetric('m-orcamento',orc>0?formatBRL(orc):'R$ —');
-  setMetric('m-realizado',pago>0?formatBRL(pago):'R$ —');
+
+  setMetric('m-orcamento',orcTotal>0?formatBRL(orcTotal):'R$ —');
+  setMetric('m-realizado',pagoTotal>0?formatBRL(pagoTotal):'R$ —');
   setMetric('m-custo2025',c2025>0?formatBRL(c2025):'R$ —');
   setMetric('m-receitas','R$ —');
   renderDashboardAlerts(cidades);
@@ -1811,12 +1934,10 @@ function parseDateForInput(br){
 
 /* ── BLOCO 9: SUB-ABAS ── */
 
-// ── Helper geral ──
 function abrirModal(id){ document.getElementById(id).classList.add('open'); }
 function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
 function setupModalOverlay(id){ document.getElementById(id).addEventListener('click',function(e){if(e.target===this)fecharModal(id);}); }
 
-// Lê aba da PPP por nome
 async function lerAbaPPP(cidade, aba, range) {
   const id = SHEET_IDS[cidade];
   const rows = await sheetsRead(id, `${aba}!${range}`);
@@ -1831,22 +1952,29 @@ async function appendAbaPPP(cidade, aba, range, values) {
   const id = SHEET_IDS[cidade];
   return await sheetsAppend(id, `${aba}!${range}`, values);
 }
-
 function dataHoje() {
-  const d = new Date();
+  const d=new Date();
   return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 }
 function agora() {
-  const d = new Date();
+  const d=new Date();
   return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
 }
+function calcDiarias(ida, volta) {
+  if (!ida || !volta) return 0;
+  const d1=new Date(parseDateForInput(ida)), d2=new Date(parseDateForInput(volta));
+  if (isNaN(d1)||isNaN(d2)) return 0;
+  return Math.max(0, Math.ceil((d2-d1)/86400000));
+}
 
-/* ═══ EQUIPE ═══ */
+/* ═══════════════════════════════════════
+   EQUIPE
+═══════════════════════════════════════ */
 let equipeData = [];
 
 async function carregarEquipe() {
   const tbody = document.getElementById('equipe-body');
-  tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
   try {
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Equipe!A:P`];
     equipeData = await lerAbaPPP(prodCidadeAtiva, 'Equipe', 'A:P');
@@ -1856,20 +1984,16 @@ async function carregarEquipe() {
 
 function renderEquipe() {
   const tbody = document.getElementById('equipe-body');
-  const podeEditar = currentUser.perfil === 'mestre' || currentUser.perfil === 'prod';
+  const podeEditar = currentUser.perfil==='mestre'||currentUser.perfil==='prod';
   if (!equipeData.length) {
     tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum membro cadastrado</td></tr>`;
     return;
   }
   tbody.innerHTML = equipeData.map((r,i) => {
-    const ida = r['DATA IDA']||'', volta = r['DATA VOLTA']||'';
-    let diarias = '';
-    if (ida && volta) {
-      const d1 = new Date(parseDateForInput(ida)), d2 = new Date(parseDateForInput(volta));
-      if (!isNaN(d1) && !isNaN(d2)) diarias = Math.max(0, Math.ceil((d2-d1)/86400000));
-    }
+    const ida=r['DATA IDA']||'', volta=r['DATA VOLTA']||'';
+    const diarias = calcDiarias(ida, volta) || parseInt(r['DIÁRIAS']||r['DIARIAS'])||0;
     const valdia = parseBRL(r['VALOR/DIA (R$)']||r['VALOR/DIA']);
-    const total = diarias && valdia ? formatBRL(diarias * valdia) : (r['TOTAL (R$)']||'—');
+    const total = diarias&&valdia ? diarias*valdia : parseBRL(r['TOTAL (R$)']||r['TOTAL']);
     const st = (r['STATUS PAGAMENTO']||'Em aberto').trim();
     const bCls = {'Em aberto':'badge-pendente','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago':'badge-pago'}[st]||'badge-pendente';
     const eb = podeEditar ? `<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalMembro(${i})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : '';
@@ -1879,9 +2003,9 @@ function renderEquipe() {
       <td class="muted">${r['EQUIPE/SETOR']||'—'}</td>
       <td class="muted">${r['DATA IDA']||'—'}</td>
       <td class="muted">${r['DATA VOLTA']||'—'}</td>
-      <td class="muted">${diarias||r['DIÁRIAS']||'—'}</td>
+      <td class="muted">${diarias||'—'}</td>
       <td class="muted">${valdia>0?formatBRL(valdia):'—'}</td>
-      <td>${total}</td>
+      <td>${total>0?formatBRL(total):'—'}</td>
       <td class="muted">${r['PRECISA HOSPEDAGEM?']||'Não'}</td>
       <td class="muted">${r['PRECISA TRANSPORTE?']||'Não'}</td>
       <td><span class="badge ${bCls}">${st}</span></td>
@@ -1892,115 +2016,192 @@ function renderEquipe() {
 }
 
 function calcMembroTotal() {
-  const ida = document.getElementById('membro-ida').value;
-  const volta = document.getElementById('membro-volta').value;
-  const valdia = parseFloat(document.getElementById('membro-valdia').value)||0;
-  if (ida && volta) {
-    const d = Math.max(0, Math.ceil((new Date(volta)-new Date(ida))/86400000));
-    document.getElementById('membro-total').value = d>0&&valdia>0 ? (d*valdia).toFixed(2) : '';
-  }
+  const ida=document.getElementById('membro-ida').value;
+  const volta=document.getElementById('membro-volta').value;
+  const valdia=parseFloat(document.getElementById('membro-valdia').value)||0;
+  const d=calcDiarias(ida,volta);
+  if (d>0) document.getElementById('membro-diarias').value=d;
+  document.getElementById('membro-total').value=d&&valdia?(d*valdia).toFixed(2):'';
 }
 
 function abrirModalMembro(idx) {
-  const r = idx !== undefined ? equipeData[idx] : null;
-  document.getElementById('membro-row-idx').value = idx !== undefined ? idx : '';
-  document.getElementById('modal-membro-titulo').textContent = r ? `Editar — ${r['NOME']}` : 'Novo membro';
-  document.getElementById('membro-nome').value = r?.['NOME']||'';
-  document.getElementById('membro-funcao').value = r?.['FUNÇÃO']||r?.['FUNCAO']||'';
-  document.getElementById('membro-setor').value = r?.['EQUIPE/SETOR']||'';
-  document.getElementById('membro-ida').value = parseDateForInput(r?.['DATA IDA']||'');
-  document.getElementById('membro-volta').value = parseDateForInput(r?.['DATA VOLTA']||'');
-  document.getElementById('membro-valdia').value = parseBRL(r?.['VALOR/DIA (R$)']||r?.['VALOR/DIA'])||'';
-  document.getElementById('membro-total').value = parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
-  document.getElementById('membro-hosp').value = r?.['PRECISA HOSPEDAGEM?']||'Não';
-  document.getElementById('membro-transp').value = r?.['PRECISA TRANSPORTE?']||'Não';
-  document.getElementById('membro-banco').value = r?.['BANCO']||'';
-  document.getElementById('membro-agencia').value = r?.['AGÊNCIA']||r?.['AGENCIA']||'';
-  document.getElementById('membro-conta').value = r?.['CONTA']||'';
-  document.getElementById('membro-pix').value = r?.['PIX']||'';
-  document.getElementById('membro-status').value = r?.['STATUS PAGAMENTO']||'Em aberto';
-  document.getElementById('membro-obs').value = r?.['OBS']||'';
+  const r = idx!==undefined ? equipeData[idx] : null;
+  document.getElementById('membro-row-idx').value = idx!==undefined?idx:'';
+  document.getElementById('modal-membro-titulo').textContent = r?`Editar — ${r['NOME']}`:'Novo membro';
+  document.getElementById('membro-nome').value=r?.['NOME']||'';
+  document.getElementById('membro-funcao').value=r?.['FUNÇÃO']||r?.['FUNCAO']||'';
+  document.getElementById('membro-setor').value=r?.['EQUIPE/SETOR']||'';
+  document.getElementById('membro-ida').value=parseDateForInput(r?.['DATA IDA']||'');
+  document.getElementById('membro-volta').value=parseDateForInput(r?.['DATA VOLTA']||'');
+  document.getElementById('membro-diarias').value=r?.['DIÁRIAS']||r?.['DIARIAS']||'';
+  document.getElementById('membro-valdia').value=parseBRL(r?.['VALOR/DIA (R$)']||r?.['VALOR/DIA'])||'';
+  document.getElementById('membro-total').value=parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
+  document.getElementById('membro-hosp').value=r?.['PRECISA HOSPEDAGEM?']||'Não';
+  document.getElementById('membro-transp').value=r?.['PRECISA TRANSPORTE?']||'Não';
+  document.getElementById('membro-banco').value=r?.['BANCO']||'';
+  document.getElementById('membro-agencia').value=r?.['AGÊNCIA']||r?.['AGENCIA']||'';
+  document.getElementById('membro-conta').value=r?.['CONTA']||'';
+  document.getElementById('membro-pix').value=r?.['PIX']||'';
+  document.getElementById('membro-status').textContent = r?.['STATUS PAGAMENTO']||'Em aberto';
+  document.getElementById('membro-obs').value=r?.['OBS']||'';
+  // Botão solicitar pagamento só aparece se tem dados bancários e status Em aberto
+  const btnSol = document.getElementById('btn-solicitar-pgto-membro');
+  const temDados = (r?.['PIX']||r?.['CONTA'])&&parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])>0;
+  const stAtual = r?.['STATUS PAGAMENTO']||'Em aberto';
+  if (btnSol) btnSol.style.display = (idx!==undefined&&temDados&&stAtual==='Em aberto') ? '' : 'none';
   abrirModal('modal-membro');
 }
 
 async function salvarMembro() {
-  const nome = document.getElementById('membro-nome').value.trim();
-  if (!nome) { showToast('Informe o nome.','warn'); return; }
-  const ida = document.getElementById('membro-ida').value;
-  const volta = document.getElementById('membro-volta').value;
-  let diarias = '';
-  if (ida && volta) diarias = Math.max(0, Math.ceil((new Date(volta)-new Date(ida))/86400000));
-  const valdia = parseFloat(document.getElementById('membro-valdia').value)||0;
-  const total = diarias&&valdia ? diarias*valdia : parseFloat(document.getElementById('membro-total').value)||0;
-  // Cols: NOME|FUNÇÃO|EQUIPE/SETOR|DIÁRIAS|VALOR/DIA|TOTAL|BANCO|AGÊNCIA|CONTA|PIX|STATUS PAGAMENTO|OBS|DATA IDA|DATA VOLTA|PRECISA HOSPEDAGEM?|PRECISA TRANSPORTE?
-  const row = [[
-    nome,
-    document.getElementById('membro-funcao').value.trim(),
-    document.getElementById('membro-setor').value.trim(),
-    diarias, valdia>0?valdia:'', total>0?total:'',
-    document.getElementById('membro-banco').value.trim(),
-    document.getElementById('membro-agencia').value.trim(),
-    document.getElementById('membro-conta').value.trim(),
-    document.getElementById('membro-pix').value.trim(),
-    document.getElementById('membro-status').value,
-    document.getElementById('membro-obs').value.trim(),
-    ida ? formatDateBR(ida) : '',
-    volta ? formatDateBR(volta) : '',
-    document.getElementById('membro-hosp').value,
-    document.getElementById('membro-transp').value,
-  ]];
+  const nome=document.getElementById('membro-nome').value.trim();
+  if(!nome){showToast('Informe o nome.','warn');return;}
+  const ida=document.getElementById('membro-ida').value;
+  const volta=document.getElementById('membro-volta').value;
+  const diarias=calcDiarias(ida,volta)||parseInt(document.getElementById('membro-diarias').value)||0;
+  const valdia=parseFloat(document.getElementById('membro-valdia').value)||0;
+  const total=diarias&&valdia?diarias*valdia:parseFloat(document.getElementById('membro-total').value)||0;
+  // NOME|FUNÇÃO|EQUIPE/SETOR|DIÁRIAS|VALOR/DIA|TOTAL|BANCO|AGÊNCIA|CONTA|PIX|STATUS PAGAMENTO|OBS|DATA IDA|DATA VOLTA|PRECISA HOSPEDAGEM?|PRECISA TRANSPORTE?
+  const row=[[nome,document.getElementById('membro-funcao').value.trim(),document.getElementById('membro-setor').value.trim(),diarias||'',valdia||'',total||'',document.getElementById('membro-banco').value.trim(),document.getElementById('membro-agencia').value.trim(),document.getElementById('membro-conta').value.trim(),document.getElementById('membro-pix').value.trim(),document.getElementById('membro-status').textContent||'Em aberto',document.getElementById('membro-obs').value.trim(),ida?formatDateBR(ida):'',volta?formatDateBR(volta):'',document.getElementById('membro-hosp').value,document.getElementById('membro-transp').value]];
   try {
-    const idxRaw = document.getElementById('membro-row-idx').value;
-    if (idxRaw === '') {
-      await appendAbaPPP(prodCidadeAtiva,'Equipe','A:P',row);
-      showToast('Membro adicionado!','success');
-    } else {
-      await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${parseInt(idxRaw)+2}:P${parseInt(idxRaw)+2}`,row);
-      showToast('Membro atualizado!','success');
-    }
-    fecharModal('modal-membro');
-    await carregarEquipe();
-  } catch(e) { console.error(e); showToast('Erro ao salvar.','error'); }
+    const idxRaw=document.getElementById('membro-row-idx').value;
+    if(idxRaw===''){await appendAbaPPP(prodCidadeAtiva,'Equipe','A:P',row);showToast('Membro adicionado!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${parseInt(idxRaw)+2}:P${parseInt(idxRaw)+2}`,row);showToast('Membro atualizado!','success');}
+    fecharModal('modal-membro');await carregarEquipe();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ HOSPEDAGEM ═══ */
-let hospedagemData = [];
+async function solicitarPagamentoMembro() {
+  const idxRaw=document.getElementById('membro-row-idx').value;
+  if(idxRaw==='')return;
+  const r=equipeData[parseInt(idxRaw)];
+  if(!r)return;
+  const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
+  // Atualiza status na planilha para "Pagamento solicitado"
+  try {
+    await gravarAbaPPP(prodCidadeAtiva,'Equipe',`K${parseInt(idxRaw)+2}`,[['Pagamento solicitado']]);
+    // Cria item na Produção para aparecer no dashboard
+    const catEquipe='OPERAÇÃO', subEquipe='PRODUÇÃO | STAFF';
+    await appendAbaPPP(prodCidadeAtiva,'Produção','A:N',[[catEquipe,r['NOME'],1,parseInt(r['DIÁRIAS']||r['DIARIAS'])||1,'',parseBRL(r['VALOR/DIA (R$)']||r['VALOR/DIA'])||'',0,total||'',total||'',0,'Pagamento solicitado',r['NOME'],`Pagamento equipe — ${r['FUNÇÃO']||r['FUNCAO']||''}`,subEquipe]]);
+    // Invalida caches
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Equipe!A:P`];
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Produção!A:O`];
+    fecharModal('modal-membro');
+    // Navega para Solicitação com dados pré-preenchidos
+    solDadosPreenchidos = {
+      cidade: prodCidadeAtiva,
+      categoria: catEquipe,
+      item: r['NOME'],
+      descricao: `Pagamento de equipe — ${r['FUNÇÃO']||r['FUNCAO']||''} — ${r['DIÁRIAS']||r['DIARIAS']||''} diárias`,
+      custoOrcado: total,
+      favorecido: r['NOME'],
+      banco: r['BANCO']||'', agencia: r['AGÊNCIA']||r['AGENCIA']||'',
+      conta: r['CONTA']||'', pix: r['PIX']||'',
+      whatsapp: r['WHATSAPP']||'',
+    };
+    navigateTo('solicitacao');
+    showToast('Pré-preenchendo solicitação de pagamento…','success');
+  }catch(e){console.error(e);showToast('Erro ao solicitar pagamento.','error');}
+}
+
+/* ═══════════════════════════════════════
+   HOSPEDAGEM — Locais > Cômodos > Alocações
+═══════════════════════════════════════ */
+let hospedagemData=[];   // aba Hospedagem (cômodos)
+let hospAlocData=[];     // aba Alocações Hosp
+
 async function carregarHospedagem() {
   try {
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Hospedagem!A:I`];
-    hospedagemData = await lerAbaPPP(prodCidadeAtiva,'Hospedagem','A:I');
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Alocações Hosp!A:E`];
+    [hospedagemData, hospAlocData] = await Promise.all([
+      lerAbaPPP(prodCidadeAtiva,'Hospedagem','A:I'),
+      lerAbaPPP(prodCidadeAtiva,'Alocações Hosp','A:E'),
+    ]);
     renderHospedagem();
-  } catch(e) { console.error(e); showToast('Erro ao carregar hospedagem.','error'); }
+  }catch(e){console.error(e);showToast('Erro ao carregar hospedagem.','error');}
 }
+
 function renderHospedagem() {
-  const tbody = document.getElementById('hospedagem-body');
-  const podeEditar = currentUser.perfil==='mestre'||currentUser.perfil==='prod';
-  if (!hospedagemData.length) { tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`; return; }
-  tbody.innerHTML = hospedagemData.map((r,i)=>{
-    const eb = podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
-    const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
-    return `<tr><td>${r['LOCAL']||'—'}</td><td class="muted">${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</td><td>${r['PESSOA']||'—'}</td><td class="muted">${r['CHECK-IN']||'—'}</td><td class="muted">${r['CHECK-OUT']||'—'}</td><td class="muted">${r['DIÁRIAS']||r['DIARIAS']||'—'}</td><td class="muted">${parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])>0?formatBRL(parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])):'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
-  }).join('');
+  const tbody=document.getElementById('hospedagem-body');
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+
+  // Alerta: quem precisa de hospedagem mas não está alocado
+  const precisam=equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim');
+  const alocados=new Set(hospAlocData.map(r=>(r['PESSOA']||'').trim()));
+  const semAloc=precisam.filter(r=>!(alocados.has((r['NOME']||'').trim())));
+
+  // Métricas simples no topo
+  const totalComodos=hospedagemData.length;
+  const totalVagas=hospedagemData.reduce((s,r)=>s+(parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0),0);
+  document.getElementById('hosp-metricas').innerHTML=`
+    <div class="metric-card"><div class="metric-label">Cômodos</div><div class="metric-value">${totalComodos}</div></div>
+    <div class="metric-card"><div class="metric-label">Vagas totais</div><div class="metric-value blue">${totalVagas}</div></div>
+    <div class="metric-card"><div class="metric-label">Precisam hosp.</div><div class="metric-value">${precisam.length}</div></div>
+    <div class="metric-card"><div class="metric-label">Sem alocação</div><div class="metric-value ${semAloc.length?'amber':''}">${semAloc.length}</div></div>`;
+
+  if(semAloc.length){
+    document.getElementById('hosp-alerta').innerHTML=`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>${semAloc.length} pessoa(s) sem alocação: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`;
+  } else {
+    document.getElementById('hosp-alerta').innerHTML='';
+  }
+
+  if(!hospedagemData.length){
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum cômodo cadastrado</td></tr>`;return;
+  }
+
+  // Agrupa por local
+  const byLocal={};
+  hospedagemData.forEach((r,i)=>{
+    const loc=r['LOCAL']||'Sem local';
+    if(!byLocal[loc])byLocal[loc]=[];
+    byLocal[loc].push({r,i});
+  });
+
+  let html='';
+  Object.entries(byLocal).forEach(([loc,items])=>{
+    html+=`<tr class="cat-row"><td colspan="10"><span style="opacity:0.5;margin-right:6px">▸</span>${loc}</td></tr>`;
+    items.forEach(({r,i})=>{
+      const cap=parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0;
+      const alocNesteCom=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
+      const ocup=alocNesteCom.length;
+      const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
+      const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';;
+      const alocBtn=podeEditar&&ocup<cap?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocHosp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
+      const pessoasAloc=alocNesteCom.map(a=>`<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);padding:1px 6px;border-radius:10px;margin-right:3px">${a['PESSOA']||''}</span>`).join('');
+      html+=`<tr>
+        <td>${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</td>
+        <td class="muted">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'}</td>
+        <td class="muted">${r['DIÁRIAS']||r['DIARIAS']||'—'}</td>
+        <td class="muted">${parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])>0?formatBRL(parseBRL(r['VALOR/DIÁRIA (R$)']||r['VALOR/DIARIA'])):'—'}</td>
+        <td>${total>0?formatBRL(total):'—'}</td>
+        <td><span style="font-family:var(--font-mono);font-size:11px">${ocup}/${cap}</span></td>
+        <td>${pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>'}</td>
+        <td class="muted">${r['OBS']||'—'}</td>
+        <td style="padding:4px;white-space:nowrap">${eb}${alocBtn}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML=html;
 }
-function calcDiariasHosp() {
-  const ci=document.getElementById('hosp-checkin').value, co=document.getElementById('hosp-checkout').value;
-  if(ci&&co){ const d=Math.max(0,Math.ceil((new Date(co)-new Date(ci))/86400000)); document.getElementById('hosp-diarias').value=d; calcTotalHosp(); }
+
+function calcDiariasHosp(){
+  const ci=document.getElementById('hosp-checkin').value,co=document.getElementById('hosp-checkout').value;
+  const d=calcDiarias(ci,co);
+  if(d>0){document.getElementById('hosp-diarias').value=d;calcTotalHosp();}
 }
-function calcTotalHosp() {
+function calcTotalHosp(){
   const d=parseInt(document.getElementById('hosp-diarias').value)||0;
   const v=parseFloat(document.getElementById('hosp-valdiaria').value)||0;
   document.getElementById('hosp-total').value=d&&v?(d*v).toFixed(2):'';
 }
-function abrirModalHospedagem(idx) {
-  // Popula datalist com membros que precisam hospedagem
-  const pessoas = equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim').map(r=>r['NOME']);
-  document.getElementById('hosp-pessoas-list').innerHTML=pessoas.map(p=>`<option value="${p}">`).join('');
-  const r = idx!==undefined ? hospedagemData[idx] : null;
+
+function abrirModalHospedagem(idx){
+  const r=idx!==undefined?hospedagemData[idx]:null;
   document.getElementById('hosp-row-idx').value=idx!==undefined?idx:'';
-  document.getElementById('modal-hosp-titulo').textContent=r?`Editar hospedagem`:'Nova hospedagem';
+  document.getElementById('modal-hosp-titulo').textContent=r?'Editar cômodo':'Novo cômodo';
   document.getElementById('hosp-local').value=r?.['LOCAL']||'';
   document.getElementById('hosp-comodo').value=r?.['CÔMODO/QUARTO']||r?.['COMODO/QUARTO']||'';
-  document.getElementById('hosp-pessoa').value=r?.['PESSOA']||'';
+  document.getElementById('hosp-cap').value=r?.['CAPACIDADE']||r?.['LOTAÇÃO']||r?.['LOTACAO']||'';
   document.getElementById('hosp-checkin').value=parseDateForInput(r?.['CHECK-IN']||'');
   document.getElementById('hosp-checkout').value=parseDateForInput(r?.['CHECK-OUT']||'');
   document.getElementById('hosp-diarias').value=r?.['DIÁRIAS']||r?.['DIARIAS']||'';
@@ -2009,135 +2210,304 @@ function abrirModalHospedagem(idx) {
   document.getElementById('hosp-obs').value=r?.['OBS']||'';
   abrirModal('modal-hospedagem');
 }
-async function salvarHospedagem() {
+
+async function salvarHospedagem(){
   const local=document.getElementById('hosp-local').value.trim();
-  if(!local){showToast('Informe o local.','warn');return;}
+  const comodo=document.getElementById('hosp-comodo').value.trim();
+  if(!local||!comodo){showToast('Informe local e cômodo.','warn');return;}
   const ci=document.getElementById('hosp-checkin').value,co=document.getElementById('hosp-checkout').value;
-  const row=[[local,document.getElementById('hosp-comodo').value.trim(),document.getElementById('hosp-pessoa').value.trim(),ci?formatDateBR(ci):'',co?formatDateBR(co):'',document.getElementById('hosp-diarias').value,parseFloat(document.getElementById('hosp-valdiaria').value)||'',parseFloat(document.getElementById('hosp-total').value)||'',document.getElementById('hosp-obs').value.trim()]];
-  try {
+  const cap=document.getElementById('hosp-cap').value;
+  // LOCAL|CÔMODO/QUARTO|CAPACIDADE|CHECK-IN|CHECK-OUT|DIÁRIAS|VALOR/DIÁRIA (R$)|TOTAL (R$)|OBS
+  const row=[[local,comodo,cap||'',ci?formatDateBR(ci):'',co?formatDateBR(co):'',document.getElementById('hosp-diarias').value,parseFloat(document.getElementById('hosp-valdiaria').value)||'',parseFloat(document.getElementById('hosp-total').value)||'',document.getElementById('hosp-obs').value.trim()]];
+  try{
     const i=document.getElementById('hosp-row-idx').value;
-    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Hospedagem','A:I',row);showToast('Hospedagem adicionada!','success');}
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Hospedagem','A:I',row);showToast('Cômodo adicionado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Hospedagem',`A${parseInt(i)+2}:I${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
     fecharModal('modal-hospedagem');await carregarHospedagem();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ TRANSPORTE ═══ */
+function abrirModalAlocHosp(idxComodo){
+  const comodo=hospedagemData[idxComodo];
+  document.getElementById('aloc-hosp-comodo-idx').value=idxComodo;
+  document.getElementById('aloc-hosp-local').textContent=comodo?.['LOCAL']||'';
+  document.getElementById('aloc-hosp-comodo').textContent=comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'';
+  // Pessoas que precisam hospedagem e ainda não estão alocadas neste cômodo
+  const jaAloc=hospAlocData.filter(a=>(a['LOCAL']||'')===(comodo?.['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'')).map(a=>a['PESSOA']);
+  const disponiveis=equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim'&&!jaAloc.includes(r['NOME'])).map(r=>r['NOME']);
+  const sel=document.getElementById('aloc-hosp-pessoa');
+  sel.innerHTML=disponiveis.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if(!disponiveis.length) sel.innerHTML='<option value="">— sem pessoas disponíveis —</option>';
+  abrirModal('modal-aloc-hosp');
+}
+
+async function salvarAlocHosp(){
+  const idxComodo=parseInt(document.getElementById('aloc-hosp-comodo-idx').value);
+  const pessoa=document.getElementById('aloc-hosp-pessoa').value;
+  if(!pessoa){showToast('Selecione uma pessoa.','warn');return;}
+  const comodo=hospedagemData[idxComodo];
+  // LOCAL|CÔMODO|DATA|VAGA|PESSOA
+  const row=[[comodo?.['LOCAL']||'',comodo?.['CÔMODO/QUARTO']||comodo?.['COMODO/QUARTO']||'',agora().split(' ')[0],'',pessoa]];
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Alocações Hosp','A:E',row);
+    showToast(`${pessoa} alocado(a)!`,'success');
+    fecharModal('modal-aloc-hosp');await carregarHospedagem();
+  }catch(e){console.error(e);showToast('Erro ao alocar.','error');}
+}
+
+/* ═══════════════════════════════════════
+   TRANSPORTE
+═══════════════════════════════════════ */
 let transporteData=[];
+let transpAlocData=[];
+
 async function carregarTransporte(){
   try{
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Transporte!A:H`];
-    transporteData=await lerAbaPPP(prodCidadeAtiva,'Transporte','A:H');
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Transporte!A:G`];
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Alocações Trans!A:E`];
+    [transporteData, transpAlocData] = await Promise.all([
+      lerAbaPPP(prodCidadeAtiva,'Transporte','A:G'),
+      lerAbaPPP(prodCidadeAtiva,'Alocações Trans','A:E'),
+    ]);
     renderTransporte();
   }catch(e){console.error(e);showToast('Erro ao carregar transporte.','error');}
 }
+
 function renderTransporte(){
   const tbody=document.getElementById('transporte-body');
   const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
-  if(!transporteData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;return;}
+  const precisam=equipeData.filter(r=>(r['PRECISA TRANSPORTE?']||'').toLowerCase()==='sim');
+  const alocados=new Set(transpAlocData.map(r=>(r['PESSOA']||'').trim()));
+  const semAloc=precisam.filter(r=>!alocados.has((r['NOME']||'').trim()));
+
+  document.getElementById('transp-metricas').innerHTML=`
+    <div class="metric-card"><div class="metric-label">Veículos</div><div class="metric-value">${transporteData.length}</div></div>
+    <div class="metric-card"><div class="metric-label">Precisam transp.</div><div class="metric-value">${precisam.length}</div></div>
+    <div class="metric-card"><div class="metric-label">Sem alocação</div><div class="metric-value ${semAloc.length?'amber':''}">${semAloc.length}</div></div>`;
+
+  if(semAloc.length){
+    document.getElementById('transp-alerta').innerHTML=`<div class="alert alert-warn" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><span>${semAloc.length} pessoa(s) sem transporte: ${semAloc.map(r=>r['NOME']).join(', ')}</span></div>`;
+  } else {
+    document.getElementById('transp-alerta').innerHTML='';
+  }
+
+  if(!transporteData.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum veículo cadastrado</td></tr>`;return;
+  }
   tbody.innerHTML=transporteData.map((r,i)=>{
+    const vagas=parseInt(r['VAGAS'])||0;
+    const alocNeste=transpAlocData.filter(a=>(a['VEÍCULO']||a['VEICULO']||'')===(r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'')&&(a['DATA']||'')===(r['DATA PARTIDA']||''));
+    const ocup=alocNeste.length;
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalTransporte(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
-    return `<tr><td>${r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'—'}</td><td class="muted">${r['TRAJETO']||'—'}</td><td class="muted">${r['VAGAS']||'—'}</td><td class="muted">${r['DATA PARTIDA']||'—'}</td><td class="muted">${r['HORÁRIO']||r['HORARIO']||'—'}</td><td>${r['PESSOA']||'—'}</td><td class="muted">${r['RETORNO']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+    const alocBtn=podeEditar&&ocup<vagas?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocTransp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
+    const pessoasAloc=alocNeste.map(a=>`<span style="font-size:10px;background:var(--green-dim);color:var(--green);padding:1px 6px;border-radius:10px;margin-right:3px">${a['PESSOA']||''}</span>`).join('');
+    return `<tr>
+      <td><strong>${r['CONDUÇÃO/VEÍCULO']||r['CONDUCAO/VEICULO']||'—'}</strong></td>
+      <td class="muted">${r['TRAJETO']||'—'}</td>
+      <td class="muted">${r['DATA PARTIDA']||'—'}</td>
+      <td class="muted">${r['HORÁRIO']||r['HORARIO']||'—'}</td>
+      <td class="muted">${r['RETORNO']||'—'}</td>
+      <td><span style="font-family:var(--font-mono);font-size:11px">${ocup}/${vagas}</span></td>
+      <td>${pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+      <td style="padding:4px;white-space:nowrap">${eb}${alocBtn}</td>
+    </tr>`;
   }).join('');
 }
+
 function abrirModalTransporte(idx){
-  const pessoas=equipeData.filter(r=>(r['PRECISA TRANSPORTE?']||'').toLowerCase()==='sim').map(r=>r['NOME']);
-  document.getElementById('transp-pessoas-list').innerHTML=pessoas.map(p=>`<option value="${p}">`).join('');
   const r=idx!==undefined?transporteData[idx]:null;
   document.getElementById('transp-row-idx').value=idx!==undefined?idx:'';
-  document.getElementById('modal-transp-titulo').textContent=r?'Editar transporte':'Novo registro';
+  document.getElementById('modal-transp-titulo').textContent=r?'Editar veículo':'Novo veículo';
   document.getElementById('transp-veiculo').value=r?.['CONDUÇÃO/VEÍCULO']||r?.['CONDUCAO/VEICULO']||'';
   document.getElementById('transp-trajeto').value=r?.['TRAJETO']||'';
   document.getElementById('transp-vagas').value=r?.['VAGAS']||'';
   document.getElementById('transp-data').value=parseDateForInput(r?.['DATA PARTIDA']||'');
   document.getElementById('transp-horario').value=r?.['HORÁRIO']||r?.['HORARIO']||'';
-  document.getElementById('transp-pessoa').value=r?.['PESSOA']||'';
   document.getElementById('transp-retorno').value=r?.['RETORNO']||'';
   document.getElementById('transp-obs').value=r?.['OBS']||'';
   abrirModal('modal-transporte');
 }
+
 async function salvarTransporte(){
   const veic=document.getElementById('transp-veiculo').value.trim();
   if(!veic){showToast('Informe o veículo.','warn');return;}
   const dp=document.getElementById('transp-data').value;
-  const row=[[veic,document.getElementById('transp-trajeto').value.trim(),document.getElementById('transp-vagas').value,dp?formatDateBR(dp):'',document.getElementById('transp-horario').value,document.getElementById('transp-pessoa').value.trim(),document.getElementById('transp-retorno').value.trim(),document.getElementById('transp-obs').value.trim()]];
+  // CONDUÇÃO/VEÍCULO|TRAJETO|VAGAS|DATA PARTIDA|HORÁRIO|RETORNO|OBS
+  const row=[[veic,document.getElementById('transp-trajeto').value.trim(),document.getElementById('transp-vagas').value,dp?formatDateBR(dp):'',document.getElementById('transp-horario').value,document.getElementById('transp-retorno').value.trim(),document.getElementById('transp-obs').value.trim()]];
   try{
     const i=document.getElementById('transp-row-idx').value;
-    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Transporte','A:H',row);showToast('Adicionado!','success');}
-    else{await gravarAbaPPP(prodCidadeAtiva,'Transporte',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    if(i===''){await appendAbaPPP(prodCidadeAtiva,'Transporte','A:G',row);showToast('Veículo adicionado!','success');}
+    else{await gravarAbaPPP(prodCidadeAtiva,'Transporte',`A${parseInt(i)+2}:G${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
     fecharModal('modal-transporte');await carregarTransporte();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ PULSEIRAS ═══ */
+function abrirModalAlocTransp(idxVeic){
+  const v=transporteData[idxVeic];
+  document.getElementById('aloc-transp-veic-idx').value=idxVeic;
+  document.getElementById('aloc-transp-veic').textContent=v?.['CONDUÇÃO/VEÍCULO']||v?.['CONDUCAO/VEICULO']||'';
+  const jaAloc=transpAlocData.filter(a=>(a['VEÍCULO']||a['VEICULO']||'')===(v?.['CONDUÇÃO/VEÍCULO']||v?.['CONDUCAO/VEICULO']||'')).map(a=>a['PESSOA']);
+  const disp=equipeData.filter(r=>(r['PRECISA TRANSPORTE?']||'').toLowerCase()==='sim'&&!jaAloc.includes(r['NOME'])).map(r=>r['NOME']);
+  const sel=document.getElementById('aloc-transp-pessoa');
+  sel.innerHTML=disp.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if(!disp.length) sel.innerHTML='<option value="">— sem pessoas disponíveis —</option>';
+  abrirModal('modal-aloc-transp');
+}
+
+async function salvarAlocTransp(){
+  const idxVeic=parseInt(document.getElementById('aloc-transp-veic-idx').value);
+  const pessoa=document.getElementById('aloc-transp-pessoa').value;
+  if(!pessoa){showToast('Selecione uma pessoa.','warn');return;}
+  const v=transporteData[idxVeic];
+  // VEÍCULO|DATA|HORÁRIO|VAGA|PESSOA
+  const row=[[v?.['CONDUÇÃO/VEÍCULO']||v?.['CONDUCAO/VEICULO']||'',v?.['DATA PARTIDA']||'',v?.['HORÁRIO']||v?.['HORARIO']||'','',pessoa]];
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Alocações Trans','A:E',row);
+    showToast(`${pessoa} alocado(a)!`,'success');
+    fecharModal('modal-aloc-transp');await carregarTransporte();
+  }catch(e){console.error(e);showToast('Erro ao alocar.','error');}
+}
+
+/* ═══════════════════════════════════════
+   PULSEIRAS
+═══════════════════════════════════════ */
+let pulsTiposData=[];
 let pulseirasData=[];
+
 async function carregarPulseiras(){
   try{
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Pulseiras!A:H`];
-    pulseirasData=await lerAbaPPP(prodCidadeAtiva,'Pulseiras','A:H');
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Tipos Pulseiras!A:D`];
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Pulseiras!A:J`];
+    [pulsTiposData, pulseirasData] = await Promise.all([
+      lerAbaPPP(prodCidadeAtiva,'Tipos Pulseiras','A:D'),
+      lerAbaPPP(prodCidadeAtiva,'Pulseiras','A:J'),
+    ]);
     renderPulseiras();
   }catch(e){console.error(e);showToast('Erro ao carregar pulseiras.','error');}
 }
+
 function renderPulseiras(){
   const tbody=document.getElementById('pulseiras-body');
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+
+  // Métricas por tipo
   const met=document.getElementById('pulseiras-metricas');
-  if(!pulseirasData.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;met.innerHTML='';return;}
-  const totalSaidas=pulseirasData.reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
-  const totalSaldo=pulseirasData.reduce((s,r)=>s+(parseInt(r['SALDO'])||0),0);
-  met.innerHTML=`
-    <div class="metric-card"><div class="metric-label">Total saídas</div><div class="metric-value accent">${totalSaidas}</div></div>
-    <div class="metric-card"><div class="metric-label">Saldo atual</div><div class="metric-value green">${totalSaldo}</div></div>`;
-  tbody.innerHTML=pulseirasData.map((r,i)=>{
-    const saldo=parseInt(r['SALDO'])||0,contagem=parseInt(r['CONTAGEM REAL'])||0;
-    const diff=contagem-saldo;
-    const diffCls=diff!==0?'diff-pos':'diff-zero';
-    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['TIPO']||'—'}</td><td class="muted">${r['ESTOQUE INICIAL']||'—'}</td><td class="muted">${r['SAÍDAS']||r['SAIDAS']||'—'}</td><td>${saldo||'—'}</td><td class="muted">${r['CONTAGEM REAL']||'—'}</td><td class="${diffCls}">${r['CONTAGEM REAL']?diff:''}</td><td class="muted">${r['SOLICITANTE']||'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px"><button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalPulseira(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td></tr>`;
+  met.innerHTML=pulsTiposData.map(t=>{
+    const saidas=pulseirasData.filter(r=>(r['TIPO']||'')===(t['TIPO']||'')).reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
+    const estoque=parseInt(t['QUANTIDADE INICIAL']||t['QTDE INICIAL']||t['QUANTIDADE'])||0;
+    const saldo=Math.max(0,estoque-saidas);
+    return `<div class="metric-card"><div class="metric-label">${t['TIPO']||'Pulseira'} <span style="font-size:9px;color:var(--text3)">${t['DATA']||''}</span></div><div class="metric-value ${saldo<10?'amber':''}">${saldo}</div><div class="metric-sub">saldo / ${estoque} inicial</div></div>`;
+  }).join('');
+
+  // Filtros
+  const filtros=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select class="form-select" id="puls-filtro-tipo" onchange="renderPulseiras()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+      <option value="">Todos os tipos</option>
+      ${pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''}</option>`).join('')}
+    </select>
+  </div>`;
+  document.getElementById('puls-filtros').innerHTML=filtros;
+
+  const filtroTipo=document.getElementById('puls-filtro-tipo')?.value||'';
+  let rows=pulseirasData;
+  if(filtroTipo) rows=rows.filter(r=>(r['TIPO']||'')==filtroTipo);
+
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma movimentação registrada</td></tr>`;return;}
+  tbody.innerHTML=rows.map((r,i)=>{
+    const sai=parseInt(r['SAÍDAS']||r['SAIDAS'])||0;
+    const cont=parseInt(r['CONTAGEM REAL']||'');
+    const diffVal=!isNaN(cont)?cont-sai:null;
+    const diffHtml=diffVal!==null?`<span style="color:${diffVal<0?'var(--red)':diffVal>0?'var(--amber)':'var(--green)'}">${diffVal>=0?'+':''}${diffVal}</span>`:'—';
+    return `<tr>
+      <td class="muted">${r['DIA']||'—'}</td>
+      <td><strong>${r['TIPO']||'—'}</strong></td>
+      <td class="muted">${sai}</td>
+      <td class="muted">${r['CONTAGEM REAL']||'—'}</td>
+      <td>${diffHtml}</td>
+      <td class="muted">${r['SOLICITANTE']||'—'}</td>
+      <td class="muted">${r['DATA/HORA']||'—'}</td>
+      <td class="muted">${r['OBS']||'—'}</td>
+    </tr>`;
   }).join('');
 }
-function calcSaldoPulseira(){
-  const est=parseInt(document.getElementById('puls-estoque').value)||0;
-  const sai=parseInt(document.getElementById('puls-saidas').value)||0;
-  document.getElementById('puls-saldo').value=Math.max(0,est-sai);
+
+function abrirModalTipoPulseira(){
+  document.getElementById('puls-tipo-nome').value='';
+  document.getElementById('puls-tipo-data').value=dataHoje();
+  document.getElementById('puls-tipo-qtd').value='';
+  document.getElementById('puls-tipo-obs').value='';
+  abrirModal('modal-tipo-pulseira');
 }
-function abrirModalPulseira(idx){
-  const r=idx!==undefined?pulseirasData[idx]:null;
-  document.getElementById('puls-dia').value=parseDateForInput(r?.['DIA']||dataHoje());
-  document.getElementById('puls-tipo').value=r?.['TIPO']||'';
-  document.getElementById('puls-estoque').value=r?.['ESTOQUE INICIAL']||'';
-  document.getElementById('puls-saidas').value=r?.['SAÍDAS']||r?.['SAIDAS']||'';
-  document.getElementById('puls-saldo').value=r?.['SALDO']||'';
-  document.getElementById('puls-contagem').value=r?.['CONTAGEM REAL']||'';
-  document.getElementById('puls-solicitante').value=r?.['SOLICITANTE']||currentUser.nome;
-  document.getElementById('puls-obs').value=r?.['OBS']||'';
-  abrirModal('modal-pulseira');
-}
-async function salvarPulseira(){
-  const dia=document.getElementById('puls-dia').value;
-  const tipo=document.getElementById('puls-tipo').value.trim();
-  if(!tipo){showToast('Informe o tipo de pulseira.','warn');return;}
-  const est=parseInt(document.getElementById('puls-estoque').value)||0;
-  const sai=parseInt(document.getElementById('puls-saidas').value)||0;
-  const saldo=Math.max(0,est-sai);
-  const row=[[dia?formatDateBR(dia):'',tipo,est||'',sai||'',saldo||'',document.getElementById('puls-contagem').value||'',document.getElementById('puls-solicitante').value.trim(),agora(),document.getElementById('puls-obs').value.trim()]];
+async function salvarTipoPulseira(){
+  const tipo=document.getElementById('puls-tipo-nome').value.trim();
+  const qtd=document.getElementById('puls-tipo-qtd').value;
+  if(!tipo||!qtd){showToast('Informe tipo e quantidade.','warn');return;}
+  const data=document.getElementById('puls-tipo-data').value;
+  // TIPO|DATA|QUANTIDADE INICIAL|OBS
   try{
-    await appendAbaPPP(prodCidadeAtiva,'Pulseiras','A:I',row);
-    showToast('Registrado!','success');fecharModal('modal-pulseira');await carregarPulseiras();
+    await appendAbaPPP(prodCidadeAtiva,'Tipos Pulseiras','A:D',[[tipo,data?formatDateBR(data):'',qtd,document.getElementById('puls-tipo-obs').value.trim()]]);
+    showToast('Tipo cadastrado!','success');fecharModal('modal-tipo-pulseira');await carregarPulseiras();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ RÁDIOS ═══ */
+function abrirModalSaida(){
+  // Popula select com tipos cadastrados
+  const sel=document.getElementById('puls-saida-tipo');
+  sel.innerHTML=pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''} (${t['DATA']||''})</option>`).join('');
+  document.getElementById('puls-saida-qtd').value='';
+  document.getElementById('puls-saida-sol').value=currentUser.nome;
+  document.getElementById('puls-saida-obs').value='';
+  abrirModal('modal-saida-pulseira');
+}
+async function salvarSaida(){
+  const tipo=document.getElementById('puls-saida-tipo').value;
+  const qtd=parseInt(document.getElementById('puls-saida-qtd').value)||0;
+  if(!tipo||!qtd){showToast('Selecione o tipo e a quantidade.','warn');return;}
+  // DIA|TIPO|SAÍDAS|CONTAGEM REAL|DIFERENÇA|SOLICITANTE|DATA/HORA|OBS|ESTOQUE INICIAL|SALDO
+  const row=[[agora().split(' ')[0],tipo,'',qtd,'',document.getElementById('puls-saida-sol').value,agora(),document.getElementById('puls-saida-obs').value.trim(),'','']];
+  // Reescreve coluna SAÍDAS como qtd
+  row[0][2]=qtd;row[0][4]='';
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Pulseiras','A:J',row);
+    showToast('Saída registrada!','success');fecharModal('modal-saida-pulseira');await carregarPulseiras();
+  }catch(e){console.error(e);showToast('Erro ao registrar.','error');}
+}
+
+function abrirModalContagemReal(){
+  const sel=document.getElementById('puls-cont-tipo');
+  sel.innerHTML=pulsTiposData.map(t=>`<option value="${t['TIPO']||''}">${t['TIPO']||''}</option>`).join('');
+  document.getElementById('puls-cont-qtd').value='';
+  abrirModal('modal-contagem-pulseira');
+}
+async function salvarContagemReal(){
+  const tipo=document.getElementById('puls-cont-tipo').value;
+  const qtd=document.getElementById('puls-cont-qtd').value;
+  if(!tipo||qtd===''){showToast('Preencha todos os campos.','warn');return;}
+  // Adiciona linha de contagem real
+  const row=[[agora().split(' ')[0],tipo,'','',,currentUser.nome,agora(),'Contagem real','','']];
+  row[0][3]=qtd;
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Pulseiras','A:J',row);
+    showToast('Contagem registrada!','success');fecharModal('modal-contagem-pulseira');await carregarPulseiras();
+  }catch(e){console.error(e);showToast('Erro ao registrar.','error');}
+}
+
+/* ═══════════════════════════════════════
+   RÁDIOS
+═══════════════════════════════════════ */
 let radiosData=[];
-let radiosHistorico=[];
+
 async function carregarRadios(){
   const tbody=document.getElementById('radios-body');
-  tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
+  if(tbody) tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
   try{
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Rádios!A:H`];
     radiosData=await lerAbaPPP(prodCidadeAtiva,'Rádios','A:H');
-    // Histórico na aba separada ou linhas sem status (implementação simples: últimas 20 linhas)
     renderRadios();
   }catch(e){console.error(e);showToast('Erro ao carregar rádios.','error');}
 }
+
 function renderRadios(){
   const tbody=document.getElementById('radios-body');
   const met=document.getElementById('radios-metricas');
@@ -2147,49 +2517,75 @@ function renderRadios(){
     <div class="metric-card"><div class="metric-label">Total</div><div class="metric-value">${radiosData.length}</div></div>
     <div class="metric-card"><div class="metric-label">Livres</div><div class="metric-value green">${livres}</div></div>
     <div class="metric-card"><div class="metric-label">Em uso</div><div class="metric-value amber">${emUso}</div></div>`;
+
   if(!radiosData.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum rádio cadastrado</td></tr>`;return;}
+
   tbody.innerHTML=radiosData.map((r,i)=>{
+    const num=r['Nº']||r['N']||r['NUM']||(i+1).toString();
     const st=(r['STATUS (Livre/Em uso)']||r['STATUS']||'Livre').trim();
     const stCls=st.toLowerCase().includes('uso')?'badge-solicitado':'badge-aprovado';
     return `<tr>
-      <td><strong>Rádio ${r['Nº']||r['N']||i+1}</strong></td>
+      <td><strong>Rádio ${num}</strong></td>
       <td>${r['RESPONSÁVEL ATUAL']||r['RESPONSAVEL ATUAL']||'—'}</td>
       <td><span class="badge ${stCls}">${st}</span></td>
       <td class="muted">${r['FONE?']||'—'}</td>
       <td class="muted">${r['DATA ENTREGA']||'—'}</td>
       <td class="muted">${r['DATA DEVOLUÇÃO']||r['DATA DEVOLUCAO']||'—'}</td>
-      <td class="muted">${r['OBS']||'—'}</td>
-      <td style="padding:4px;white-space:nowrap">
+      <td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r['OBS']||'—'}</td>
+      <td style="padding:4px">
         <button class="btn btn-red btn-sm" onclick="excluirRadio(${i})" title="Excluir">✕</button>
       </td>
     </tr>`;
   }).join('');
-  // Popula select de rádios no modal de uso
+
+  // Popula select do modal de uso com números reais
   const sel=document.getElementById('radio-uso-num');
-  if(sel) sel.innerHTML=radiosData.map(r=>`<option value="${r['Nº']||r['N']||''}">Rádio ${r['Nº']||r['N']||''}</option>`).join('');
+  if(sel) sel.innerHTML=radiosData.map((r,i)=>{
+    const num=r['Nº']||r['N']||r['NUM']||(i+1).toString();
+    return `<option value="${num}" data-idx="${i}">Rádio ${num}</option>`;
+  }).join('');
+
+  // Histórico — extrai da coluna HISTÓRICO
+  const histBody=document.getElementById('radios-historico-body');
+  if(histBody){
+    const linhasHist=[];
+    radiosData.forEach(r=>{
+      const hist=r['HISTÓRICO']||r['HISTORICO']||'';
+      if(hist) linhasHist.push({num:r['Nº']||r['N']||'', hist});
+    });
+    histBody.innerHTML=linhasHist.length
+      ? linhasHist.map(h=>`<tr><td class="muted">${h.hist.split(' - ')[0]||'—'}</td><td class="muted">${h.hist.split(' - ')[1]||'—'}</td><td class="muted">Rádio ${h.num}</td><td class="muted">${h.hist.split(' - ')[2]||'—'}</td><td class="muted">—</td><td class="muted">—</td></tr>`).join('')
+      : `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum histórico</td></tr>`;
+  }
 }
+
 function abrirModalRadioUso(){ abrirModal('modal-radio-uso'); }
 function abrirModalRadioNovo(){ document.getElementById('radio-novo-num').value=''; document.getElementById('radio-novo-obs').value=''; abrirModal('modal-radio-novo'); }
+
 async function salvarRadioUso(){
-  const num=document.getElementById('radio-uso-num').value;
+  const sel=document.getElementById('radio-uso-num');
+  const num=sel.value;
+  const idx=parseInt(sel.options[sel.selectedIndex]?.dataset.idx??'-1');
   const tipo=document.getElementById('radio-uso-tipo').value;
   const resp=document.getElementById('radio-uso-resp').value.trim();
   if(!resp){showToast('Informe o responsável.','warn');return;}
+  if(idx===-1){showToast('Rádio não encontrado.','error');return;}
   const fone=document.getElementById('radio-uso-fone').value;
   const obs=document.getElementById('radio-uso-obs').value.trim();
   const ehEmprestimo=tipo==='Empréstimo';
-  // Atualiza status do rádio
-  const idx=radiosData.findIndex(r=>(r['Nº']||r['N']||'')===num);
-  if(idx===-1){showToast('Rádio não encontrado.','error');return;}
   const novoStatus=ehEmprestimo?'Em uso':'Livre';
+  const dataOp=agora();
+  const histLog=`${dataOp} - ${tipo} - ${resp}${obs?' - '+obs:''}`;
   const linha=idx+2;
   try{
-    await gravarAbaPPP(prodCidadeAtiva,'Rádios',`B${linha}:H${linha}`,[[ehEmprestimo?resp:'',novoStatus,ehEmprestimo?agora().split(' ')[0]:'',ehEmprestimo?'':agora().split(' ')[0],fone,`${agora()} - ${tipo} - ${resp}`,obs]]);
+    // Atualiza B=RESP, C=STATUS, D=ENTREGA, E=DEVOLUCAO, F=FONE, G=HISTORICO, H=OBS
+    await gravarAbaPPP(prodCidadeAtiva,'Rádios',`B${linha}:H${linha}`,[[ehEmprestimo?resp:'',novoStatus,ehEmprestimo?dataOp.split(' ')[0]:'',ehEmprestimo?'':dataOp.split(' ')[0],fone,histLog,obs]]);
     showToast(`${tipo} registrado!`,'success');fecharModal('modal-radio-uso');await carregarRadios();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
+
 async function salvarRadioNovo(){
-  const num=document.getElementById('radio-novo-num').value;
+  const num=document.getElementById('radio-novo-num').value.trim();
   const obs=document.getElementById('radio-novo-obs').value.trim();
   if(!num){showToast('Informe o número.','warn');return;}
   try{
@@ -2197,9 +2593,10 @@ async function salvarRadioNovo(){
     showToast('Rádio adicionado!','success');fecharModal('modal-radio-novo');await carregarRadios();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
+
 async function excluirRadio(idx){
-  if(!confirm(`Excluir Rádio ${radiosData[idx]['Nº']||radiosData[idx]['N']||idx+1}?`))return;
-  // Limpa a linha (não deleta para manter histórico)
+  const num=radiosData[idx]['Nº']||radiosData[idx]['N']||idx+1;
+  if(!confirm(`Excluir Rádio ${num}?`))return;
   const linha=idx+2;
   try{
     await gravarAbaPPP(prodCidadeAtiva,'Rádios',`A${linha}:H${linha}`,[['','','','','','','','']]);
@@ -2207,58 +2604,140 @@ async function excluirRadio(idx){
   }catch(e){console.error(e);showToast('Erro.','error');}
 }
 
-/* ═══ ALIMENTAÇÃO ═══ */
+/* ═══════════════════════════════════════
+   ALIMENTAÇÃO
+═══════════════════════════════════════ */
+let alimentacaoFornData=[];
 let alimentacaoData=[];
+
 async function carregarAlimentacao(){
   try{
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Fornecedores Alim!A:C`];
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Alimentação!A:H`];
-    alimentacaoData=await lerAbaPPP(prodCidadeAtiva,'Alimentação','A:H');
+    [alimentacaoFornData, alimentacaoData] = await Promise.all([
+      lerAbaPPP(prodCidadeAtiva,'Fornecedores Alim','A:C'),
+      lerAbaPPP(prodCidadeAtiva,'Alimentação','A:H'),
+    ]);
     renderAlimentacao();
   }catch(e){console.error(e);showToast('Erro ao carregar alimentação.','error');}
 }
+
 function renderAlimentacao(){
   const tbody=document.getElementById('alim-body');
   const met=document.getElementById('alim-metricas');
-  if(!alimentacaoData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;met.innerHTML='';return;}
+
+  // Popula select de fornecedor no modal de registro
+  const selForn=document.getElementById('alim-forn');
+  if(selForn) selForn.innerHTML=`<option value="">— selecione —</option>`+alimentacaoFornData.map(f=>`<option value="${f['FORNECEDOR']||''}" data-val="${f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']||0}">${f['FORNECEDOR']||''} (R$ ${parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']).toFixed(2)})</option>`).join('');
+
+  // Popula select de setor com equipe
+  const selSetor=document.getElementById('alim-setor');
+  if(selSetor){
+    const setores=[...new Set(equipeData.map(r=>r['EQUIPE/SETOR']).filter(Boolean))];
+    selSetor.innerHTML=`<option value="">— selecione —</option>`+setores.map(s=>`<option value="${s}">${s}</option>`).join('');
+  }
+
+  // Filtros
+  const dias=[...new Set(alimentacaoData.map(r=>r['DIA']).filter(Boolean))];
+  const forns=[...new Set(alimentacaoData.map(r=>r['FORNECEDOR']).filter(Boolean))];
+  document.getElementById('alim-filtros').innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select class="form-select" id="alim-f-dia" onchange="renderAlimTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os dias</option>${dias.map(d=>`<option value="${d}">${d}</option>`).join('')}
+      </select>
+      <select class="form-select" id="alim-f-forn" onchange="renderAlimTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os fornecedores</option>${forns.map(f=>`<option value="${f}">${f}</option>`).join('')}
+      </select>
+    </div>`;
+
+  // Métricas
   const totalVouchers=alimentacaoData.reduce((s,r)=>s+(parseInt(r['QNT VOUCHERS']||r['QTD VOUCHERS'])||0),0);
-  const totalVal=alimentacaoData.reduce((s,r)=>s+(parseBRL(r['TOTAL (R$)']||r['TOTAL'])),0);
-  const fornSet=new Set(alimentacaoData.map(r=>r['FORNECEDOR']).filter(Boolean));
+  const totalVal=alimentacaoData.reduce((s,r)=>s+parseBRL(r['TOTAL (R$)']||r['TOTAL']),0);
   met.innerHTML=`
     <div class="metric-card"><div class="metric-label">Total vouchers</div><div class="metric-value accent">${totalVouchers}</div></div>
     <div class="metric-card"><div class="metric-label">Valor total</div><div class="metric-value green">${formatBRL(totalVal)}</div></div>
-    <div class="metric-card"><div class="metric-label">Fornecedores</div><div class="metric-value blue">${fornSet.size}</div></div>`;
-  tbody.innerHTML=alimentacaoData.map((r,i)=>{
-    const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
-    const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalAlimentacao(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
-    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['EQUIPE/SETOR']||'—'}</td><td class="muted">${r['FORNECEDOR']||'—'}</td><td class="muted">${parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])>0?formatBRL(parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])):'—'}</td><td class="muted">${r['QNT VOUCHERS']||r['QTD VOUCHERS']||'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
-  }).join('');
+    <div class="metric-card"><div class="metric-label">Fornecedores</div><div class="metric-value blue">${alimentacaoFornData.length}</div></div>`;
+
+  renderAlimTabela();
 }
+
+function autoPreencherVoucher(){
+  const sel=document.getElementById('alim-forn');
+  if(!sel)return;
+  const opt=sel.options[sel.selectedIndex];
+  const val=opt?.dataset.val||'';
+  document.getElementById('alim-valvoucher').value=parseBRL(val)||'';
+  calcTotalAlim();
+}
+
 function calcTotalAlim(){
   const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
   const q=parseInt(document.getElementById('alim-qtd').value)||0;
   document.getElementById('alim-total').value=v&&q?(v*q).toFixed(2):'';
 }
+
+function renderAlimTabela(){
+  const tbody=document.getElementById('alim-body');
+  const fDia=document.getElementById('alim-f-dia')?.value||'';
+  const fForn=document.getElementById('alim-f-forn')?.value||'';
+  let rows=alimentacaoData;
+  if(fDia) rows=rows.filter(r=>(r['DIA']||'')==fDia);
+  if(fForn) rows=rows.filter(r=>(r['FORNECEDOR']||'')==fForn);
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum registro</td></tr>`;return;}
+  tbody.innerHTML=rows.map((r,i)=>{
+    const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
+    const realIdx=alimentacaoData.indexOf(r);
+    const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalAlimentacao(${realIdx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['EQUIPE/SETOR']||'—'}</td><td class="muted">${r['FORNECEDOR']||'—'}</td><td class="muted">${parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])>0?formatBRL(parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])):'—'}</td><td class="muted">${r['QNT VOUCHERS']||r['QTD VOUCHERS']||'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+  }).join('');
+}
+
+function abrirModalFornAlim(){
+  document.getElementById('forn-alim-nome').value='';
+  document.getElementById('forn-alim-val').value='';
+  document.getElementById('forn-alim-obs').value='';
+  abrirModal('modal-forn-alim');
+}
+async function salvarFornAlim(){
+  const nome=document.getElementById('forn-alim-nome').value.trim();
+  const val=parseFloat(document.getElementById('forn-alim-val').value)||0;
+  if(!nome||!val){showToast('Informe nome e valor do voucher.','warn');return;}
+  // FORNECEDOR|VALOR VOUCHER (R$)|OBS
+  try{
+    await appendAbaPPP(prodCidadeAtiva,'Fornecedores Alim','A:C',[[nome,val,document.getElementById('forn-alim-obs').value.trim()]]);
+    showToast('Fornecedor cadastrado!','success');fecharModal('modal-forn-alim');await carregarAlimentacao();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
 function abrirModalAlimentacao(idx){
   const r=idx!==undefined?alimentacaoData[idx]:null;
   document.getElementById('alim-row-idx').value=idx!==undefined?idx:'';
   document.getElementById('modal-alim-titulo').textContent=r?'Editar registro':'Novo registro';
   document.getElementById('alim-dia').value=parseDateForInput(r?.['DIA']||dataHoje());
-  document.getElementById('alim-setor').value=r?.['EQUIPE/SETOR']||'';
-  document.getElementById('alim-forn').value=r?.['FORNECEDOR']||'';
+  // Setor
+  const selSet=document.getElementById('alim-setor');
+  if(selSet) selSet.value=r?.['EQUIPE/SETOR']||'';
+  // Fornecedor
+  const selForn=document.getElementById('alim-forn');
+  if(selForn){selForn.value=r?.['FORNECEDOR']||'';autoPreencherVoucher();}
   document.getElementById('alim-valvoucher').value=parseBRL(r?.['VALOR VOUCHER (R$)']||r?.['VALOR VOUCHER'])||'';
   document.getElementById('alim-qtd').value=r?.['QNT VOUCHERS']||r?.['QTD VOUCHERS']||'';
   document.getElementById('alim-total').value=parseBRL(r?.['TOTAL (R$)']||r?.['TOTAL'])||'';
   document.getElementById('alim-obs').value=r?.['OBS']||'';
   abrirModal('modal-alimentacao');
 }
+
 async function salvarAlimentacao(){
-  const setor=document.getElementById('alim-setor').value.trim();
+  const selSet=document.getElementById('alim-setor');
+  const setor=selSet?.value||document.getElementById('alim-setor-input')?.value||'';
   if(!setor){showToast('Informe a equipe/setor.','warn');return;}
   const dia=document.getElementById('alim-dia').value;
+  const selForn=document.getElementById('alim-forn');
+  const forn=selForn?.value||'';
   const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
   const q=parseInt(document.getElementById('alim-qtd').value)||0;
   const total=v&&q?v*q:parseFloat(document.getElementById('alim-total').value)||0;
-  const row=[[dia?formatDateBR(dia):'',setor,document.getElementById('alim-forn').value.trim(),v||'',q||'',total||'',agora(),document.getElementById('alim-obs').value.trim()]];
+  const row=[[dia?formatDateBR(dia):'',setor,forn,v||'',q||'',total||'',agora(),document.getElementById('alim-obs').value.trim()]];
   try{
     const i=document.getElementById('alim-row-idx').value;
     if(i===''){await appendAbaPPP(prodCidadeAtiva,'Alimentação','A:H',row);showToast('Registrado!','success');}
@@ -2267,8 +2746,11 @@ async function salvarAlimentacao(){
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ SINALIZAÇÕES ═══ */
+/* ═══════════════════════════════════════
+   SINALIZAÇÕES
+═══════════════════════════════════════ */
 let sinalizacoesData=[];
+
 async function carregarSinalizacoes(){
   try{
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Sinalizações!A:H`];
@@ -2276,18 +2758,46 @@ async function carregarSinalizacoes(){
     renderSinalizacoes();
   }catch(e){console.error(e);showToast('Erro ao carregar sinalizações.','error');}
 }
+
 function renderSinalizacoes(){
   const tbody=document.getElementById('sinalizacoes-body');
-  if(!sinalizacoesData.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma sinalização</td></tr>`;return;}
-  const statusOrder=['Não iniciado','Arte pronta','Em produção','Entregue','Posicionado'];
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+
+  // Filtro por fornecedor
+  const forns=[...new Set(sinalizacoesData.map(r=>r['FORNECEDOR']).filter(Boolean))];
+  document.getElementById('sinal-filtros').innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select class="form-select" id="sinal-f-forn" onchange="renderSinalTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os fornecedores</option>${forns.map(f=>`<option value="${f}">${f}</option>`).join('')}
+      </select>
+      <select class="form-select" id="sinal-f-status" onchange="renderSinalTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os status</option>
+        <option>Não iniciado</option><option>Arte pronta</option>
+        <option>Em produção</option><option>Entregue</option><option>Posicionado</option>
+      </select>
+    </div>`;
+  renderSinalTabela();
+}
+
+function renderSinalTabela(){
+  const tbody=document.getElementById('sinalizacoes-body');
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+  const fForn=document.getElementById('sinal-f-forn')?.value||'';
+  const fSt=document.getElementById('sinal-f-status')?.value||'';
+  let rows=sinalizacoesData;
+  if(fForn) rows=rows.filter(r=>(r['FORNECEDOR']||'')==fForn);
+  if(fSt) rows=rows.filter(r=>(r['STATUS']||'')==fSt);
   const stCls={'Não iniciado':'badge-pendente','Arte pronta':'badge-orcado','Em produção':'badge-solicitado','Entregue':'badge-aprovado','Posicionado':'badge-pago'};
-  tbody.innerHTML=sinalizacoesData.map((r,i)=>{
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhuma sinalização</td></tr>`;return;}
+  tbody.innerHTML=rows.map(r=>{
+    const realIdx=sinalizacoesData.indexOf(r);
     const st=(r['STATUS']||'Não iniciado').trim();
     const orc=parseBRL(r['ORÇAMENTO']||r['ORCAMENTO']);
-    const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalSinalizacao(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalSinalizacao(${realIdx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
     return `<tr><td><strong>${r['ITEM']||'—'}</strong></td><td class="muted">${r['FORNECEDOR']||'—'}</td><td><span class="badge ${stCls[st]||'badge-pendente'}">${st}</span></td><td class="muted">${r['QNT']||'—'}</td><td class="muted">${r['DIMENSÃO']||r['DIMENSAO']||'—'}</td><td class="muted">${r['DESCRIÇÃO']||r['DESCRICAO']||'—'}</td><td class="muted">${orc>0?formatBRL(orc):'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
   }).join('');
 }
+
 function abrirModalSinalizacao(idx){
   const r=idx!==undefined?sinalizacoesData[idx]:null;
   document.getElementById('sinal-row-idx').value=idx!==undefined?idx:'';
@@ -2302,6 +2812,7 @@ function abrirModalSinalizacao(idx){
   document.getElementById('sinal-obs').value=r?.['OBS']||'';
   abrirModal('modal-sinalizacao');
 }
+
 async function salvarSinalizacao(){
   const item=document.getElementById('sinal-item').value.trim();
   if(!item){showToast('Informe o item.','warn');return;}
@@ -2314,25 +2825,27 @@ async function salvarSinalizacao(){
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-/* ═══ MAPA ═══ */
+/* ═══════════════════════════════════════
+   MAPA
+═══════════════════════════════════════ */
 let mapaPinos=[];
 let mapaEditando=false;
-let mapaPinoTemp=null;
 
 function mapaCarregarImagem(){
-  const url=document.getElementById('mapa-url-input').value.trim();
+  let url=document.getElementById('mapa-url-input').value.trim();
   if(!url){showToast('Cole a URL da imagem.','warn');return;}
+  // Converte link do Google Drive para link direto
+  const gdMatch=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(gdMatch) url=`https://drive.google.com/uc?export=view&id=${gdMatch[1]}`;
   const img=document.getElementById('mapa-img');
-  const placeholder=document.getElementById('mapa-placeholder');
   img.onload=()=>{
-    placeholder.style.display='none';
+    document.getElementById('mapa-placeholder').style.display='none';
     img.style.display='block';
     document.getElementById('btn-mapa-editar').style.display='';
     mapaRestaurarPinos();
   };
-  img.onerror=()=>showToast('Não foi possível carregar a imagem. Verifique se o link é público.','error');
+  img.onerror=()=>showToast('Não foi possível carregar a imagem. Use um link público ou o link de compartilhamento do Google Drive.','error',5000);
   img.src=url;
-  // Salva URL por cidade
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
   cfg[prodCidadeAtiva]=url;
   localStorage.setItem('sj2026_mapa_urls',JSON.stringify(cfg));
@@ -2340,12 +2853,9 @@ function mapaCarregarImagem(){
 
 function mapaToggleEdicao(){
   mapaEditando=!mapaEditando;
-  const overlay=document.getElementById('mapa-overlay');
-  const hint=document.getElementById('mapa-edit-hint');
-  const btn=document.getElementById('btn-mapa-editar-txt');
-  overlay.style.display=mapaEditando?'block':'none';
-  hint.style.display=mapaEditando?'':'none';
-  btn.textContent=mapaEditando?'Sair do modo edição':'Modo edição';
+  document.getElementById('mapa-overlay').style.display=mapaEditando?'block':'none';
+  document.getElementById('mapa-edit-hint').style.display=mapaEditando?'':'none';
+  document.getElementById('btn-mapa-editar-txt').textContent=mapaEditando?'Sair do modo edição':'Modo edição';
 }
 
 function mapaAdicionarPino(e){
@@ -2363,9 +2873,7 @@ function mapaAdicionarPino(e){
 function atualizarListaPino(){
   const tipo=document.getElementById('pino-tipo').value;
   const sel=document.getElementById('pino-item');
-  let opcoes=[];
-  if(tipo==='sinal') opcoes=sinalizacoesData.map(r=>r['ITEM']).filter(Boolean);
-  else opcoes=equipeData.map(r=>r['NOME']).filter(Boolean);
+  let opcoes=tipo==='sinal'?sinalizacoesData.map(r=>r['ITEM']).filter(Boolean):equipeData.map(r=>r['NOME']).filter(Boolean);
   sel.innerHTML=opcoes.map(o=>`<option value="${o}">${o}</option>`).join('');
 }
 
@@ -2379,7 +2887,6 @@ function confirmarPino(){
   const pino={x,y,tipo,item,ref};
   mapaPinos.push(pino);
   mapaRenderizarPino(pino,mapaPinos.length-1);
-  // Salva no localStorage
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
   if(!cfg[prodCidadeAtiva])cfg[prodCidadeAtiva]=[];
   cfg[prodCidadeAtiva].push(pino);
@@ -2391,14 +2898,21 @@ function mapaRenderizarPino(pino,idx){
   const pinos=document.getElementById('mapa-pinos');
   pinos.style.pointerEvents='all';
   const el=document.createElement('div');
-  el.style.cssText=`position:absolute;left:${pino.x}%;top:${pino.y}%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform 0.15s;z-index:10;`;
+  el.style.cssText=`position:absolute;left:${pino.x}%;top:${pino.y}%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform 0.15s;z-index:10;border:2px solid rgba(255,255,255,0.4)`;
   el.style.background=pino.tipo==='sinal'?'#f0a830':'#5cb8f0';
-  el.style.color=pino.tipo==='sinal'?'#0e0f0e':'#0e0f0e';
   el.textContent=pino.tipo==='sinal'?'S':'E';
   el.title=`${pino.item}${pino.ref?' — '+pino.ref:''}`;
-  el.addEventListener('mouseenter',()=>el.style.transform='translate(-50%,-50%) scale(1.3)');
+  el.addEventListener('mouseenter',()=>el.style.transform='translate(-50%,-50%) scale(1.4)');
   el.addEventListener('mouseleave',()=>el.style.transform='translate(-50%,-50%) scale(1)');
-  el.addEventListener('click',e=>{e.stopPropagation();if(confirm(`Remover pino "${pino.item}"?`)){el.remove();mapaPinos.splice(idx,1);const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');cfg[prodCidadeAtiva]=mapaPinos.slice();localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));}});
+  el.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(confirm(`Remover pino "${pino.item}"?`)){
+      el.remove();mapaPinos.splice(idx,1);
+      const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
+      cfg[prodCidadeAtiva]=mapaPinos.slice();
+      localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
+    }
+  });
   pinos.appendChild(el);
 }
 
@@ -2406,20 +2920,20 @@ function mapaRestaurarPinos(){
   mapaPinos=[];
   document.getElementById('mapa-pinos').innerHTML='';
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
-  const pinos=cfg[prodCidadeAtiva]||[];
-  pinos.forEach((p,i)=>{mapaPinos.push(p);mapaRenderizarPino(p,i);});
+  (cfg[prodCidadeAtiva]||[]).forEach((p,i)=>{mapaPinos.push(p);mapaRenderizarPino(p,i);});
 }
 
 function mapaCarregarLista(){
   const lista=document.getElementById('mapa-lista');
   const sinais=sinalizacoesData.filter(r=>r['ITEM']);
   const equipe=equipeData.filter(r=>r['NOME']);
-  lista.innerHTML=`
-    ${sinais.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Sinalizações</div>${sinais.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['ITEM']}</div>`).join('')}`:''}
-    ${equipe.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px">Equipe</div>${equipe.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['NOME']}</div>`).join('')}`:''}
-  `;
+  lista.innerHTML=
+    (sinais.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Sinalizações</div>${sinais.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['ITEM']}</div>`).join('')}`:'')
+    +(equipe.length?`<div style="font-family:var(--font-mono);font-size:9px;color:var(--blue);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px">Equipe</div>${equipe.map(r=>`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border2);color:var(--text2)">${r['NOME']}</div>`).join('')}`:'');
 }
 
+/* Variável para dados pré-preenchidos na Solicitação (vinda do pagamento de equipe) */
+let solDadosPreenchidos = null;
 
 /* ── BLOCO 8: GANTT ── */
 let ganttDragState = null;
@@ -3043,8 +3557,37 @@ let solDados = {};
 function initSolicitacao() {
   solPasso = 1;
   solDados = {};
-  // Renderiza steps e passo 1
   solMostrarPasso(1);
+  // Se veio de pagamento de equipe, pré-preenche os dados
+  if (solDadosPreenchidos) {
+    const pf = solDadosPreenchidos;
+    solDadosPreenchidos = null;
+    setTimeout(() => {
+      // Passo 1
+      const selCid = document.getElementById('sol-cidade');
+      selCid.value = pf.cidade; selCid.disabled = true;
+      solCarregarCategorias();
+      setTimeout(() => {
+        document.getElementById('sol-categoria').value = pf.categoria;
+        solCarregarItens();
+        setTimeout(() => {
+          document.getElementById('sol-item').value = pf.item;
+          solSelecionarItem();
+          document.getElementById('sol-descricao').value = pf.descricao || '';
+          // Passo 2
+          document.getElementById('sol-valor').value = pf.custoOrcado || '';
+          // Passo 3
+          document.getElementById('sol-favorecido').value = pf.favorecido || '';
+          document.getElementById('sol-banco').value = pf.banco || '';
+          document.getElementById('sol-agencia').value = pf.agencia || '';
+          document.getElementById('sol-conta').value = pf.conta || '';
+          document.getElementById('sol-pix').value = pf.pix || '';
+          document.getElementById('sol-whatsapp').value = pf.whatsapp || '';
+          showToast('Dados pré-preenchidos. Revise e confirme.', 'info');
+        }, 100);
+      }, 100);
+    }, 100);
+  }
 
   // Cidade — travada para produtor, livre para mestre/fin
   const sel = document.getElementById('sol-cidade');
