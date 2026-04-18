@@ -267,8 +267,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
   .topbar{display:none}
   .page-content{padding:16px}
   .metric-grid{grid-template-columns:repeat(2,1fr)}
-  .city-filter{display:none}
-  .mobile-city-filter{display:flex!important}
+  /* city filter always in topbar only */
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .btn{min-height:44px}
   #toast-container{left:16px;right:16px;bottom:16px}
@@ -349,12 +348,8 @@ tbody tr:hover .btn-edit-row{opacity:1}
       </div>
       <span class="cidade-badge" id="cidade-badge" style="display:none"></span>
     </div>
-    <div class="mobile-city-filter" id="city-filter-mobile" style="display:none">
-      <button class="city-pill active" data-city="todas">Todas</button>
-      <button class="city-pill" data-city="irece">Irecê</button>
-      <button class="city-pill" data-city="jequie">Jequié</button>
-      <button class="city-pill" data-city="serrinha">Serrinha</button>
-    </div>
+    <!-- city-filter-mobile removido: filtro mantido apenas no topbar -->
+    <div id="city-filter-mobile" style="display:none"></div>
 
     <div class="page-content">
 
@@ -401,15 +396,15 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </button>
           </div>
           <div id="prod-cat-filtro" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;overflow-x:auto;padding-bottom:4px"></div>
-          <div class="table-wrap">
-            <table>
+          <div class="table-wrap" style="overflow-x:auto;max-width:100%">
+            <table style="min-width:900px">
               <thead>
                 <tr>
-                  <th style="min-width:160px">Item</th>
-                  <th>Qtd</th><th>Dias</th><th>Data início</th>
-                  <th>Valor unit</th><th>Custo 2025</th><th>Total 2026</th>
-                  <th>Diferença</th><th>Valor pago</th><th>Em aberto</th>
-                  <th>Status</th><th>Fornecedor</th><th>OBS</th>
+                  <th style="min-width:160px;position:sticky;left:0;background:var(--surface2);z-index:2">Item</th>
+                  <th style="min-width:50px">Qtd</th><th style="min-width:50px">Dias</th><th style="min-width:90px">Data início</th>
+                  <th style="min-width:90px">Valor unit</th><th style="min-width:90px">Custo 2025</th><th style="min-width:90px">Total 2026</th>
+                  <th style="min-width:80px">Diferença</th><th style="min-width:90px">Valor pago</th><th style="min-width:80px">Em aberto</th>
+                  <th style="min-width:120px">Status</th><th style="min-width:120px">Fornecedor</th><th style="min-width:100px">OBS</th>
                   <th style="width:36px"></th>
                 </tr>
               </thead>
@@ -1692,7 +1687,6 @@ function navigateTo(pageId){
   const t=document.getElementById('page-'+mainId);if(t)t.classList.add('active');
   if(mainId==='producao'){
     document.getElementById('city-filter-desktop').style.display='none';
-    document.getElementById('city-filter-mobile').style.display='none';
     if(currentUser&&appData){initProducao();navegarProdSub(pageId.startsWith('prod-')?pageId:'prod-planilha');}
   }else if(mainId==='solicitacao'){
     if(currentUser&&appData)initSolicitacao();
@@ -1745,29 +1739,24 @@ document.getElementById('sidebar-overlay').addEventListener('click',closeMobileS
 function setupCityFilter(){
   const isProd=currentUser.perfil==='prod', isVend=currentUser.perfil==='vend';
   const df=document.getElementById('city-filter-desktop');
-  const mf=document.getElementById('city-filter-mobile');
-  // desktop: flex quando visível; mobile: deixa CSS (@media) controlar
+  // Filtro de cidade: apenas no topbar (superior direito), sem duplicação
   if(isProd||isVend){
     df.style.display='none';
-    mf.style.display='none';
   } else {
     df.style.display='flex';
-    mf.style.display=''; // deixa o CSS decidir (só aparece em mobile via @media)
   }
-  [df,mf].forEach(wrap=>{
-    // Limpa e recria pills sem duplicar listeners
-    const cities=[{v:'todas',l:'Todas'},{v:'irece',l:'Irecê'},{v:'jequie',l:'Jequié'},{v:'serrinha',l:'Serrinha'}];
-    wrap.innerHTML=cities.map(x=>`<button class="city-pill${x.v===currentCity?' active':''}" data-city="${x.v}">${x.l}</button>`).join('');
-    wrap.querySelectorAll('.city-pill').forEach(pill=>{
-      pill.addEventListener('click',()=>{
-        currentCity=pill.dataset.city;
-        localStorage.setItem('sj2026_city',currentCity);
-        document.querySelectorAll('.city-pill[data-city]').forEach(p=>p.classList.toggle('active',p.dataset.city===currentCity));
-        if(appData&&Object.keys(appData.pppData).length>0){
-          renderDashboard();
-          if(despSolicitacoes.length>0)renderDespesas();
-        }
-      });
+  // Reconstrói pills sem duplicar listeners
+  const cities=[{v:'todas',l:'Todas'},{v:'irece',l:'Irecê'},{v:'jequie',l:'Jequié'},{v:'serrinha',l:'Serrinha'}];
+  df.innerHTML=cities.map(x=>`<button class="city-pill${x.v===currentCity?' active':''}" data-city="${x.v}">${x.l}</button>`).join('');
+  df.querySelectorAll('.city-pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{
+      currentCity=pill.dataset.city;
+      localStorage.setItem('sj2026_city',currentCity);
+      document.querySelectorAll('.city-pill[data-city]').forEach(p=>p.classList.toggle('active',p.dataset.city===currentCity));
+      if(appData&&Object.keys(appData.pppData).length>0){
+        renderDashboard();
+        if(despSolicitacoes.length>0)renderDespesas();
+      }
     });
   });
 }
@@ -1888,35 +1877,21 @@ function renderDashboard(){
   const cidade=currentUser.cidade||(currentCity==='todas'?null:currentCity);
   const cidades=cidade?[cidade]:['irece','serrinha','jequie'];
 
-  // Métricas do Resumo por cidade (B3:D6 = Produção/Equipe/Hospedagem/Alimentação, B8=Total Geral)
-  // Estrutura: linha 3=Produção, 4=Equipe, 5=Hospedagem, 6=Alimentação, 8=Total Geral
-  // Colunas: A=label, B=Previsto, C=Pago, D=Diferença
-  let orcTotal=0, pagoTotal=0, temResumo=false;
+  // Métricas sempre da aba Produção (única fonte de verdade)
+  let orcTotal=0, pagoTotal=0;
   const resumoPorCidade = {};
 
   cidades.forEach(c=>{
-    const resumo=(appData.pppData[c]&&appData.pppData[c].resumo)||[];
-    if(resumo.length>=8){
-      const totalRow = resumo[7] || [];
-      const prev = parseBRLSheet(totalRow[1]);
-      const pago = parseBRLSheet(totalRow[2]);
-      if(prev>0){ orcTotal+=prev; temResumo=true; }
-      pagoTotal+=pago;
-      resumoPorCidade[c] = resumo;
-    }
-  });
-
-  // Fallback linha a linha se Resumo não carregou
-  if(!temResumo){
-    cidades.forEach(c=>{
-      const prod=(appData.pppData[c]&&appData.pppData[c].producao)||[];
-      prod.forEach(r=>{
-        if(!r['ITEM'])return;
-        orcTotal+=parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)']);
-        pagoTotal+=parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
-      });
+    const prod=(appData.pppData[c]&&appData.pppData[c].producao)||[];
+    prod.forEach(r=>{
+      if(!r['ITEM'])return;
+      orcTotal+=parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)']);
+      pagoTotal+=parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
     });
-  }
+    // Mantém resumoPorCidade para a tabela visual do dashboard (se disponível)
+    const resumo=(appData.pppData[c]&&appData.pppData[c].resumo)||[];
+    if(resumo.length>=8) resumoPorCidade[c]=resumo;
+  });
 
   // Custo 2025 sempre da Produção
   let c2025=0;
@@ -2101,15 +2076,14 @@ function renderProdPlanilha(){
     if(!item){
       if(cat&&cat!==catAtual&&(prodCatFiltro==='todas'||prodCatFiltro===cat)){
         catAtual=cat;
-        html+=`<tr class="cat-row"><td colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+        html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
       }
       return;
     }
     if(prodCatFiltro!=='todas'&&cat!==prodCatFiltro)return;
-    // Injeta linha de categoria se mudou (itens sem linha separadora na planilha)
     if(cat&&cat!==catAtual&&prodCatFiltro==='todas'){
       catAtual=cat;
-      html+=`<tr class="cat-row"><td colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+      html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
     }
     const subcat=(row['SUBCATEGORIA']||'').trim();
     const c25=parseBRL(row['CUSTO 2025 (R$)']||row['CUSTO 2025']);
@@ -2122,7 +2096,7 @@ function renderProdPlanilha(){
     const vu=parseBRL(row['VALOR UNIT (R$)']||row['VALOR UNIT']);
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-edit-row btn-icon" onclick="abrirModalEditItem(${idx})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
     html+=`<tr data-idx="${idx}">
-      <td style="min-width:160px"><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${subcat}</div>`:''}</td>
+      <td style="min-width:160px;position:sticky;left:0;background:inherit;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.15)"><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${subcat}</div>`:''}</td>
       <td class="muted">${row['QNT']||'—'}</td><td class="muted">${row['DIAS']||'—'}</td>
       <td class="muted">${row['DATA INÍCIO']||'—'}</td>
       <td class="muted">${vu>0?formatBRL(vu):'—'}</td>
@@ -2408,6 +2382,45 @@ function abrirModalMembro(idx) {
   abrirModal('modal-membro');
 }
 
+// ── Sincroniza item na aba Produção (cria ou atualiza linha) ──
+async function sincProd(cidade, categoria, item, qnt, dias, valorUnit, total, subcategoria) {
+  await loadPPP(cidade); // garante dados frescos
+  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
+  const nm = {irece:'Irecê', serrinha:'Serrinha', jequie:'Jequié'};
+
+  // Busca linha existente (mesma categoria + item)
+  const idx = prod.findIndex(r =>
+    (r['CATEGORIA']||'').trim().toUpperCase() === categoria.toUpperCase() &&
+    (r['ITEM']||'').trim() === item.trim()
+  );
+
+  // Colunas Produção A:N: CATEGORIA|ITEM|QNT|DIAS|DATA INÍCIO|VALOR UNIT (R$)|CUSTO 2025 (R$)|TOTAL 2026 (R$)|DIFERENÇA (R$)|VALOR PAGO (R$)|STATUS|FORNECEDOR|OBS|SUBCATEGORIA
+  const row = [[categoria, item, qnt||'', dias||'', '', valorUnit||'', '', total||'', '', '', 'Pendente', '', '', subcategoria||'']];
+
+  const sheetId = SHEET_IDS[cidade];
+  if (idx === -1) {
+    // Nova linha
+    await sheetsAppend(sheetId, 'Produção!A:N', row);
+  } else {
+    // Atualiza linha existente (mantém custo 2025, valor pago e status se já aprovado)
+    const linhaSheet = idx + 2;
+    const existing = prod[idx];
+    row[0][6] = existing['CUSTO 2025 (R$)'] || existing['CUSTO 2025'] || ''; // mantém custo 2025
+    row[0][9] = existing['VALOR PAGO (R$)'] || existing['VALOR PAGO'] || ''; // mantém valor pago
+    const stAtual = (existing['STATUS']||'').trim();
+    // Não regride status se já aprovado ou pago
+    if(['Pagamento aprovado','Pago','Pago parcial','Pagamento solicitado'].includes(stAtual)) {
+      row[0][10] = stAtual;
+    }
+    await sheetsWrite(sheetId, `Produção!A${linhaSheet}:N${linhaSheet}`, row);
+  }
+  // Invalida caches
+  delete sheetsCache[`${sheetId}::Produção!A:O`];
+  delete sheetsCache[`${sheetId}::Produção!A:N`];
+  // Recarrega PPP
+  await loadPPP(cidade);
+}
+
 async function salvarMembro() {
   const nome=document.getElementById('membro-nome').value.trim();
   if(!nome){showToast('Informe o nome.','warn');return;}
@@ -2422,6 +2435,12 @@ async function salvarMembro() {
     const idxRaw=document.getElementById('membro-row-idx').value;
     if(idxRaw===''){await appendAbaPPP(prodCidadeAtiva,'Equipe','A:P',row);showToast('Membro adicionado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${parseInt(idxRaw)+2}:P${parseInt(idxRaw)+2}`,row);showToast('Membro atualizado!','success');}
+    // Sincroniza com aba Produção se tem valor definido
+    if(total > 0) {
+      const setor = document.getElementById('membro-setor').value.trim();
+      const itemProd = setor ? `${setor} — ${nome}` : nome;
+      await sincProd(prodCidadeAtiva, 'EQUIPE', itemProd, 1, diarias||'', valdia||'', total, 'STAFF');
+    }
     fecharModal('modal-membro');await carregarEquipe();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
@@ -2635,8 +2654,22 @@ async function salvarHospedagem(){
     const i=document.getElementById('hosp-row-idx').value;
     if(i===''){await appendAbaPPP(prodCidadeAtiva,'Hospedagem','A:I',row);showToast('Cômodo adicionado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Hospedagem',`A${parseInt(i)+2}:I${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    // Sincroniza total do local com Produção
+    // Soma todos os cômodos do mesmo local (incluindo o recém-salvo)
+    const totalLocal = await calcTotalHospLocal(prodCidadeAtiva, local);
+    const valDiaria = parseFloat(document.getElementById('hosp-valdiaria').value)||0;
+    await sincProd(prodCidadeAtiva, 'HOSPEDAGEM', local, 1, '', valDiaria||'', totalLocal, 'ACOMODAÇÃO');
     fecharModal('modal-hospedagem');await carregarHospedagem();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+async function calcTotalHospLocal(cidade, local) {
+  // Relê a aba para ter dados frescos incluindo o recém-salvo
+  delete sheetsCache[`${SHEET_IDS[cidade]}::Hospedagem!A:I`];
+  const rows = await lerAbaPPP(cidade, 'Hospedagem', 'A:I');
+  return rows
+    .filter(r => (r['LOCAL']||'').trim() === local.trim())
+    .reduce((s,r) => s + parseBRL(r['TOTAL (R$)']||r['TOTAL']), 0);
 }
 
 function alimDatasEquipe(){
@@ -3241,8 +3274,22 @@ async function salvarAlimentacao(){
     const i=document.getElementById('alim-row-idx').value;
     if(i===''){await appendAbaPPP(prodCidadeAtiva,'Alimentação','A:H',row);showToast('Registrado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Alimentação',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
+    // Sincroniza total do fornecedor com Produção
+    if(forn) {
+      const totalForn = await calcTotalAlimForn(prodCidadeAtiva, forn);
+      const valVoucher = parseFloat(document.getElementById('alim-valvoucher').value)||0;
+      await sincProd(prodCidadeAtiva, 'ALIMENTAÇÃO', forn, 1, '', valVoucher||'', totalForn, 'VOUCHER');
+    }
     fecharModal('modal-alimentacao');await carregarAlimentacao();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+async function calcTotalAlimForn(cidade, fornecedor) {
+  delete sheetsCache[`${SHEET_IDS[cidade]}::Alimentação!A:H`];
+  const rows = await lerAbaPPP(cidade, 'Alimentação', 'A:H');
+  return rows
+    .filter(r => (r['FORNECEDOR']||'').trim() === fornecedor.trim())
+    .reduce((s,r) => s + parseBRL(r['TOTAL (R$)']||r['TOTAL']), 0);
 }
 
 /* ═══════════════════════════════════════
