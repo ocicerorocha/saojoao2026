@@ -23,7 +23,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px}
-body{background:var(--bg);color:var(--text);font-family:var(--font-display);min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-display);min-height:100vh;overflow-x:clip}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--surface)}
 ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
@@ -1784,6 +1784,24 @@ function setupCityFilter(){
       if(appData&&Object.keys(appData.pppData).length>0){
         renderDashboard();
         if(despSolicitacoes.length>0)renderDespesas();
+        if(receitasData.length>0)renderReceitas();
+        if(bileiteriaData.length>0)renderBilheteria();
+      }
+      // Se mapa estiver visível (qualquer cidade), recarrega imagem da nova cidade
+      if(currentPage==='prod-mapa') {
+        const nmMap={irece:'irece',serrinha:'serrinha',jequie:'jequie'};
+        const cid=nmMap[currentCity]||currentCity;
+        const cfgMapa=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
+        const url=cfgMapa[cid];
+        document.getElementById('mapa-url-input').value=url||'';
+        if(url){mapaCarregarImagem();}
+        else{
+          const img=document.getElementById('mapa-img');
+          img.src='';img.style.display='none';
+          document.getElementById('mapa-placeholder').style.display='flex';
+          document.getElementById('mapa-pinos').innerHTML='';
+          mapaPinos=[];
+        }
       }
     });
   });
@@ -2183,12 +2201,18 @@ function navegarProdSub(subId){
   if(subId==='prod-alimentacao')carregarAlimentacao();
   if(subId==='prod-sinalizacoes')carregarSinalizacoes();
   if(subId==='prod-mapa'){
-    // Carrega dados para lista lateral e restaura URL/pinos salvos
     Promise.all([carregarEquipe(),carregarSinalizacoes()]).then(()=>{
       mapaCarregarLista();
+      const cidMapa = prodCidadeAtiva || currentCity || 'serrinha';
       const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
-      const url=cfg[prodCidadeAtiva];
-      if(url){document.getElementById('mapa-url-input').value=url;mapaCarregarImagem();}
+      const url=cfg[cidMapa];
+      document.getElementById('mapa-url-input').value=url||'';
+      if(url){mapaCarregarImagem();}
+      else{
+        // Garante que pinos são limpos para cidade sem imagem
+        document.getElementById('mapa-pinos').innerHTML='';
+        mapaPinos=[];
+      }
     });
   }
 }
@@ -3474,8 +3498,10 @@ function mapaCarregarImagem(){
     }
   };
   img.src=url;
+  // Salva URL pela cidade ativa — prodCidadeAtiva se em Produção, currentCity caso contrário
+  const cidMapa = prodCidadeAtiva || currentCity || 'todas';
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_urls')||'{}');
-  cfg[prodCidadeAtiva]=url;
+  cfg[cidMapa]=url;
   localStorage.setItem('sj2026_mapa_urls',JSON.stringify(cfg));
 }
 
@@ -3515,9 +3541,10 @@ function confirmarPino(){
   if(!item){showToast('Selecione um item.','warn');return;}
   const pino={x,y,tipo,item,ref,id:Date.now()};
   // Grava no localStorage ANTES de fechar o modal
+  const cidMapa = prodCidadeAtiva || currentCity || 'todas';
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
-  if(!cfg[prodCidadeAtiva])cfg[prodCidadeAtiva]=[];
-  cfg[prodCidadeAtiva].push(pino);
+  if(!cfg[cidMapa])cfg[cidMapa]=[];
+  cfg[cidMapa].push(pino);
   localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
   // Recarrega pinos do localStorage para garantir consistência
   mapaRestaurarPinos();
@@ -3544,8 +3571,9 @@ function mapaRenderizarPino(pino,idx){
     if(confirm(`Remover pino "${pino.item}"?`)){
       el.remove();
       // Remove pelo id único
+      const cidMapa = prodCidadeAtiva || currentCity || 'todas';
       const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
-      cfg[prodCidadeAtiva]=(cfg[prodCidadeAtiva]||[]).filter(p=>p.id!==pino.id);
+      cfg[cidMapa]=(cfg[cidMapa]||[]).filter(p=>p.id!==pino.id);
       localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
       mapaPinos=mapaPinos.filter(p=>p.id!==pino.id);
     }
@@ -3556,8 +3584,9 @@ function mapaRenderizarPino(pino,idx){
 function mapaRestaurarPinos(){
   mapaPinos=[];
   document.getElementById('mapa-pinos').innerHTML='';
+  const cidMapa = prodCidadeAtiva || currentCity || 'todas';
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
-  (cfg[prodCidadeAtiva]||[]).forEach((p,i)=>{mapaPinos.push(p);mapaRenderizarPino(p,i);});
+  (cfg[cidMapa]||[]).forEach((p,i)=>{mapaPinos.push(p);mapaRenderizarPino(p,i);});
 }
 
 function mapaCarregarLista(){
@@ -4249,10 +4278,11 @@ function renderReceitas() {
 
   // Filtros
   const cats=[...new Set(receitasData.map(r=>r['CATEGORIA']).filter(Boolean))];
-  const cidades=[...new Set(receitasData.map(r=>r['CIDADE']).filter(Boolean))];
+  // Cidades fixas — não depende de ter receitas cadastradas
+  const cidadesFixas = ['Irecê','Serrinha','Jequié','Todas'];
   document.getElementById('rec-filtros').innerHTML = `
     <select class="form-select" id="rec-f-cidade" onchange="renderRecTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
-      <option value="">Todas as cidades</option>${cidades.map(c=>`<option value="${c}">${c}</option>`).join('')}
+      <option value="">Todas as cidades</option>${cidadesFixas.map(c=>`<option value="${c}">${c}</option>`).join('')}
     </select>
     <select class="form-select" id="rec-f-cat" onchange="renderRecTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
       <option value="">Todas as categorias</option>${cats.map(c=>`<option value="${c}">${c}</option>`).join('')}
@@ -4304,7 +4334,7 @@ function renderRecTabela() {
     <tbody>${linhas}</tbody></table></div>`;
 }
 
-function abrirModalReceita(idx) {
+async function abrirModalReceita(idx) {
   const r = idx!==undefined ? receitasData[idx] : null;
   document.getElementById('rec-row-idx').value = idx!==undefined?idx:'';
   document.getElementById('modal-rec-titulo').textContent = r?'Editar receita':'Nova receita';
@@ -4315,10 +4345,23 @@ function abrirModalReceita(idx) {
   document.getElementById('rec-status').value = r?.['STATUS']||'Previsto';
   document.getElementById('rec-resp').value = r?.['RESPONSÁVEL']||r?.['RESPONSAVEL']||currentUser.nome;
   document.getElementById('rec-obs').value = r?.['OBS']||'';
-  // Popula categorias
+  // Popula categorias — recarrega se vazio
+  if(!recCategoriasData.length) {
+    const catsSet = new Set();
+    for (const cid of ['irece','serrinha','jequie']) {
+      try {
+        delete sheetsCache[`${SHEET_IDS[cid]}::Categorias Receita!A:B`];
+        const rows = await lerAbaPPP(cid, 'Categorias Receita', 'A:B');
+        rows.forEach(row => {
+          const cat = (row['CATEGORIA']||'').trim();
+          if(cat && !catsSet.has(cat)) { catsSet.add(cat); recCategoriasData.push(row); }
+        });
+      } catch(_) {}
+    }
+  }
   const sel = document.getElementById('rec-categoria');
-  const cats = recCategoriasData.map(c=>c['CATEGORIA']||'').filter(Boolean);
-  sel.innerHTML = `<option value="">— selecione —</option>`+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const cats = recCategoriasData.map(row=>row['CATEGORIA']||'').filter(Boolean);
+  sel.innerHTML = `<option value="">— selecione —</option>`+cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('');
   if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
   abrirModal('modal-receita');
 }
@@ -4417,11 +4460,14 @@ function renderBilheteria() {
     <div class="metric-card"><div class="metric-label">Crédito</div><div class="metric-value">${formatBRL(totalCred)}</div></div>
     <div class="metric-card"><div class="metric-label">Ticket médio</div><div class="metric-value amber">${formatBRL(ticketMedio)}</div></div>`;
   // Filtros
-  const cidades=[...new Set(bileiteriaData.map(r=>r['CIDADE / EVENTO']||r['CIDADE']).filter(Boolean))];
+  // Cidades fixas para filtro — não depende de dados
   const canais=[...new Set(bileiteriaData.map(r=>r['CANAL']).filter(Boolean))];
   document.getElementById('bil-filtros').innerHTML=`
     <select class="form-select" id="bil-f-cidade" onchange="renderBilTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
-      <option value="">Todas as cidades</option>${cidades.map(c=>`<option>${c}</option>`).join('')}
+      <option value="">Todas as cidades</option>
+      <option value="Irecê">Irecê</option>
+      <option value="Serrinha">Serrinha</option>
+      <option value="Jequié">Jequié</option>
     </select>
     <select class="form-select" id="bil-f-canal" onchange="renderBilTabela()" style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
       <option value="">Todos os canais</option>${canais.map(c=>`<option>${c}</option>`).join('')}
@@ -4433,8 +4479,11 @@ function renderBilTabela() {
   const wrap = document.getElementById('bil-table-wrap');
   const fCidade = document.getElementById('bil-f-cidade')?.value||'';
   const fCanal  = document.getElementById('bil-f-canal')?.value||'';
+  const nmMap = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  // Aplica filtro global de cidade do topbar se não tiver filtro específico
+  const cidadeEfetiva = fCidade || (currentCity!=='todas'?nmMap[currentCity]||'':'');
   let rows = bileiteriaData;
-  if(fCidade) rows=rows.filter(r=>(r['CIDADE / EVENTO']||r['CIDADE']||'')==fCidade);
+  if(cidadeEfetiva) rows=rows.filter(r=>(r['CIDADE / EVENTO']||r['CIDADE']||'')==cidadeEfetiva);
   if(fCanal)  rows=rows.filter(r=>(r['CANAL']||'')==fCanal);
   if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-title">Nenhum registro</div></div>`; return; }
   const podeBilEdit = currentUser.perfil==='mestre'||currentUser.perfil==='fin';
