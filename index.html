@@ -396,6 +396,8 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </button>
           </div>
           <div id="prod-cat-filtro" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;overflow-x:auto;padding-bottom:4px"></div>
+          <!-- Resumo da planilha -->
+          <div id="prod-resumo" class="metric-grid" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"></div>
           <div class="table-wrap" style="overflow-x:auto;max-width:100%">
             <table style="min-width:900px">
               <thead>
@@ -405,11 +407,10 @@ tbody tr:hover .btn-edit-row{opacity:1}
                   <th style="min-width:90px">Valor unit</th><th style="min-width:90px">Custo 2025</th><th style="min-width:90px">Total 2026</th>
                   <th style="min-width:80px">Diferença</th><th style="min-width:90px">Valor pago</th><th style="min-width:80px">Em aberto</th>
                   <th style="min-width:120px">Status</th><th style="min-width:120px">Fornecedor</th><th style="min-width:100px">OBS</th>
-                  <th style="width:36px"></th>
                 </tr>
               </thead>
               <tbody id="prod-planilha-body">
-                <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>
+                <tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1409,6 +1410,33 @@ tbody tr:hover .btn-edit-row{opacity:1}
         </div>
       </div>
 
+      <!-- MODAL RECEBER RECEITA -->
+      <div class="modal-overlay" id="modal-receber-receita">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header"><span class="modal-title">Confirmar recebimento</span><button class="modal-close" onclick="fecharModal('modal-receber-receita')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="rec-receber-idx">
+            <div id="rec-receber-info" style="background:var(--surface2);border-radius:var(--radius);padding:12px;margin-bottom:16px;font-size:13px"></div>
+            <div class="form-group">
+              <label class="form-label">Valor recebido (R$)</label>
+              <input class="form-input" id="rec-receber-valor" type="number" min="0" step="0.01" placeholder="0,00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data do recebimento</label>
+              <input class="form-input" id="rec-receber-data" type="date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">OBS</label>
+              <input class="form-input" id="rec-receber-obs" placeholder="Comprovante, referência…">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-receber-receita')">Cancelar</button>
+              <button class="btn btn-primary" onclick="confirmarRecebimentoReceita()">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL DOCUMENTO -->
       <div class="modal-overlay" id="modal-documento">
         <div class="modal" style="max-width:500px">
@@ -2068,7 +2096,7 @@ function renderProdPlanilha(){
     `<button class="city-pill ${c===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${c.replace(/'/g,"\\'")}')"`+
     ` style="font-size:10px;padding:3px 10px">${c==='todas'?'Todas':c}</button>`
   ).join('');
-  if(!prod.length){tbody.innerHTML=`<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
+  if(!prod.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
   let html='',catAtual=null;
   prod.forEach((row,idx)=>{
     const item=(row['ITEM']||'').trim(),cat=(row['CATEGORIA']||'').trim();
@@ -2076,14 +2104,14 @@ function renderProdPlanilha(){
     if(!item){
       if(cat&&cat!==catAtual&&(prodCatFiltro==='todas'||prodCatFiltro===cat)){
         catAtual=cat;
-        html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+        html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="13"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
       }
       return;
     }
     if(prodCatFiltro!=='todas'&&cat!==prodCatFiltro)return;
     if(cat&&cat!==catAtual&&prodCatFiltro==='todas'){
       catAtual=cat;
-      html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="14"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
+      html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="13"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
     }
     const subcat=(row['SUBCATEGORIA']||'').trim();
     const c25=parseBRL(row['CUSTO 2025 (R$)']||row['CUSTO 2025']);
@@ -2092,11 +2120,18 @@ function renderProdPlanilha(){
     const ab=Math.max(0,t26-pago),diff=t26-c25;
     const dc=diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero',ds=diff>0?'+':'';
     const st=(row['STATUS']||'Pendente').trim();
-    const bc={'Pendente':'badge-pendente','Orçado':'badge-orcado','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago parcial':'badge-pago-parc','Pago':'badge-pago'}[st]||'badge-pendente';
+    const bc={'Pendente':'badge-pendente','Orçado':'badge-orcado','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago parcial':'badge-pago-parc','Pago':'badge-pago','Item cancelado':'badge-rejeitado'}[st]||'badge-pendente';
     const vu=parseBRL(row['VALOR UNIT (R$)']||row['VALOR UNIT']);
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-edit-row btn-icon" onclick="abrirModalEditItem(${idx})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
-    html+=`<tr data-idx="${idx}">
-      <td style="min-width:160px;position:sticky;left:0;background:inherit;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.15)"><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${subcat}</div>`:''}</td>
+    const isCancelado=st==='Item cancelado';
+    const rowStyle=isCancelado?'opacity:0.45;text-decoration:line-through':'';
+    html+=`<tr data-idx="${idx}" style="${rowStyle}">
+      <td style="min-width:180px;position:sticky;left:0;background:inherit;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.2)">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${eb}
+          <div><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:1px">${subcat}</div>`:''}</div>
+        </div>
+      </td>
       <td class="muted">${row['QNT']||'—'}</td><td class="muted">${row['DIAS']||'—'}</td>
       <td class="muted">${row['DATA INÍCIO']||'—'}</td>
       <td class="muted">${vu>0?formatBRL(vu):'—'}</td>
@@ -2108,10 +2143,30 @@ function renderProdPlanilha(){
       <td><span class="badge ${bc}">${st}</span></td>
       <td class="muted" style="min-width:100px">${row['FORNECEDOR']||'—'}</td>
       <td class="muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="${(row['OBS']||'').replace(/"/g,'&quot;')}">${row['OBS']||'—'}</td>
-      <td style="padding:4px">${eb}</td>
     </tr>`;
   });
-  tbody.innerHTML=html||`<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum item nesta categoria</td></tr>`;
+  tbody.innerHTML=html||`<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum item nesta categoria</td></tr>`;
+
+  // Resumo respeitando filtro de categoria (excluindo cancelados)
+  const filtrados=prod.filter(r=>{
+    const it=(r['ITEM']||'').trim(),ct=(r['CATEGORIA']||'').trim();
+    if(!it)return false;
+    if(prodCatFiltro!=='todas'&&ct!==prodCatFiltro)return false;
+    if((r['STATUS']||'').trim()==='Item cancelado')return false;
+    return true;
+  });
+  const rOrc   =filtrados.reduce((s,r)=>s+parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)']),0);
+  const rPago  =filtrados.reduce((s,r)=>s+parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']),0);
+  const r2025  =filtrados.reduce((s,r)=>s+parseBRL(r['CUSTO 2025 (R$)']||r['CUSTO 2025']),0);
+  const semOrc =filtrados.filter(r=>parseBRL(r['TOTAL 2026 (R$)']||r['CUSTO 2026']||r['CUSTO 2026 (R$)'])===0).length;
+  const emAberto=Math.max(0,rOrc-rPago);
+  const resumoEl=document.getElementById('prod-resumo');
+  if(resumoEl)resumoEl.innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total orçado 2026</div><div class="metric-value accent" style="font-size:16px">${rOrc>0?formatBRL(rOrc):'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Total pago</div><div class="metric-value green" style="font-size:16px">${rPago>0?formatBRL(rPago):'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Em aberto</div><div class="metric-value amber" style="font-size:16px">${emAberto>0?formatBRL(emAberto):'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Custo 2025</div><div class="metric-value" style="font-size:16px;color:var(--text2)">${r2025>0?formatBRL(r2025):'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Sem orçamento 2026</div><div class="metric-value ${semOrc>0?'amber':''}" style="font-size:16px">${semOrc}</div><div class="metric-sub">itens pendentes</div></div>`;
 }
 
 function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdPlanilha();}
@@ -2212,7 +2267,7 @@ function preencherStatusWrap(status,ehAuto){
     const bc={'Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago parcial':'badge-pago-parc','Pago':'badge-pago'}[status]||'badge-pendente';
     wrap.innerHTML=`<div class="form-input" style="display:flex;align-items:center;gap:8px;opacity:0.8;cursor:default"><span class="badge ${bc}">${status}</span><span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">Controlado pelo fluxo de pagamento</span></div>`;
   }else{
-    wrap.innerHTML=`<select class="form-select" onchange="document.getElementById('edit-status').value=this.value">${['Pendente','Orçado'].map(o=>`<option value="${o}" ${o===status?'selected':''}>${o}</option>`).join('')}</select>`;
+    wrap.innerHTML=`<select class="form-select" onchange="document.getElementById('edit-status').value=this.value">${['Pendente','Orçado','Item cancelado'].map(o=>`<option value="${o}" ${o===status?'selected':''}>${o}</option>`).join('')}</select>`;
     document.getElementById('edit-status').value=status;
   }
 }
@@ -2237,7 +2292,9 @@ async function salvarItemProducao(){
   const t2026v=parseFloat(document.getElementById('edit-total2026').value)||0;
   const forn=document.getElementById('edit-fornecedor').value.trim();
   const obs=document.getElementById('edit-obs').value.trim();
-  const status=document.getElementById('edit-status').value||'Pendente';
+  // Auto-status: se preencheu total 2026 e status ainda é Pendente → Orçado
+  let status=document.getElementById('edit-status').value||'Pendente';
+  if(t2026v>0&&status==='Pendente') status='Orçado';
   const pago=isNovo?0:parseBRL((prod[idx]&&prod[idx]['VALOR PAGO (R$)'])||(prod[idx]&&prod[idx]['VALOR PAGO'])||0);
   if(!item){showToast('Preencha o nome do item.','warn');btn.disabled=false;btn.textContent='Salvar';return;}
   const diff=t2026v-c2025v;
@@ -2247,7 +2304,15 @@ async function salvarItemProducao(){
   const rv=[[cat,item,qnt,dias,dataInicio,vUnit>0?vUnit:'',c2025v>0?c2025v:'',t2026v>0?t2026v:'',diff!==0?diff:'',pago>0?pago:'',status,forn,obs,subcat]];
   try{
     if(isNovo){await sheetsAppend(sheetId,'Produção!A:N',rv);showToast('Item adicionado!','success');}
-    else{await sheetsWrite(sheetId,`Produção!A${idx+2}:N${idx+2}`,rv);showToast('Item atualizado!','success');}
+    else{
+      // Registra alerta se valor Total 2026 mudou
+      const rowAnt=prod[idx];
+      const valAnt=parseBRL(rowAnt&&(rowAnt['TOTAL 2026 (R$)']||rowAnt['CUSTO 2026']||rowAnt['CUSTO 2026 (R$)'])||0);
+      if(!isNovo && Math.abs(t2026v-valAnt)>0.01) {
+        registrarAlertaValor(cidade, item, valAnt, t2026v);
+      }
+      await sheetsWrite(sheetId,`Produção!A${idx+2}:N${idx+2}`,rv);showToast('Item atualizado!','success');
+    }
     delete sheetsCache[`${sheetId}::Produção!A:O`];
     await loadPPP(cidade);renderProdPlanilha();fecharModalEditItem();
   }catch(err){console.error('salvarItemProducao:',err);showToast('Erro ao salvar. Tente novamente.','error');}
@@ -3423,8 +3488,9 @@ function mapaToggleEdicao(){
 
 function mapaAdicionarPino(e){
   if(!mapaEditando)return;
-  const container=document.getElementById('mapa-container');
-  const rect=container.getBoundingClientRect();
+  // Calcula posição relativa ao container da imagem (não ao overlay)
+  const img=document.getElementById('mapa-img');
+  const rect=img.getBoundingClientRect();
   const x=((e.clientX-rect.left)/rect.width*100).toFixed(2);
   const y=((e.clientY-rect.top)/rect.height*100).toFixed(2);
   document.getElementById('pino-x').value=x;
@@ -3447,14 +3513,16 @@ function confirmarPino(){
   const item=document.getElementById('pino-item').value;
   const ref=document.getElementById('pino-ref').value.trim();
   if(!item){showToast('Selecione um item.','warn');return;}
-  const pino={x,y,tipo,item,ref};
-  mapaPinos.push(pino);
-  mapaRenderizarPino(pino,mapaPinos.length-1);
+  const pino={x,y,tipo,item,ref,id:Date.now()};
+  // Grava no localStorage ANTES de fechar o modal
   const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
   if(!cfg[prodCidadeAtiva])cfg[prodCidadeAtiva]=[];
   cfg[prodCidadeAtiva].push(pino);
   localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
+  // Recarrega pinos do localStorage para garantir consistência
+  mapaRestaurarPinos();
   fecharModal('modal-pino');
+  showToast(`Pino "${item}" fixado!`,'success');
 }
 
 function mapaRenderizarPino(pino,idx){
@@ -3469,11 +3537,17 @@ function mapaRenderizarPino(pino,idx){
   el.addEventListener('mouseleave',()=>el.style.transform='translate(-50%,-50%) scale(1)');
   el.addEventListener('click',e=>{
     e.stopPropagation();
+    if(!mapaEditando){
+      showToast(`${pino.item}${pino.ref?' — '+pino.ref:''}`, 'info', 2000);
+      return;
+    }
     if(confirm(`Remover pino "${pino.item}"?`)){
-      el.remove();mapaPinos.splice(idx,1);
+      el.remove();
+      // Remove pelo id único
       const cfg=JSON.parse(localStorage.getItem('sj2026_mapa_pinos')||'{}');
-      cfg[prodCidadeAtiva]=mapaPinos.slice();
+      cfg[prodCidadeAtiva]=(cfg[prodCidadeAtiva]||[]).filter(p=>p.id!==pino.id);
       localStorage.setItem('sj2026_mapa_pinos',JSON.stringify(cfg));
+      mapaPinos=mapaPinos.filter(p=>p.id!==pino.id);
     }
   });
   pinos.appendChild(el);
@@ -4144,12 +4218,19 @@ async function carregarReceitas() {
     delete sheetsCache[`${SHEET_IDS.geral}::Receitas!A:H`];
     const rows = await sheetsRead(SHEET_IDS.geral, 'Receitas!A:H');
     receitasData = rowsToObjects(rows);
-    // Tenta carregar categorias de uma cidade (serrinha como padrão)
-    const cidadeCat = currentUser.cidade || 'serrinha';
-    try {
-      delete sheetsCache[`${SHEET_IDS[cidadeCat]}::Categorias Receita!A:B`];
-      recCategoriasData = await lerAbaPPP(cidadeCat, 'Categorias Receita', 'A:B');
-    } catch(_) { recCategoriasData = []; }
+    // Carrega categorias de TODAS as cidades e consolida (sem duplicatas)
+    recCategoriasData = [];
+    const catsSet = new Set();
+    for (const cid of ['irece','serrinha','jequie']) {
+      try {
+        delete sheetsCache[`${SHEET_IDS[cid]}::Categorias Receita!A:B`];
+        const catRows = await lerAbaPPP(cid, 'Categorias Receita', 'A:B');
+        catRows.forEach(r => {
+          const cat = (r['CATEGORIA']||'').trim();
+          if(cat && !catsSet.has(cat)) { catsSet.add(cat); recCategoriasData.push(r); }
+        });
+      } catch(_) {}
+    }
     renderReceitas();
   } catch(e) { console.error(e); showToast('Erro ao carregar receitas.','error'); }
 }
@@ -4189,7 +4270,9 @@ function renderRecTabela() {
   const fCat    = document.getElementById('rec-f-cat')?.value||'';
   const fStatus = document.getElementById('rec-f-status')?.value||'';
   let rows = receitasData;
-  if(fCidade) rows=rows.filter(r=>(r['CIDADE']||'')==fCidade);
+  // Aplica filtro de cidade global (currentCity) se não tiver filtro específico
+  const cidadeEfetiva = fCidade || (currentCity !== 'todas' ? ({'irece':'Irecê','serrinha':'Serrinha','jequie':'Jequié'}[currentCity]||'') : '');
+  if(cidadeEfetiva) rows=rows.filter(r=>(r['CIDADE']||'')==cidadeEfetiva);
   if(fCat)    rows=rows.filter(r=>(r['CATEGORIA']||'')==fCat);
   if(fStatus) rows=rows.filter(r=>(r['STATUS']||'')==fStatus);
   if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">Nenhuma receita encontrada</div></div>`; return; }
@@ -4197,21 +4280,27 @@ function renderRecTabela() {
   const linhas = rows.map(r=>{
     const idx=receitasData.indexOf(r);
     const val=parseBRL(r['VALOR (R$)']||r['VALOR']);
+    const recebParcial=parseBRL(r['RECEBIDO PARCIAL']||r['VALOR RECEBIDO']||'');
     const st=(r['STATUS']||'Previsto').trim();
+    const stCls={'Previsto':'badge-pendente','Confirmado':'badge-aprovado','Recebido':'badge-pago','Recebido parcial':'badge-pago-parc'};
+    const podeReceberBtn=(st==='Confirmado'||st==='Previsto')&&(currentUser.perfil==='mestre'||currentUser.perfil==='fin');
     return `<tr>
       <td class="muted">${r['DATA']||'—'}</td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td><strong>${r['CATEGORIA']||'—'}</strong></td>
       <td>${r['DESCRIÇÃO']||r['DESCRICAO']||'—'}</td>
       <td>${val>0?formatBRL(val):'—'}</td>
+      <td>${recebParcial>0?`<span style="color:var(--green);font-size:11px">${formatBRL(recebParcial)}</span>`:'—'}</td>
       <td><span class="badge ${stCls[st]||'badge-pendente'}">${st}</span></td>
       <td class="muted">${r['RESPONSÁVEL']||r['RESPONSAVEL']||'—'}</td>
-      <td class="muted">${r['OBS']||'—'}</td>
-      <td style="padding:4px"><button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalReceita(${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
+      <td style="padding:4px;white-space:nowrap">
+        <button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalReceita(${idx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        ${podeReceberBtn?`<button class="btn btn-ghost btn-sm" onclick="abrirModalReceberReceita(${idx})" style="color:var(--green);border-color:rgba(76,219,138,0.3);margin-left:4px">✓ Receber</button>`:''}
+      </td>
     </tr>`;
   }).join('');
   wrap.innerHTML=`<div class="table-wrap"><table>
-    <thead><tr><th>Data</th><th>Cidade</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Responsável</th><th>OBS</th><th style="width:36px"></th></tr></thead>
+    <thead><tr><th>Data</th><th>Cidade</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Recebido</th><th>Status</th><th>Responsável</th><th style="width:120px"></th></tr></thead>
     <tbody>${linhas}</tbody></table></div>`;
 }
 
@@ -4232,6 +4321,53 @@ function abrirModalReceita(idx) {
   sel.innerHTML = `<option value="">— selecione —</option>`+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
   if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
   abrirModal('modal-receita');
+}
+
+function abrirModalReceberReceita(idx) {
+  const r = receitasData[idx];
+  if(!r) return;
+  document.getElementById('rec-receber-idx').value = idx;
+  const val = parseBRL(r['VALOR (R$)']||r['VALOR']);
+  const jaReceb = parseBRL(r['RECEBIDO PARCIAL']||r['VALOR RECEBIDO']||'');
+  const restante = Math.max(0, val - jaReceb);
+  document.getElementById('rec-receber-info').innerHTML =
+    `<strong>${r['CATEGORIA']} — ${r['DESCRIÇÃO']||r['DESCRICAO']||''}</strong><br>`+
+    `<span style="color:var(--text2)">Valor total: ${formatBRL(val)}</span>`+
+    (jaReceb>0?`<span style="color:var(--green);margin-left:12px">Já recebido: ${formatBRL(jaReceb)}</span>`:'')+
+    `<br><span style="color:var(--amber)">Restante: ${formatBRL(restante)}</span>`;
+  document.getElementById('rec-receber-valor').value = restante > 0 ? restante.toFixed(2) : '';
+  document.getElementById('rec-receber-data').value = dataHoje();
+  document.getElementById('rec-receber-obs').value = '';
+  abrirModal('modal-receber-receita');
+}
+
+async function confirmarRecebimentoReceita() {
+  const idx = parseInt(document.getElementById('rec-receber-idx').value);
+  const r = receitasData[idx];
+  if(!r) return;
+  const valorReceb = parseFloat(document.getElementById('rec-receber-valor').value)||0;
+  if(!valorReceb){ showToast('Informe o valor recebido.','warn'); return; }
+  const val = parseBRL(r['VALOR (R$)']||r['VALOR']);
+  const jaReceb = parseBRL(r['RECEBIDO PARCIAL']||r['VALOR RECEBIDO']||'');
+  const totalReceb = jaReceb + valorReceb;
+  const novoStatus = totalReceb >= val ? 'Recebido' : 'Recebido parcial';
+  const obs = document.getElementById('rec-receber-obs').value.trim();
+  const data = document.getElementById('rec-receber-data').value;
+  // Geral Receitas: STATUS=col F (6), OBS=col H (8), adiciona coluna RECEBIDO PARCIAL
+  // Usamos col H para OBS atualizado e guardamos valor recebido no OBS por ora
+  // A planilha precisa ter coluna I=RECEBIDO PARCIAL — mas simplificamos gravando no OBS
+  const linha = idx + 2;
+  try {
+    // Atualiza STATUS (col F) e OBS (col H)
+    await sheetsWrite(SHEET_IDS.geral, `Receitas!F${linha}`, [[novoStatus]]);
+    const obsAtual = r['OBS']||'';
+    const novoObs = `${obsAtual}${obsAtual?' | ':''}Recebido ${formatBRL(valorReceb)} em ${data?formatDateBR(data):'—'}${obs?' — '+obs:''}`;
+    await sheetsWrite(SHEET_IDS.geral, `Receitas!H${linha}`, [[novoObs]]);
+    delete sheetsCache[`${SHEET_IDS.geral}::Receitas!A:H`];
+    showToast(`${novoStatus}! ${formatBRL(totalReceb)} registrado.`, 'success');
+    fecharModal('modal-receber-receita');
+    await carregarReceitas();
+  } catch(e){ console.error(e); showToast('Erro ao confirmar.','error'); }
 }
 
 async function salvarReceita() {
@@ -4301,7 +4437,9 @@ function renderBilTabela() {
   if(fCidade) rows=rows.filter(r=>(r['CIDADE / EVENTO']||r['CIDADE']||'')==fCidade);
   if(fCanal)  rows=rows.filter(r=>(r['CANAL']||'')==fCanal);
   if(!rows.length){ wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-title">Nenhum registro</div></div>`; return; }
+  const podeBilEdit = currentUser.perfil==='mestre'||currentUser.perfil==='fin';
   const linhas=rows.map(r=>{
+    const realIdx=bileiteriaData.indexOf(r);
     const rec=parseBRL(r['RECEITA TOTAL (R$)']||r['RECEITA TOTAL']);
     const ticket=parseBRL(r['TICKET MÉDIO (R$)']||r['TICKET MEDIO']);
     return `<tr>
@@ -4319,18 +4457,61 @@ function renderBilTabela() {
       <td class="muted">${r['Nº PEDIDOS']||r['N PEDIDOS']||'—'}</td>
       <td class="muted">${r['CANAL']||'—'}</td>
       <td class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${r['OBS']||'—'}</td>
+      <td style="padding:4px;white-space:nowrap">${podeBilEdit?`
+        <button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="editarBilheteria(${realIdx})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-red btn-sm btn-icon" onclick="apagarBilheteria(${realIdx})" title="Apagar">✕</button>`:''}</td>
     </tr>`;
   }).join('');
   wrap.innerHTML=`<div class="table-wrap"><table>
     <thead><tr>
       <th>Upload</th><th>Cidade/Evento</th><th>Vendidos</th><th>Meia</th><th>Camarote</th>
       <th>Receita</th><th>Cred. Qtd</th><th>Cred. R$</th><th>Pix Qtd</th><th>Pix R$</th>
-      <th>Ticket</th><th>Pedidos</th><th>Canal</th><th>OBS</th>
+      <th>Ticket</th><th>Pedidos</th><th>Canal</th><th>OBS</th><th style="width:60px"></th>
     </tr></thead>
     <tbody>${linhas}</tbody></table></div>`;
 }
 
 // PDV parser — lê arquivo .xls/.xlsx do browser via SheetJS
+function editarBilheteria(idx) {
+  const r = bileiteriaData[idx];
+  if(!r) return;
+  // Pre-fill modal PDV fields with existing data for editing
+  document.getElementById('pdv-cidade').value = r['CIDADE / EVENTO']||r['CIDADE']||'Serrinha';
+  document.getElementById('pdv-canal').value = r['CANAL']||'';
+  document.getElementById('pdv-obs').value = r['OBS']||'';
+  pdvParsed = {
+    totalQtd: parseInt(r['INGRESSOS VENDIDOS'])||0,
+    totalVal: parseBRL(r['RECEITA TOTAL (R$)']||r['RECEITA TOTAL']),
+    credQtd: parseInt(r['CRÉDITO QTD']||r['CREDITO QTD'])||0,
+    credVal: parseBRL(r['CRÉDITO (R$)']||r['CREDITO']),
+    pixQtd: parseInt(r['PIX QTD'])||0,
+    pixVal: parseBRL(r['PIX (R$)']||r['PIX']),
+    ticket: parseBRL(r['TICKET MÉDIO (R$)']||r['TICKET MEDIO']),
+    pedidos: parseInt(r['Nº PEDIDOS']||r['N PEDIDOS'])||0,
+    _editIdx: idx, // flag: editing, not inserting
+  };
+  document.getElementById('pdv-preview').innerHTML=`
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">INGRESSOS</span><div style="font-weight:700;color:var(--accent)">${pdvParsed.totalQtd}</div></div>
+      <div><span style="color:var(--text3);font-family:var(--font-mono);font-size:10px">RECEITA TOTAL</span><div style="font-weight:700;color:var(--green)">${formatBRL(pdvParsed.totalVal)}</div></div>
+    </div>
+    <p style="font-size:11px;color:var(--amber);margin-top:8px">Editando registro existente. Ajuste cidade/canal/OBS e confirme.</p>`;
+  abrirModal('modal-pdv');
+}
+
+async function apagarBilheteria(idx) {
+  if(!confirm('Apagar este registro de bilheteria? Esta ação não pode ser desfeita.')) return;
+  const linha = idx + 2;
+  try {
+    // Apaga limpando a linha (14 colunas)
+    await sheetsWrite(SHEET_IDS.geral, `Bilheteria!A${linha}:N${linha}`,
+      [['','','','','','','','','','','','','','']]);
+    delete sheetsCache[`${SHEET_IDS.geral}::Bilheteria!A:N`];
+    showToast('Registro apagado.','warn');
+    await carregarBilheteria();
+  } catch(e){ console.error(e); showToast('Erro ao apagar.','error'); }
+}
+
 function importarPDV(input) {
   const file = input.files[0];
   if(!file){ return; }
@@ -4391,14 +4572,20 @@ async function confirmarImportPDV() {
   const canal   = document.getElementById('pdv-canal').value.trim();
   const obs     = document.getElementById('pdv-obs').value.trim();
   const dataUp  = formatDateBR(dataHoje());
-  // DATA UPLOAD | CIDADE/EVENTO | INGRESSOS VENDIDOS | MEIA-ENTRADA | CAMAROTE | RECEITA TOTAL | CRÉDITO QTD | CRÉDITO R$ | PIX QTD | PIX R$ | TICKET MÉDIO | Nº PEDIDOS | CANAL | OBS
   const row = [[dataUp, cidade, pdvParsed.totalQtd, '', '', pdvParsed.totalVal,
     pdvParsed.credQtd, pdvParsed.credVal, pdvParsed.pixQtd, pdvParsed.pixVal,
     pdvParsed.ticket, pdvParsed.pedidos, canal, obs]];
   try {
-    await sheetsAppend(SHEET_IDS.geral,'Bilheteria!A:N',row);
+    if(pdvParsed._editIdx !== undefined) {
+      // Modo edição — sobrescreve linha existente
+      const linha = pdvParsed._editIdx + 2;
+      await sheetsWrite(SHEET_IDS.geral, `Bilheteria!A${linha}:N${linha}`, row);
+      showToast('Registro atualizado!','success');
+    } else {
+      await sheetsAppend(SHEET_IDS.geral,'Bilheteria!A:N',row);
+      showToast('Importado com sucesso!','success');
+    }
     delete sheetsCache[`${SHEET_IDS.geral}::Bilheteria!A:N`];
-    showToast('Importado com sucesso!','success');
     fecharModal('modal-pdv'); pdvParsed=null;
     await carregarBilheteria();
   } catch(e){ console.error(e); showToast('Erro ao salvar.','error'); }
@@ -4499,8 +4686,18 @@ let alertasHistData = [];
 async function carregarAlertas() {
   document.getElementById('alert-table-wrap').innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
   try {
-    delete sheetsCache[`${SHEET_IDS.geral}::Alertas & Histórico!A:I`];
-    const rows = await sheetsRead(SHEET_IDS.geral, 'Alertas & Histórico!A:I');
+    // Tenta com e sem acento (compatibilidade)
+    let rows = [];
+    try {
+      delete sheetsCache[`${SHEET_IDS.geral}::Alertas & Histórico!A:I`];
+      rows = await sheetsRead(SHEET_IDS.geral, 'Alertas & Histórico!A:I');
+    } catch(_) {
+      try {
+        delete sheetsCache[`${SHEET_IDS.geral}::Alertas!A:I`];
+        rows = await sheetsRead(SHEET_IDS.geral, 'Alertas!A:I');
+      } catch(__) { rows = []; }
+    }
+    const _ = rows; // reuse variable name consistency
     alertasHistData = rowsToObjects(rows);
     renderAlertas();
   } catch(e){ console.error(e); showToast('Erro ao carregar alertas.','error'); }
