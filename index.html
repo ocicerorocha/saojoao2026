@@ -147,6 +147,8 @@ tbody td{padding:10px 14px;color:var(--text);white-space:nowrap}
 tbody td.muted{color:var(--text2);font-family:var(--font-mono);font-size:12px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-family:var(--font-display);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background 0.15s,color 0.15s,transform 0.1s;white-space:nowrap;min-height:36px}
 .btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:0.55;cursor:not-allowed;transform:none;pointer-events:none}
+.btn.loading{opacity:0.7;cursor:wait;pointer-events:none}
 .btn-primary{background:var(--accent);color:#0e0f0e}
 .btn-primary:hover{background:var(--accent-hover)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
@@ -457,11 +459,12 @@ tbody tr:hover .btn-edit-row{opacity:1}
           </div>
           <div class="metric-grid" id="hosp-metricas" style="margin-bottom:12px"></div>
           <div id="hosp-alerta"></div>
-          <div class="table-wrap">
-            <table><thead><tr>
-              <th>Cômodo / Grade de alocação</th><th style="width:80px"></th>
+          <div style="border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+            <table style="width:100%;border-collapse:collapse"><thead><tr>
+              <th style="padding:10px 14px;background:var(--surface2);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);border-bottom:1px solid var(--border)">Cômodo / Grade de alocação</th>
+              <th style="width:120px;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)"></th>
             </tr></thead>
-            <tbody id="hospedagem-body"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
+            <tbody id="hospedagem-body"><tr><td colspan="2" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -682,7 +685,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModalEditItem()">Cancelar</button>
-              <button class="btn btn-primary" id="btn-salvar-item" onclick="salvarItemProducao()">Salvar</button>
+              <button class="btn btn-primary" id="btn-salvar-item" onclick="btnRun(this,()=>salvarItemProducao())">Salvar</button>
             </div>
           </div>
         </div>
@@ -816,7 +819,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:space-between">
               <button class="btn btn-ghost" onclick="solVoltar(4)">← Voltar</button>
-              <button class="btn btn-primary" id="btn-sol-enviar" onclick="solEnviar()">
+              <button class="btn btn-primary" id="btn-sol-enviar" onclick="btnRun(this,()=>solEnviar())">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 Enviar solicitação
               </button>
@@ -888,7 +891,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end">
               <button class="btn btn-ghost" onclick="fecharModalPagamento()">Cancelar</button>
-              <button class="btn btn-primary" onclick="confirmarPagamento()">Confirmar pagamento</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>confirmarPagamento())">Confirmar pagamento</button>
             </div>
           </div>
         </div>
@@ -927,7 +930,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="cred-eq-obs" placeholder="Observações…"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-cred-equipe')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarEquipeQtd()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarEquipeQtd())">Salvar</button>
             </div>
           </div>
         </div>
@@ -947,7 +950,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="cred-pres-obs" placeholder="Observações…"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-cred-presenca')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarPresenca()">Registrar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarPresenca())">Registrar</button>
             </div>
           </div>
         </div>
@@ -968,7 +971,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end">
               <button class="btn btn-ghost" onclick="fecharModalRejeitar()">Cancelar</button>
-              <button class="btn btn-red" onclick="confirmarRejeicao()">Confirmar rejeição</button>
+              <button class="btn btn-red" onclick="btnRun(this,()=>confirmarRejeicao())">Confirmar rejeição</button>
             </div>
           </div>
         </div>
@@ -1008,7 +1011,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
               </button>
               <div style="display:flex;gap:8px;margin-left:auto">
                 <button class="btn btn-ghost" onclick="fecharModal('modal-membro')">Cancelar</button>
-                <button class="btn btn-primary" onclick="salvarMembro()">Salvar</button>
+                <button class="btn btn-primary" onclick="btnRun(this,()=>salvarMembro())">Salvar</button>
               </div>
             </div>
           </div>
@@ -1038,7 +1041,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-hospedagem')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarHospedagem()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarHospedagem())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1068,7 +1071,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div id="aloc-hosp-datas-info" style="font-family:var(--font-mono);font-size:11px;color:var(--text3);padding:6px 10px;background:var(--surface2);border-radius:6px;margin-bottom:8px"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-aloc-hosp')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarAlocHosp()">Alocar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarAlocHosp())">Alocar</button>
             </div>
           </div>
         </div>
@@ -1091,7 +1094,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-transporte')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarTransporte()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarTransporte())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1107,7 +1110,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">Pessoa</label><select class="form-select" id="aloc-transp-pessoa"></select></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-aloc-transp')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarAlocTransp()">Alocar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarAlocTransp())">Alocar</button>
             </div>
           </div>
         </div>
@@ -1124,7 +1127,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="puls-tipo-obs"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-tipo-pulseira')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarTipoPulseira()">Cadastrar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarTipoPulseira())">Cadastrar</button>
             </div>
           </div>
         </div>
@@ -1142,7 +1145,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <p style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px">Data e hora preenchidos automaticamente no momento do registro.</p>
             <div style="display:flex;gap:8px;justify-content:flex-end">
               <button class="btn btn-ghost" onclick="fecharModal('modal-saida-pulseira')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarSaida()">Registrar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarSaida())">Registrar</button>
             </div>
           </div>
         </div>
@@ -1158,7 +1161,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">Quantidade real restante</label><input class="form-input" id="puls-cont-qtd" type="number" min="0"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-contagem-pulseira')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarContagemReal()">Registrar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarContagemReal())">Registrar</button>
             </div>
           </div>
         </div>
@@ -1178,7 +1181,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-radio-uso')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarRadioUso()">Confirmar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarRadioUso())">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1193,7 +1196,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="radio-novo-obs"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-radio-novo')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarRadioNovo()">Adicionar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarRadioNovo())">Adicionar</button>
             </div>
           </div>
         </div>
@@ -1209,7 +1212,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="forn-alim-obs"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-forn-alim')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarFornAlim()">Cadastrar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarFornAlim())">Cadastrar</button>
             </div>
           </div>
         </div>
@@ -1233,7 +1236,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-alimentacao')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarAlimentacao()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarAlimentacao())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1262,7 +1265,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-sinalizacao')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarSinalizacao()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarSinalizacao())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1351,7 +1354,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
               </div>
               <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
                 <button class="btn btn-ghost" onclick="fecharModal('modal-pdv')">Cancelar</button>
-                <button class="btn btn-primary" onclick="confirmarImportPDV()">Salvar na planilha</button>
+                <button class="btn btn-primary" onclick="btnRun(this,()=>confirmarImportPDV())">Salvar na planilha</button>
               </div>
             </div>
           </div>
@@ -1457,7 +1460,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-receita')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarReceita())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1484,7 +1487,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-receber-receita')">Cancelar</button>
-              <button class="btn btn-primary" onclick="confirmarRecebimentoReceita()">Confirmar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>confirmarRecebimentoReceita())">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1519,7 +1522,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-documento')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarDocumento()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarDocumento())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1548,7 +1551,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-evento')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarEvento()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarEvento())">Salvar</button>
             </div>
           </div>
         </div>
@@ -1570,7 +1573,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <div class="form-group"><label class="form-label">Código de acesso</label><input class="form-input" id="prod-cfg-codigo" placeholder="Ex: IRECE01" style="font-family:var(--font-mono)"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
               <button class="btn btn-ghost" onclick="fecharModal('modal-produtor')">Cancelar</button>
-              <button class="btn btn-primary" onclick="salvarProdutor()">Salvar</button>
+              <button class="btn btn-primary" onclick="btnRun(this,()=>salvarProdutor())">Salvar</button>
             </div>
           </div>
         </div>
@@ -2707,7 +2710,7 @@ function renderHospedagem() {
     </td></tr>`;
 
     items.forEach(({r,i})=>{
-      const comodoNome=(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'').trim();
+      const comodoNome=(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||r['CÔMODO']||r['COMODO']||r['QUARTO']||'').trim();
       const cap=parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0;
       const dias=getDiasBetween(r['CHECK-IN'],r['CHECK-OUT']);
       const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
@@ -2724,7 +2727,7 @@ function renderHospedagem() {
       let gradeHtml='';
       if(dias.length>0 && cap>0){
         // Grade: linhas=vagas, colunas=dias
-        gradeHtml=`<div style="overflow-x:auto;margin-top:8px"><table style="border-collapse:collapse;font-size:11px">
+        gradeHtml=`<div style="overflow-x:auto;margin-top:8px;max-width:100%;border:1px solid var(--border);border-radius:var(--radius)"><table style="border-collapse:collapse;font-size:11px;white-space:nowrap">
           <thead><tr>
             <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);border:1px solid var(--border2)">Vaga</th>
             ${dias.map(d=>{
@@ -2778,7 +2781,7 @@ function renderHospedagem() {
 
       html+=`<tr>
         <td style="vertical-align:top;padding:10px 12px">
-          <div style="font-weight:600;font-size:13px">${comodoNome||'—'}</div>
+          <div style="font-weight:600;font-size:13px">${comodoNome||(r['CÔMODO']||r['COMODO']||r['QUARTO']||'—')}</div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'} · ${cap} vaga(s) · ${total>0?formatBRL(total):'sem valor'}</div>
           ${gradeHtml}
         </td>
@@ -3910,7 +3913,9 @@ function renderCredenciamento() {
         txt=`<strong style="color:${clr}">${comp}</strong><span style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">/${prev}</span>`;
       }
       const faltaReg=comp===null&&isHoje?`<span style="font-size:8px;color:var(--amber);font-family:var(--font-mono);display:block">pendente</span>`:'';
-      const clickAttr=podeEditar?`onclick="abrirModalPresenca('${nm.replace(/'/g,"\\'")}','${d}',${comp??''},${prev})" style="cursor:pointer"`:'';
+      // Usa data-* em vez de onclick inline para evitar problema de aspas com nomes especiais
+      const clickAttr=podeEditar?`class="cred-cell-click" data-nm="${nm.replace(/"/g,'&quot;')}" data-dt="${d}" data-comp="${comp??''}" data-prev="${prev}" style="cursor:pointer"`:'';
+      return `<td ${clickAttr} style="padding:6px 4px;border:1px solid var(--border2);background:${isHoje&&comp===null?'rgba(212,240,74,0.04)':bg};text-align:center">${txt}${faltaReg}</td>`;
       return `<td ${clickAttr} style="padding:6px 4px;border:1px solid var(--border2);background:${isHoje&&comp===null?'rgba(212,240,74,0.04)':bg};text-align:center">${txt}${faltaReg}</td>`;
     }).join('');
 
@@ -3926,6 +3931,16 @@ function renderCredenciamento() {
 
   html+='</tbody></table></div>';
   wrap.innerHTML=html;
+  // Event delegation para células de presença (evita problema de aspas em onclick inline)
+  wrap.querySelectorAll('.cred-cell-click').forEach(td=>{
+    td.addEventListener('click',()=>{
+      const nm=td.dataset.nm;
+      const dt=td.dataset.dt;
+      const comp=td.dataset.comp;
+      const prev=parseInt(td.dataset.prev)||0;
+      abrirModalPresenca(nm,dt,comp===''?null:comp,prev);
+    });
+  });
 }
 
 function salvarCredDias(){
@@ -5699,6 +5714,27 @@ function iconTicket(){return`<svg width="14" height="14" viewBox="0 0 24 24" fil
 function iconFolder(){return`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`;}
 function iconBell(){return`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>`;}
 function iconGear(){return`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;}
+
+/* ── BUTTON PROTECTION ── */
+function btnLock(btn){
+  if(!btn)return false;
+  if(btn.disabled||btn.classList.contains('loading'))return false;
+  btn._origHTML=btn.innerHTML;
+  btn._origText=btn.textContent;
+  btn.classList.add('loading');
+  btn.disabled=true;
+  return true;
+}
+function btnUnlock(btn){
+  if(!btn)return;
+  btn.classList.remove('loading');
+  btn.disabled=false;
+  if(btn._origHTML!==undefined)btn.innerHTML=btn._origHTML;
+}
+async function btnRun(btn,fn){
+  if(!btnLock(btn))return;
+  try{await fn();}finally{btnUnlock(btn);}
+}
 
 /* ── INIT ── */
 // Setup modal overlays para sub-abas
