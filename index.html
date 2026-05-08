@@ -1022,7 +1022,11 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div class="modal-body">
             <input type="hidden" id="hosp-row-idx">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Local (ex: Hotel São João)</label><input class="form-input" id="hosp-local" placeholder="Nome do local"></div>
+              <div class="form-group" style="grid-column:1/-1">
+  <label class="form-label">Local</label>
+  <select class="form-select" id="hosp-local-sel" onchange="hospLocalSelChange()"></select>
+  <input class="form-input" id="hosp-local" placeholder="Nome do novo local" style="display:none;margin-top:6px">
+</div>
               <div class="form-group"><label class="form-label">Cômodo/Quarto</label><input class="form-input" id="hosp-comodo" placeholder="Ex: Quarto 101"></div>
               <div class="form-group"><label class="form-label">Capacidade (pessoas)</label><input class="form-input" id="hosp-cap" type="number" min="1"></div>
               <div class="form-group"><label class="form-label">Check-in</label><input class="form-input" id="hosp-checkin" type="date" oninput="calcDiariasHosp()"></div>
@@ -1221,6 +1225,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
               <div class="form-group"><label class="form-label">Dia</label><input class="form-input" id="alim-dia" type="date"></div>
               <div class="form-group"><label class="form-label">Equipe/Setor</label><select class="form-select" id="alim-setor"></select></div>
               <div class="form-group" style="grid-column:1/-1"><label class="form-label">Fornecedor</label><select class="form-select" id="alim-forn" onchange="autoPreencherVoucher()"></select></div>
+              <div class="form-group" style="grid-column:1/-1"><label class="form-label">Tipo de voucher</label><select class="form-select" id="alim-tipo" onchange="autoPreencherVoucherTipo()" disabled></select></div>
               <div class="form-group"><label class="form-label">Valor voucher (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-valvoucher" type="number" min="0" step="0.01" oninput="calcTotalAlim()"></div>
               <div class="form-group"><label class="form-label">Qtd vouchers</label><input class="form-input" id="alim-qtd" type="number" min="0" oninput="calcTotalAlim()"></div>
               <div class="form-group" style="grid-column:1/-1"><label class="form-label">Total (R$) <span style="color:var(--text3);font-size:10px">auto</span></label><input class="form-input" id="alim-total" readonly style="opacity:0.7;cursor:default"></div>
@@ -2668,7 +2673,7 @@ function getDiasBetween(ci, co) {
 function renderHospedagem() {
   const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
   const precisam=equipeData.filter(r=>(r['PRECISA HOSPEDAGEM?']||'').toLowerCase()==='sim');
-  const alocados=new Set(hospAlocData.map(r=>(r['PESSOA']||'').trim()));
+  const alocados=new Set(hospAlocData.map(r=>(r['PESSOA']||'').trim()).filter(Boolean));
   const semAloc=precisam.filter(r=>!alocados.has((r['NOME']||'').trim()));
 
   const totalComodos=hospedagemData.length;
@@ -2683,108 +2688,101 @@ function renderHospedagem() {
 
   const tbody=document.getElementById('hospedagem-body');
   if(!hospedagemData.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum cômodo cadastrado</td></tr>`;return;
+    tbody.innerHTML=`<tr><td colspan="2" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum cômodo cadastrado</td></tr>`;return;
   }
 
-  // Agrupa por local e exibe grade de dias por cômodo
+  // Agrupa por local
   const byLocal={};
   hospedagemData.forEach((r,i)=>{
-    const loc=r['LOCAL']||'Sem local';
+    const loc=(r['LOCAL']||'Sem local').trim();
     if(!byLocal[loc])byLocal[loc]=[];
     byLocal[loc].push({r,i});
   });
 
   let html='';
   Object.entries(byLocal).forEach(([loc,items])=>{
-    html+=`<tr class="cat-row"><td colspan="9"><span style="opacity:0.5;margin-right:6px">▸</span>${loc}</td></tr>`;
+    // Cabeçalho do local com botão de editar local
+    html+=`<tr class="cat-row"><td colspan="2" style="position:sticky;left:0;background:var(--surface3)">
+      <span style="opacity:0.5;margin-right:6px">▸</span>${loc}
+    </td></tr>`;
+
     items.forEach(({r,i})=>{
+      const comodoNome=(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'').trim();
       const cap=parseInt(r['CAPACIDADE']||r['LOTAÇÃO']||r['LOTACAO'])||0;
       const dias=getDiasBetween(r['CHECK-IN'],r['CHECK-OUT']);
       const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
-      const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+      const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalHospedagem(${i})" title="Editar cômodo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
       const alocBtn=podeEditar?`<button class="btn btn-ghost btn-sm" onclick="abrirModalAlocHosp(${i})" style="margin-left:4px">+ Alocar</button>`:'';
 
-      // Grade de alocações: linhas=vagas, colunas=dias
+      // Alocações deste cômodo EXATO
+      const alocDesseCom=hospAlocData.filter(a=>
+        (a['LOCAL']||'').trim()===(r['LOCAL']||'').trim() &&
+        (a['CÔMODO']||a['COMODO']||'').trim()===comodoNome
+      );
+
+      // Grade de dias (se tem check-in/out) ou lista simples
       let gradeHtml='';
-      if(dias.length>0&&cap>0){
+      if(dias.length>0 && cap>0){
+        // Grade: linhas=vagas, colunas=dias
         gradeHtml=`<div style="overflow-x:auto;margin-top:8px"><table style="border-collapse:collapse;font-size:11px">
           <thead><tr>
-            <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);white-space:nowrap;border:1px solid var(--border2)">Vaga</th>
+            <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);border:1px solid var(--border2)">Vaga</th>
             ${dias.map(d=>{
               const dd=d.split('-');
               const isHoje=d===new Date().toISOString().split('T')[0];
               return `<th style="padding:3px 6px;background:${isHoje?'var(--accent-dim)':'var(--surface3)'};color:${isHoje?'var(--accent)':'var(--text3)'};font-family:var(--font-mono);font-size:9px;border:1px solid var(--border2);white-space:nowrap">${parseInt(dd[2])}/${parseInt(dd[1])}</th>`;
             }).join('')}
-            <th style="padding:3px 8px;background:var(--surface3);font-family:var(--font-mono);font-size:9px;color:var(--text3);border:1px solid var(--border2)"></th>
           </tr></thead><tbody>`;
+
         for(let v=0;v<cap;v++){
-          gradeHtml+=`<tr>
-            <td style="padding:3px 8px;background:var(--surface2);font-family:var(--font-mono);font-size:10px;color:var(--text3);border:1px solid var(--border2);white-space:nowrap">Vaga ${v+1}</td>`;
+          gradeHtml+=`<tr><td style="padding:3px 8px;background:var(--surface2);font-family:var(--font-mono);font-size:10px;color:var(--text3);border:1px solid var(--border2)">Vaga ${v+1}</td>`;
           dias.forEach(d=>{
-            const aloc=hospAlocData.find(a=>
-              (a['LOCAL']||'')===(r['LOCAL']||'')&&
-              (a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'')&&
-              (a['DATA']||'')==d&&
-              (parseInt(a['VAGA']||'0')===v||(a['VAGA']===''&&hospAlocData.filter(x=>(x['LOCAL']||'')===(r['LOCAL']||'')&&(x['CÔMODO']||x['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'')&&(x['DATA']||'')==d).indexOf(a)===v))
-            );
-            const pessoa=aloc?aloc['PESSOA']:'';
+            // Pega a v-ésima alocação deste dia neste cômodo
+            const alocsDia=alocDesseCom.filter(a=>(a['DATA']||'')==d);
+            const pessoa=alocsDia[v]?.['PESSOA']||'';
             gradeHtml+=`<td style="padding:3px 6px;border:1px solid var(--border2);min-width:80px;background:${pessoa?'var(--blue-dim)':'var(--surface)'};color:${pessoa?'var(--blue)':'var(--text3)'};font-size:11px">${pessoa||''}</td>`;
           });
-          // Botão remover alocação
-          const alocsDia=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
-          gradeHtml+=`<td style="border:1px solid var(--border2);padding:2px"></td></tr>`;
+          gradeHtml+=`</tr>`;
         }
         gradeHtml+='</tbody></table></div>';
+      }
 
-        // Lista de pessoas únicas alocadas (com equipe) + botão remover (uma vez por pessoa)
-        const alocNeste=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
-        if(alocNeste.length){
-          // Agrupa por pessoa — mostra cada nome só uma vez
-          const pessoasUnicas=[...new Set(alocNeste.map(a=>a['PESSOA']||'').filter(Boolean))];
-          gradeHtml+=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--border2)">`;
-          pessoasUnicas.forEach(pessoa=>{
-            // Encontra equipe/setor da pessoa na aba Equipe
-            const memEquipe=equipeData.find(e=>(e['NOME']||'').trim()===pessoa.trim());
-            const setor=memEquipe?.['EQUIPE/SETOR']||'';
-            // Índice da primeira alocação desta pessoa (para remover)
-            const primeiraAloc=alocNeste.find(a=>a['PESSOA']===pessoa);
-            const realIdx=primeiraAloc?hospAlocData.indexOf(primeiraAloc):-1;
-            const removeBtn=podeEditar&&realIdx>=0?`<span style="color:var(--red);cursor:pointer;font-weight:700;margin-left:4px" onclick="removerAlocHospPessoa('${pessoa.replace(/'/g,"\'")}','${(r['LOCAL']||'').replace(/'/g,"\'")}','${(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'').replace(/'/g,"\'")}')">×</span>`:'';
-            gradeHtml+=`<span style="font-size:11px;background:var(--blue-dim);color:var(--blue);padding:2px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:4px">
-              <strong>${pessoa}</strong>${setor?`<span style="color:var(--text3);font-size:9px;font-family:var(--font-mono)">${setor}</span>`:''}
-              ${removeBtn}
-            </span>`;
-          });
-          gradeHtml+='</div>';
-
-          // Alerta: dias pendentes se período da pessoa > disponibilidade do cômodo
-          pessoasUnicas.forEach(pessoa=>{
-            const mem=equipeData.find(e=>(e['NOME']||'').trim()===pessoa.trim());
-            if(!mem)return;
-            const diasPessoa=getDiasBetween(mem['DATA IDA'],mem['DATA VOLTA']);
-            const diasAloc=alocNeste.filter(a=>a['PESSOA']===pessoa).map(a=>a['DATA']||'');
-            const pendentes=diasPessoa.filter(d=>!diasAloc.includes(d));
-            if(pendentes.length>0){
-              gradeHtml+=`<div style="font-size:10px;color:var(--amber);font-family:var(--font-mono);margin-top:4px">⚠ ${pessoa}: ${pendentes.length} dia(s) sem hospedagem (${pendentes.slice(0,3).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];}).join(', ')}${pendentes.length>3?'…':''})</div>`;
-            }
-          });
-        }
-      } else {
-        // Sem datas definidas — alocação simples
-        const alocNeste=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
-        const pessoasAloc=alocNeste.map((a,ai)=>{
-          const realIdx=hospAlocData.indexOf(a);
-          return `<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);padding:1px 6px;border-radius:10px;margin-right:3px;display:inline-flex;align-items:center;gap:4px">${a['PESSOA']||''} ${podeEditar?`<span style="color:var(--red);cursor:pointer" onclick="removerAlocHosp(${realIdx})">×</span>`:''}</span>`}).join('');
-        gradeHtml=pessoasAloc||'<span style="color:var(--text3);font-size:11px">Vazio</span>';
+      // Lista de pessoas ÚNICAS alocadas (abaixo da grade, uma vez cada)
+      const pessoasUnicas=[...new Set(alocDesseCom.map(a=>a['PESSOA']||'').filter(Boolean))];
+      if(pessoasUnicas.length){
+        gradeHtml+=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--border2)">`;
+        pessoasUnicas.forEach(pessoa=>{
+          const mem=equipeData.find(e=>(e['NOME']||'').trim()===pessoa.trim());
+          const setor=mem?.['EQUIPE/SETOR']||'';
+          const locEsc=(r['LOCAL']||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const comEsc=comodoNome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const pesEsc=pessoa.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const removeBtn=podeEditar
+            ?`<span style="color:var(--red);cursor:pointer;font-weight:700;margin-left:4px" onclick="removerAlocHospPessoa('${pesEsc}','${locEsc}','${comEsc}')">×</span>`
+            :'';
+          // Alerta de dias pendentes
+          const diasPessoa=getDiasBetween(mem?.['DATA IDA']||'',mem?.['DATA VOLTA']||'');
+          const diasAloc=alocDesseCom.filter(a=>a['PESSOA']===pessoa).map(a=>a['DATA']||'');
+          const pendentes=diasPessoa.filter(d=>!diasAloc.includes(d));
+          gradeHtml+=`<span style="font-size:11px;background:var(--blue-dim);color:var(--blue);padding:3px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px">
+            <strong>${pessoa}</strong>
+            ${setor?`<span style="color:var(--text3);font-size:9px;font-family:var(--font-mono)">${setor}</span>`:''}
+            ${pendentes.length?`<span style="color:var(--amber);font-size:9px">⚠ ${pendentes.length}d pendente</span>`:''}
+            ${removeBtn}
+          </span>`;
+        });
+        gradeHtml+='</div>';
+      } else if(!dias.length) {
+        gradeHtml='<div style="font-size:11px;color:var(--text3);margin-top:6px">Nenhuma pessoa alocada</div>';
       }
 
       html+=`<tr>
-        <td style="vertical-align:top">
-          <strong>${r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'—'}</strong>
-          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'} · ${cap} vagas · ${total>0?formatBRL(total):'—'}</div>
+        <td style="vertical-align:top;padding:10px 12px">
+          <div style="font-weight:600;font-size:13px">${comodoNome||'—'}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'} · ${cap} vaga(s) · ${total>0?formatBRL(total):'sem valor'}</div>
           ${gradeHtml}
         </td>
-        <td style="padding:4px;vertical-align:top;white-space:nowrap">${eb}${alocBtn}</td>
+        <td style="padding:8px;vertical-align:top;white-space:nowrap;width:120px">${eb}${alocBtn}</td>
       </tr>`;
     });
   });
@@ -2827,11 +2825,27 @@ function calcTotalHosp(){
   document.getElementById('hosp-total').value=d&&v?(d*v).toFixed(2):'';
 }
 
+function hospLocalSelChange(){
+  const sel=document.getElementById('hosp-local-sel');
+  const inp=document.getElementById('hosp-local');
+  if(sel.value==='__novo'){inp.style.display='';inp.value='';inp.focus();}
+  else{inp.style.display='none';inp.value=sel.value;}
+}
+
 function abrirModalHospedagem(idx){
   const r=idx!==undefined?hospedagemData[idx]:null;
   document.getElementById('hosp-row-idx').value=idx!==undefined?idx:'';
   document.getElementById('modal-hosp-titulo').textContent=r?'Editar cômodo':'Novo cômodo';
-  document.getElementById('hosp-local').value=r?.['LOCAL']||'';
+  // Popula select de locais existentes
+  const locais=[...new Set(hospedagemData.map(h=>(h['LOCAL']||'').trim()).filter(Boolean))];
+  const sel=document.getElementById('hosp-local-sel');
+  sel.innerHTML=`<option value="">— selecione o local —</option>`+
+    locais.map(l=>`<option value="${l}">${l}</option>`).join('')+
+    `<option value="__novo">+ Novo local…</option>`;
+  const localAtual=r?.['LOCAL']||'';
+  sel.value=localAtual||'';
+  document.getElementById('hosp-local').style.display='none';
+  document.getElementById('hosp-local').value=localAtual;
   document.getElementById('hosp-comodo').value=r?.['CÔMODO/QUARTO']||r?.['COMODO/QUARTO']||'';
   document.getElementById('hosp-cap').value=r?.['CAPACIDADE']||r?.['LOTAÇÃO']||r?.['LOTACAO']||'';
   document.getElementById('hosp-checkin').value=parseDateForInput(r?.['CHECK-IN']||'');
@@ -2844,7 +2858,10 @@ function abrirModalHospedagem(idx){
 }
 
 async function salvarHospedagem(){
-  const local=document.getElementById('hosp-local').value.trim();
+  const sel=document.getElementById('hosp-local-sel');
+  const local=sel.value==='__novo'||sel.value===''
+    ? document.getElementById('hosp-local').value.trim()
+    : sel.value;
   const comodo=document.getElementById('hosp-comodo').value.trim();
   if(!local||!comodo){showToast('Informe local e cômodo.','warn');return;}
   const ci=document.getElementById('hosp-checkin').value,co=document.getElementById('hosp-checkout').value;
@@ -3354,16 +3371,16 @@ function renderAlimentacao(){
   const tbody=document.getElementById('alim-body');
   const met=document.getElementById('alim-metricas');
 
-  // Popula select de fornecedor no modal de registro (inclui TIPO se disponível)
+  // Popula select de FORNECEDOR (nomes únicos)
   const selForn=document.getElementById('alim-forn');
-  if(selForn) selForn.innerHTML=`<option value="">— selecione —</option>`+
-    alimentacaoFornData.map(f=>{
-      const tipo=f['TIPO']||'';
-      const label=tipo?`${f['FORNECEDOR']||''} — ${tipo} (${formatBRL(parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']))})`:
-        `${f['FORNECEDOR']||''} (${formatBRL(parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']))})`;
-      const key=`${f['FORNECEDOR']||''}||${tipo}`;
-      return `<option value="${key}" data-val="${f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']||0}">${label}</option>`;
-    }).join('');
+  if(selForn){
+    const fornsUnicos=[...new Set(alimentacaoFornData.map(f=>(f['FORNECEDOR']||'').trim()).filter(Boolean))];
+    selForn.innerHTML=`<option value="">— selecione o fornecedor —</option>`+
+      fornsUnicos.map(f=>`<option value="${f}">${f}</option>`).join('');
+    // Reseta select de tipo
+    const selTipo=document.getElementById('alim-tipo');
+    if(selTipo){selTipo.innerHTML='<option value="">— selecione o fornecedor primeiro —</option>';selTipo.disabled=true;}
+  }
 
   // Popula select de setor com equipe
   const selSetor=document.getElementById('alim-setor');
@@ -3422,13 +3439,39 @@ function renderAlimentacao(){
 function autoPreencherVoucher(){
   const sel=document.getElementById('alim-forn');
   if(!sel)return;
-  const opt=sel.options[sel.selectedIndex];
+  const fornNome=sel.value;
+  // Carrega tipos deste fornecedor no select de tipo
+  const selTipo=document.getElementById('alim-tipo');
+  if(selTipo){
+    const tiposDeste=alimentacaoFornData.filter(f=>(f['FORNECEDOR']||'').trim()===fornNome);
+    if(tiposDeste.length){
+      selTipo.disabled=false;
+      selTipo.innerHTML=`<option value="">— selecione o tipo —</option>`+
+        tiposDeste.map(f=>{
+          const tipo=f['TIPO']||'Voucher';
+          const val=parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']);
+          return `<option value="${tipo}" data-val="${val}">${tipo} — ${formatBRL(val)}</option>`;
+        }).join('');
+    } else {
+      // Sem tipo definido — usa o fornecedor direto
+      selTipo.disabled=true;
+      selTipo.innerHTML='<option value="Padrão">Padrão</option>';
+      const f=alimentacaoFornData.find(x=>(x['FORNECEDOR']||'').trim()===fornNome);
+      if(f) document.getElementById('alim-valvoucher').value=parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER'])||'';
+      calcTotalAlim(); return;
+    }
+  }
+  // Reseta valor até escolher tipo
+  document.getElementById('alim-valvoucher').value='';
+  calcTotalAlim();
+}
+
+function autoPreencherVoucherTipo(){
+  const selTipo=document.getElementById('alim-tipo');
+  if(!selTipo)return;
+  const opt=selTipo.options[selTipo.selectedIndex];
   const val=opt?.dataset.val||'';
   document.getElementById('alim-valvoucher').value=parseBRL(val)||'';
-  // Extrai nome do fornecedor da key "FORNECEDOR||TIPO"
-  const parts=(sel.value||'').split('||');
-  if(parts[0]&&document.getElementById('alim-forn-nome'))
-    document.getElementById('alim-forn-nome').value=parts[0];
   calcTotalAlim();
 }
 
@@ -3505,8 +3548,10 @@ async function salvarAlimentacao(){
   if(!setor){showToast('Informe a equipe/setor.','warn');return;}
   const dia=document.getElementById('alim-dia').value;
   const selForn=document.getElementById('alim-forn');
-  const fornKey=selForn?.value||'';
-  const forn=fornKey.split('||')[0]||fornKey; // extract just fornecedor name from "NOME||TIPO" key
+  const forn=selForn?.value||'';
+  // Tipo do voucher
+  const selTipo=document.getElementById('alim-tipo');
+  const tipoVoucher=selTipo?.value||'';
   const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
   const q=parseInt(document.getElementById('alim-qtd').value)||0;
   const total=v&&q?v*q:parseFloat(document.getElementById('alim-total').value)||0;
@@ -3748,120 +3793,134 @@ function mapaCarregarLista(){
 let solDadosPreenchidos = null;
 
 /* ── BLOCO 9b: CREDENCIAMENTO ── */
-let credEquipesData = [];   // aba Presença Equipe (equipes cadastradas)
-let credPresencaData = [];  // registros de presença
+let credEquipesData = [];
+let credPresencaData = [];
 
 async function carregarCredenciamento() {
+  const wrap = document.getElementById('cred-grade-wrap');
+  if(wrap) wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
   try {
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
-    const rows = await sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Equipe!A:D');
-    if (!rows || rows.length < 2) { credEquipesData = []; credPresencaData = []; }
-    else {
-      const headers = rows[0].map(h=>(h||'').trim());
-      const all = rows.slice(1).filter(r=>r.some(c=>c!==undefined&&c!==''));
-      const objs = all.map(r=>{ const o={}; headers.forEach((h,i)=>o[h]=(r[i]||'').toString().trim()); return o; });
-      // Separa equipes (tem QUANTIDADE PREVISTA) de registros de presença (tem COMPARECEU)
-      credEquipesData = objs.filter(r=>r['QUANTIDADE PREVISTA']!==undefined&&r['COMPARECEU']===undefined||
-        (r['QUANTIDADE PREVISTA']&&!r['DATA']));
-      credPresencaData = objs.filter(r=>r['DATA']&&r['COMPARECEU']!==undefined);
-    }
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:C`];
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Diária!A:D`];
+    const [eqRows, presRows] = await Promise.all([
+      sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Equipe!A:C'),
+      sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Diária!A:D'),
+    ]);
+    credEquipesData = rowsToObjects(eqRows||[]);
+    credPresencaData = rowsToObjects(presRows||[]);
     renderCredenciamento();
   } catch(e){ console.error(e); showToast('Erro ao carregar credenciamento.','error'); }
 }
 
-async function carregarCredenciamentoFull() {
-  // Recarrega tanto equipes quanto presença
-  delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
-  const rows = await sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Equipe!A:D');
-  if(!rows||rows.length<2){ credEquipesData=[]; credPresencaData=[]; renderCredenciamento(); return; }
-  const headers=rows[0].map(h=>(h||'').trim());
-  const all=rows.slice(1).filter(r=>r.some(c=>c!==undefined&&c!==''))
-    .map(r=>{const o={_row:0};headers.forEach((h,i)=>o[h]=(r[i]||'').toString().trim());return o;});
-  // Row 0 = equipes (EMPRESA/SETOR + QUANTIDADE PREVISTA, sem DATA)
-  // Rows com DATA = registros de presença
-  credEquipesData = all.filter(r=>!r['DATA']&&(r['EMPRESA/SETOR']||r['EMPRESA']||''));
-  credPresencaData = all.filter(r=>r['DATA']);
-  renderCredenciamento();
+function getCredDias() {
+  // Dias do evento: localStorage por cidade, ou do eventoAtivo
+  const key = `sj2026_cred_dias_${prodCidadeAtiva}`;
+  const saved = localStorage.getItem(key);
+  if(saved) {
+    try { return JSON.parse(saved); } catch(_) {}
+  }
+  if(appData.eventoAtivo) {
+    const ini = parseDateForInput(appData.eventoAtivo['DATA INÍCIO']||appData.eventoAtivo['DATA INICIO']||'');
+    const fim = parseDateForInput(appData.eventoAtivo['DATA FIM']||'');
+    if(ini && fim) {
+      const dias = getDiasBetween(ini, fim);
+      if(dias.length) return dias;
+    }
+  }
+  return [];
 }
 
 function renderCredenciamento() {
   const wrap = document.getElementById('cred-grade-wrap');
   const met  = document.getElementById('cred-metricas');
   const podeEditar = currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+  const dias = getCredDias();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Configuração de datas
+  const key = `sj2026_cred_dias_${prodCidadeAtiva}`;
+  const saved = localStorage.getItem(key);
+  let iniVal='', fimVal='';
+  if(saved){ try{ const d=JSON.parse(saved);iniVal=d[0]||'';fimVal=d[d.length-1]||''; }catch(_){} }
+
+  const configDatas=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:var(--surface2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Dias do evento</span>
+    <input class="form-input" type="date" id="cred-data-ini" value="${iniVal}" style="width:140px;min-height:32px;font-size:12px;padding:4px 8px">
+    <span style="color:var(--text3);font-size:12px">→</span>
+    <input class="form-input" type="date" id="cred-data-fim" value="${fimVal}" style="width:140px;min-height:32px;font-size:12px;padding:4px 8px">
+    <button class="btn btn-ghost btn-sm" onclick="salvarCredDias()">Definir</button>
+    ${dias.length?`<span style="font-family:var(--font-mono);font-size:10px;color:var(--green)">${dias.length} dia(s) configurado(s)</span>`:`<span style="font-family:var(--font-mono);font-size:10px;color:var(--amber)">Nenhum dia configurado</span>`}
+  </div>`;
 
   if(!credEquipesData.length){
     met.innerHTML='';
-    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Nenhuma equipe cadastrada</div><div class="empty-sub">Clique em "+ Equipe" para começar</div></div>`;
+    wrap.innerHTML=configDatas+`<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Nenhuma equipe cadastrada</div><div class="empty-sub">Clique em "+ Equipe" para adicionar</div></div>`;
     return;
   }
 
-  // Dias do evento — pega de appData.eventoAtivo ou usa datas de presença
-  const presencaDias=[...new Set(credPresencaData.map(r=>r['DATA']).filter(Boolean))].sort();
-  let diasEvento=presencaDias;
-  if(!diasEvento.length&&appData.eventoAtivo){
-    const ini=parseDateForInput(appData.eventoAtivo['DATA INÍCIO']||appData.eventoAtivo['DATA INICIO']||'');
-    const fim=parseDateForInput(appData.eventoAtivo['DATA FIM']||'');
-    if(ini&&fim) diasEvento=getDiasBetween(ini,fim);
-  }
-  if(!diasEvento.length){
-    // Fallback: 3 dias a partir de hoje
-    for(let i=0;i<3;i++){
-      const d=new Date(); d.setDate(d.getDate()+i);
-      diasEvento.push(d.toISOString().split('T')[0]);
-    }
-  }
+  // Métricas
+  const prevTotal=credEquipesData.reduce((s,e)=>s+(parseInt(e['QUANTIDADE PREVISTA']||e['QTDE PREVISTA'])||0),0);
+  const hojeReg=credPresencaData.filter(r=>r['DATA']===hoje);
+  const hojeComp=hojeReg.reduce((s,r)=>s+(parseInt(r['COMPARECEU'])||0),0);
+  const equipesFaltando=credEquipesData.filter(e=>{
+    const nm=e['EMPRESA/SETOR']||e['EMPRESA']||'';
+    return !hojeReg.find(r=>(r['EMPRESA/SETOR']||r['EMPRESA']||'')==nm);
+  }).length;
 
-  // Métricas: total previsto vs compareceu hoje
-  const hoje=new Date().toISOString().split('T')[0];
-  const previsto=credEquipesData.reduce((s,e)=>s+(parseInt(e['QUANTIDADE PREVISTA']||e['QTDE PREVISTA'])||0),0);
-  const hojeComparec=credPresencaData.filter(r=>r['DATA']===hoje)
-    .reduce((s,r)=>s+(parseInt(r['COMPARECEU'])||0),0);
   met.innerHTML=`
-    <div class="metric-card"><div class="metric-label">Total previsto</div><div class="metric-value accent">${previsto}</div></div>
-    <div class="metric-card"><div class="metric-label">Hoje compareceu</div><div class="metric-value ${hojeComparec<previsto?'amber':'green'}">${hojeComparec||'—'}</div></div>
-    <div class="metric-card"><div class="metric-label">Equipes cadastradas</div><div class="metric-value blue">${credEquipesData.length}</div></div>`;
+    <div class="metric-card"><div class="metric-label">Total previsto</div><div class="metric-value accent">${prevTotal}</div></div>
+    <div class="metric-card"><div class="metric-label">Hoje compareceu</div><div class="metric-value ${hojeComp<prevTotal&&hojeComp>0?'amber':hojeComp>=prevTotal?'green':''}">${hojeComp||'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Equipes sem registro hoje</div><div class="metric-value ${equipesFaltando?'amber':''}">${equipesFaltando}</div></div>`;
 
-  // Grade visual: linhas=equipes, colunas=dias
+  if(!dias.length){
+    wrap.innerHTML=configDatas+`<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Configure as datas do evento acima para visualizar a grade.</span></div>`;
+    return;
+  }
+
+  // Grade
   const dFmt=d=>{const p=d.split('-');return`${p[2]}/${p[1]}`;};
-  let html=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px;min-width:500px">
+  let html=configDatas+`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px">
     <thead style="position:sticky;top:0;z-index:2">
       <tr>
-        <th style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);min-width:160px;text-align:left;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3)">Equipe</th>
-        <th style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);text-align:center">Previsto</th>
-        ${diasEvento.map(d=>{
+        <th style="padding:8px 14px;background:var(--surface2);border:1px solid var(--border);min-width:180px;text-align:left;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3)">Equipe</th>
+        <th style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);text-align:center">Previsto</th>
+        ${dias.map(d=>{
           const isHoje=d===hoje;
-          return `<th style="padding:8px 6px;background:${isHoje?'var(--accent-dim)':'var(--surface2)'};border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;color:${isHoje?'var(--accent)':'var(--text3)'};text-align:center;min-width:70px">${dFmt(d)}</th>`;
+          return `<th style="padding:8px 6px;background:${isHoje?'var(--accent-dim)':'var(--surface2)'};border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;color:${isHoje?'var(--accent)':'var(--text3)'};text-align:center;min-width:72px;white-space:nowrap">${dFmt(d)}${isHoje?'<br><span style="font-size:8px">hoje</span>':''}</th>`;
         }).join('')}
-        <th style="padding:8px;background:var(--surface2);border:1px solid var(--border);width:36px"></th>
+        ${podeEditar?`<th style="padding:8px;background:var(--surface2);border:1px solid var(--border);width:36px"></th>`:''}
       </tr>
     </thead>
     <tbody>`;
 
   credEquipesData.forEach((equipe,ei)=>{
-    const nomeEq=equipe['EMPRESA/SETOR']||equipe['EMPRESA']||`Equipe ${ei+1}`;
-    const prevQtd=parseInt(equipe['QUANTIDADE PREVISTA']||equipe['QTDE PREVISTA'])||0;
-    const editBtn=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon" onclick="abrirModalEquipeQtd(${ei})" title="Editar"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+    const nm=equipe['EMPRESA/SETOR']||equipe['EMPRESA']||`Equipe ${ei+1}`;
+    const prev=parseInt(equipe['QUANTIDADE PREVISTA']||equipe['QTDE PREVISTA'])||0;
+    const editBtn=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon" onclick="abrirModalEquipeQtd(${ei})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
 
-    const cells=diasEvento.map(d=>{
-      const regDia=credPresencaData.find(r=>r['DATA']===d&&(r['EMPRESA/SETOR']||r['EMPRESA']||'')==nomeEq);
-      const comp=regDia?parseInt(regDia['COMPARECEU'])||0:null;
+    const cells=dias.map(d=>{
+      const reg=credPresencaData.find(r=>(r['EMPRESA/SETOR']||r['EMPRESA']||'')==nm&&r['DATA']==d);
+      const comp=reg?parseInt(reg['COMPARECEU'])||0:null;
       const isHoje=d===hoje;
-      let bgColor='transparent', textColor='var(--text3)', cellContent='—';
+      let bg='transparent',clr='var(--text3)',txt='—';
       if(comp!==null){
-        if(comp>=prevQtd){bgColor='var(--green-dim)';textColor='var(--green)';}
-        else if(comp>0){bgColor='var(--amber-dim)';textColor='var(--amber)';}
-        else{bgColor='var(--red-dim)';textColor='var(--red)';}
-        cellContent=`<strong>${comp}</strong><span style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">/`+prevQtd+'</span>';
+        if(comp>=prev){bg='var(--green-dim)';clr='var(--green)';}
+        else if(comp>0){bg='var(--amber-dim)';clr='var(--amber)';}
+        else{bg='var(--red-dim)';clr='var(--red)';}
+        txt=`<strong style="color:${clr}">${comp}</strong><span style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">/${prev}</span>`;
       }
-      const clickFn=podeEditar?`onclick="abrirModalPresenca('${nomeEq.replace(/'/g,"\'")}','${d}',${comp??''},${prevQtd})"`:'' ;
-      return `<td style="padding:6px;border:1px solid var(--border2);background:${isHoje&&comp===null?'rgba(212,240,74,0.03)':bgColor};text-align:center;cursor:${podeEditar?'pointer':'default'}" ${clickFn}>${cellContent}</td>`;
+      const faltaReg=comp===null&&isHoje?`<span style="font-size:8px;color:var(--amber);font-family:var(--font-mono);display:block">pendente</span>`:'';
+      const clickAttr=podeEditar?`onclick="abrirModalPresenca('${nm.replace(/'/g,"\\'")}','${d}',${comp??''},${prev})" style="cursor:pointer"`:'';
+      return `<td ${clickAttr} style="padding:6px 4px;border:1px solid var(--border2);background:${isHoje&&comp===null?'rgba(212,240,74,0.04)':bg};text-align:center">${txt}${faltaReg}</td>`;
     }).join('');
 
     html+=`<tr>
-      <td style="padding:8px 12px;border:1px solid var(--border2);font-weight:600">${nomeEq}<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${equipe['OBS']||''}</div></td>
-      <td style="padding:8px 12px;border:1px solid var(--border2);text-align:center;font-family:var(--font-mono);color:var(--text2)">${prevQtd}</td>
+      <td style="padding:8px 14px;border:1px solid var(--border2);font-weight:600">${nm}
+        ${equipe['OBS']?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${equipe['OBS']}</div>`:''}
+      </td>
+      <td style="padding:8px;border:1px solid var(--border2);text-align:center;font-family:var(--font-mono);color:var(--text2)">${prev}</td>
       ${cells}
-      <td style="padding:4px;border:1px solid var(--border2)">${editBtn}</td>
+      ${podeEditar?`<td style="padding:4px;border:1px solid var(--border2)">${editBtn}</td>`:''}
     </tr>`;
   });
 
@@ -3869,7 +3928,17 @@ function renderCredenciamento() {
   wrap.innerHTML=html;
 }
 
-// Modal para cadastrar/editar equipe
+function salvarCredDias(){
+  const ini=document.getElementById('cred-data-ini')?.value;
+  const fim=document.getElementById('cred-data-fim')?.value;
+  if(!ini||!fim){showToast('Informe início e fim.','warn');return;}
+  const dias=getDiasBetween(ini,fim);
+  if(!dias.length){showToast('Datas inválidas.','warn');return;}
+  localStorage.setItem(`sj2026_cred_dias_${prodCidadeAtiva}`,JSON.stringify(dias));
+  showToast(`${dias.length} dia(s) configurado(s).`,'success');
+  renderCredenciamento();
+}
+
 function abrirModalEquipeQtd(idx){
   const e=idx!==undefined?credEquipesData[idx]:null;
   document.getElementById('cred-eq-idx').value=idx!==undefined?idx:'';
@@ -3884,34 +3953,31 @@ async function salvarEquipeQtd(){
   const prev=document.getElementById('cred-eq-previsto').value;
   if(!nome||!prev){showToast('Informe nome e quantidade prevista.','warn');return;}
   const obs=document.getElementById('cred-eq-obs').value.trim();
-  // EMPRESA/SETOR | QUANTIDADE PREVISTA | OBS | (DATA vazio = é uma equipe, não presença)
-  const row=[[nome,prev,obs,'']];
+  // EMPRESA/SETOR | QUANTIDADE PREVISTA | OBS
+  const row=[[nome,prev,obs]];
   try{
     const i=document.getElementById('cred-eq-idx').value;
     if(i===''){
-      await sheetsAppend(SHEET_IDS[prodCidadeAtiva],'Presença Equipe!A:D',row);
+      await sheetsAppend(SHEET_IDS[prodCidadeAtiva],'Presença Equipe!A:C',row);
       showToast('Equipe adicionada!','success');
     } else {
-      // Encontra linha real da equipe no sheet
-      const sheetRow=credEquipesData[parseInt(i)]?._row||(parseInt(i)+2);
-      await sheetsWrite(SHEET_IDS[prodCidadeAtiva],`Presença Equipe!A${sheetRow}:D${sheetRow}`,row);
+      await sheetsWrite(SHEET_IDS[prodCidadeAtiva],`Presença Equipe!A${parseInt(i)+2}:C${parseInt(i)+2}`,row);
       showToast('Equipe atualizada!','success');
     }
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:C`];
     fecharModal('modal-cred-equipe');
     await carregarCredenciamento();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
-// Modal para registrar presença de um dia
-function abrirModalPresenca(equipe, data, compAtual, previsto){
+function abrirModalPresenca(equipe,data,compAtual,previsto){
   document.getElementById('cred-pres-equipe').value=equipe;
   document.getElementById('cred-pres-data').value=data;
   document.getElementById('cred-pres-prev').textContent=previsto;
-  document.getElementById('cred-pres-comp').value=compAtual||'';
+  document.getElementById('cred-pres-comp').value=compAtual!==''&&compAtual!==null?compAtual:'';
   document.getElementById('cred-pres-obs').value='';
-  const dFmt=d=>{const p=d.split('-');return`${p[2]}/${p[1]}`;};
-  document.getElementById('cred-pres-titulo').textContent=`${equipe} — ${dFmt(data)}`;
+  const p=data.split('-');
+  document.getElementById('cred-pres-titulo').textContent=`${equipe} — ${p[2]}/${p[1]}`;
   abrirModal('modal-cred-presenca');
 }
 
@@ -3920,20 +3986,23 @@ async function salvarPresenca(){
   const data=document.getElementById('cred-pres-data').value;
   const comp=document.getElementById('cred-pres-comp').value;
   const obs=document.getElementById('cred-pres-obs').value.trim();
-  if(!comp&&comp!=='0'){showToast('Informe a quantidade.','warn');return;}
-  // Verifica se já existe registro para esta equipe+data → atualiza; senão → append
-  const existente=credPresencaData.find(r=>
-    (r['EMPRESA/SETOR']||r['EMPRESA']||'')==equipe&&r['DATA']==data);
-  // EMPRESA/SETOR | QUANTIDADE PREVISTA | OBS | DATA → mas presença usa: EMPRESA/SETOR | DATA | COMPARECEU | OBS
-  // Ajuste para estrutura da aba: A=EMPRESA/SETOR, B=DATA, C=COMPARECEU, D=OBS
+  if(comp===''||comp===null){showToast('Informe a quantidade.','warn');return;}
+  // EMPRESA/SETOR | DATA | COMPARECEU | OBS
   const row=[[equipe,data,comp,obs]];
   try{
-    if(existente&&existente._row){
-      await sheetsWrite(SHEET_IDS[prodCidadeAtiva],`Presença Equipe!A${existente._row}:D${existente._row}`,row);
+    // Verifica se já existe linha para esta equipe+data → sobrescreve
+    const sheetId=SHEET_IDS[prodCidadeAtiva];
+    delete sheetsCache[`${sheetId}::Presença Diária!A:D`];
+    const existRows=await sheetsRead(sheetId,'Presença Diária!A:D');
+    const existObjs=rowsToObjects(existRows||[]);
+    const existIdx=existObjs.findIndex(r=>
+      (r['EMPRESA/SETOR']||r['EMPRESA']||'')==equipe&&r['DATA']==data);
+    if(existIdx>=0){
+      await sheetsWrite(sheetId,`Presença Diária!A${existIdx+2}:D${existIdx+2}`,row);
     } else {
-      await sheetsAppend(SHEET_IDS[prodCidadeAtiva],'Presença Equipe!A:D',row);
+      await sheetsAppend(sheetId,'Presença Diária!A:D',row);
     }
-    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+    delete sheetsCache[`${sheetId}::Presença Diária!A:D`];
     showToast('Presença registrada!','success');
     fecharModal('modal-cred-presenca');
     await carregarCredenciamento();
