@@ -398,11 +398,11 @@ tbody tr:hover .btn-edit-row{opacity:1}
           <div id="prod-cat-filtro" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;overflow-x:auto;padding-bottom:4px"></div>
           <!-- Resumo da planilha -->
           <div id="prod-resumo" class="metric-grid" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"></div>
-          <div class="table-wrap" style="overflow-x:auto;max-width:100%">
+          <div class="table-wrap" style="overflow-x:auto;max-width:100%;max-height:calc(100vh - 320px);overflow-y:auto">
             <table style="min-width:900px">
-              <thead>
+              <thead style="position:sticky;top:0;z-index:3">
                 <tr>
-                  <th style="min-width:160px;position:sticky;left:0;background:var(--surface2);z-index:2">Item</th>
+                  <th style="min-width:180px;position:sticky;left:0;top:0;background:var(--surface2);z-index:4">Item</th>
                   <th style="min-width:50px">Qtd</th><th style="min-width:50px">Dias</th><th style="min-width:90px">Data início</th>
                   <th style="min-width:90px">Valor unit</th><th style="min-width:90px">Custo 2025</th><th style="min-width:90px">Total 2026</th>
                   <th style="min-width:80px">Diferença</th><th style="min-width:90px">Valor pago</th><th style="min-width:80px">Em aberto</th>
@@ -543,6 +543,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
             </div>
           </div>
           <div class="metric-grid" id="alim-metricas" style="margin-bottom:12px"></div>
+          <div class="alim-forn-lista"></div>
           <div id="alim-filtros"></div>
           <div class="table-wrap">
             <table><thead><tr>
@@ -606,6 +607,16 @@ tbody tr:hover .btn-edit-row{opacity:1}
             <span id="mapa-edit-hint" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);display:none">Clique no mapa para adicionar pino</span>
           </div>
         </div>
+      </div>
+
+      <!-- CREDENCIAMENTO -->
+      <div id="prod-sub-credenciamento" class="prod-sub">
+        <div class="section-header">
+          <span class="section-title">Credenciamento</span>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalEquipeQtd()">+ Equipe</button>
+        </div>
+        <div class="metric-grid" id="cred-metricas" style="margin-bottom:12px"></div>
+        <div id="cred-grade-wrap"></div>
       </div>
 
       <!-- MODAL EDIÇÃO -->
@@ -901,6 +912,43 @@ tbody tr:hover .btn-edit-row{opacity:1}
           </div>
           <div id="apr-historico-wrap">
             <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Carregando…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL CREDENCIAMENTO — EQUIPE -->
+      <div class="modal-overlay" id="modal-cred-equipe">
+        <div class="modal" style="max-width:400px">
+          <div class="modal-header"><span class="modal-title">Cadastrar equipe</span><button class="modal-close" onclick="fecharModal('modal-cred-equipe')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="cred-eq-idx">
+            <div class="form-group"><label class="form-label">Empresa / Setor</label><input class="form-input" id="cred-eq-nome" placeholder="Ex: Segurança — Empresa X"></div>
+            <div class="form-group"><label class="form-label">Quantidade prevista</label><input class="form-input" id="cred-eq-previsto" type="number" min="1" placeholder="Ex: 60"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="cred-eq-obs" placeholder="Observações…"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-cred-equipe')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarEquipeQtd()">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL CREDENCIAMENTO — PRESENÇA -->
+      <div class="modal-overlay" id="modal-cred-presenca">
+        <div class="modal" style="max-width:380px">
+          <div class="modal-header"><span class="modal-title" id="cred-pres-titulo">Registrar presença</span><button class="modal-close" onclick="fecharModal('modal-cred-presenca')">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="cred-pres-equipe">
+            <input type="hidden" id="cred-pres-data">
+            <div style="background:var(--surface2);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:13px;color:var(--text2)">
+              Previsto: <strong id="cred-pres-prev" style="color:var(--text)"></strong> pessoas
+            </div>
+            <div class="form-group"><label class="form-label">Compareceu</label><input class="form-input" id="cred-pres-comp" type="number" min="0" placeholder="Quantidade que compareceu"></div>
+            <div class="form-group"><label class="form-label">OBS</label><input class="form-input" id="cred-pres-obs" placeholder="Observações…"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+              <button class="btn btn-ghost" onclick="fecharModal('modal-cred-presenca')">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarPresenca()">Registrar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1590,6 +1638,7 @@ const PROD_SUB_ITEMS=[
   {id:'prod-transporte',label:'Transporte'},{id:'prod-pulseiras',label:'Pulseiras'},
   {id:'prod-radios',label:'Rádios'},{id:'prod-alimentacao',label:'Alimentação'},
   {id:'prod-sinalizacoes',label:'Sinalizações'},{id:'prod-mapa',label:'Mapa'},
+  {id:'prod-credenciamento',label:'Credenciamento'},
 ];
 
 const PROD_SUB_IDS={
@@ -1598,6 +1647,7 @@ const PROD_SUB_IDS={
   'prod-transporte':'prod-sub-transporte','prod-pulseiras':'prod-sub-pulseiras',
   'prod-radios':'prod-sub-radios','prod-alimentacao':'prod-sub-alimentacao',
   'prod-sinalizacoes':'prod-sub-sinalizacoes','prod-mapa':'prod-sub-mapa',
+  'prod-credenciamento':'prod-sub-credenciamento',
 };
 
 const PAGE_TITLES={
@@ -1786,6 +1836,17 @@ function setupCityFilter(){
         if(despSolicitacoes.length>0)renderDespesas();
         if(receitasData.length>0)renderReceitas();
         if(bileiteriaData.length>0)renderBilheteria();
+      }
+      // Mestre: atualiza prodCidadeAtiva e recarrega sub-aba ativa de Produção
+      if(currentUser.perfil==='mestre'&&currentCity!=='todas') {
+        const nmMap={irece:'irece',serrinha:'serrinha',jequie:'jequie'};
+        const novaCidade=nmMap[currentCity]||currentCity;
+        if(novaCidade!==prodCidadeAtiva) {
+          prodCidadeAtiva=novaCidade;
+          if(currentPage&&currentPage.startsWith('prod-')) {
+            navegarProdSub(currentPage);
+          }
+        }
       }
       // Se mapa estiver visível (qualquer cidade), recarrega imagem da nova cidade
       if(currentPage==='prod-mapa') {
@@ -2200,6 +2261,7 @@ function navegarProdSub(subId){
   if(subId==='prod-radios')carregarRadios();
   if(subId==='prod-alimentacao')carregarAlimentacao();
   if(subId==='prod-sinalizacoes')carregarSinalizacoes();
+  if(subId==='prod-credenciamento') carregarCredenciamento();
   if(subId==='prod-mapa'){
     Promise.all([carregarEquipe(),carregarSinalizacoes()]).then(()=>{
       mapaCarregarLista();
@@ -2396,7 +2458,18 @@ async function carregarEquipe() {
   if (tbody) tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Carregando…</td></tr>`;
   try {
     delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Equipe!A:P`];
-    equipeData = await lerAbaPPP(prodCidadeAtiva, 'Equipe', 'A:P');
+    const sheetId = SHEET_IDS[prodCidadeAtiva];
+    const rows = await sheetsRead(sheetId, 'Equipe!A:P');
+    if (!rows || rows.length < 2) { equipeData = []; renderEquipe(); return; }
+    const headers = rows[0].map(h => (h||'').trim());
+    // Mantém _sheetRow para saber a linha real na planilha (base 1, +1 por cabeçalho)
+    equipeData = [];
+    rows.slice(1).forEach((row, i) => {
+      if (!row.some(c => c !== undefined && c !== '')) return;
+      const obj = { _sheetRow: i + 2 }; // linha real na planilha
+      headers.forEach((h, j) => { obj[h] = (row[j]||'').toString().trim(); });
+      equipeData.push(obj);
+    });
     renderEquipe();
   } catch(e) { console.error(e); showToast('Erro ao carregar equipe.','error'); }
 }
@@ -2523,12 +2596,12 @@ async function salvarMembro() {
   try {
     const idxRaw=document.getElementById('membro-row-idx').value;
     if(idxRaw===''){await appendAbaPPP(prodCidadeAtiva,'Equipe','A:P',row);showToast('Membro adicionado!','success');}
-    else{await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${parseInt(idxRaw)+2}:P${parseInt(idxRaw)+2}`,row);showToast('Membro atualizado!','success');}
-    // Sincroniza com aba Produção se tem valor definido
-    if(total > 0) {
-      const setor = document.getElementById('membro-setor').value.trim();
-      const itemProd = setor ? `${setor} — ${nome}` : nome;
-      await sincProd(prodCidadeAtiva, 'EQUIPE', itemProd, 1, diarias||'', valdia||'', total, 'STAFF');
+    else{
+      // Usa _sheetRow para gravar na linha correta (evita erro com linhas vazias)
+      const membroAtual = equipeData[parseInt(idxRaw)];
+      const sheetRow = membroAtual?._sheetRow || (parseInt(idxRaw)+2);
+      await gravarAbaPPP(prodCidadeAtiva,'Equipe',`A${sheetRow}:P${sheetRow}`,row);
+      showToast('Membro atualizado!','success');
     }
     fecharModal('modal-membro');await carregarEquipe();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
@@ -2663,15 +2736,38 @@ function renderHospedagem() {
         }
         gradeHtml+='</tbody></table></div>';
 
-        // Lista de alocações com botão remover
+        // Lista de pessoas únicas alocadas (com equipe) + botão remover (uma vez por pessoa)
         const alocNeste=hospAlocData.filter(a=>(a['LOCAL']||'')===(r['LOCAL']||'')&&(a['CÔMODO']||a['COMODO']||'')===(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||''));
-        if(alocNeste.length&&podeEditar){
-          gradeHtml+=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">`;
-          alocNeste.forEach((a,ai)=>{
-            const realIdx=hospAlocData.indexOf(a);
-            gradeHtml+=`<span style="font-size:11px;background:var(--blue-dim);color:var(--blue);padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px">${a['PESSOA']||''} <span style="color:var(--red);cursor:pointer;font-weight:700" onclick="removerAlocHosp(${realIdx})">×</span></span>`;
+        if(alocNeste.length){
+          // Agrupa por pessoa — mostra cada nome só uma vez
+          const pessoasUnicas=[...new Set(alocNeste.map(a=>a['PESSOA']||'').filter(Boolean))];
+          gradeHtml+=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--border2)">`;
+          pessoasUnicas.forEach(pessoa=>{
+            // Encontra equipe/setor da pessoa na aba Equipe
+            const memEquipe=equipeData.find(e=>(e['NOME']||'').trim()===pessoa.trim());
+            const setor=memEquipe?.['EQUIPE/SETOR']||'';
+            // Índice da primeira alocação desta pessoa (para remover)
+            const primeiraAloc=alocNeste.find(a=>a['PESSOA']===pessoa);
+            const realIdx=primeiraAloc?hospAlocData.indexOf(primeiraAloc):-1;
+            const removeBtn=podeEditar&&realIdx>=0?`<span style="color:var(--red);cursor:pointer;font-weight:700;margin-left:4px" onclick="removerAlocHospPessoa('${pessoa.replace(/'/g,"\'")}','${(r['LOCAL']||'').replace(/'/g,"\'")}','${(r['CÔMODO/QUARTO']||r['COMODO/QUARTO']||'').replace(/'/g,"\'")}')">×</span>`:'';
+            gradeHtml+=`<span style="font-size:11px;background:var(--blue-dim);color:var(--blue);padding:2px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:4px">
+              <strong>${pessoa}</strong>${setor?`<span style="color:var(--text3);font-size:9px;font-family:var(--font-mono)">${setor}</span>`:''}
+              ${removeBtn}
+            </span>`;
           });
           gradeHtml+='</div>';
+
+          // Alerta: dias pendentes se período da pessoa > disponibilidade do cômodo
+          pessoasUnicas.forEach(pessoa=>{
+            const mem=equipeData.find(e=>(e['NOME']||'').trim()===pessoa.trim());
+            if(!mem)return;
+            const diasPessoa=getDiasBetween(mem['DATA IDA'],mem['DATA VOLTA']);
+            const diasAloc=alocNeste.filter(a=>a['PESSOA']===pessoa).map(a=>a['DATA']||'');
+            const pendentes=diasPessoa.filter(d=>!diasAloc.includes(d));
+            if(pendentes.length>0){
+              gradeHtml+=`<div style="font-size:10px;color:var(--amber);font-family:var(--font-mono);margin-top:4px">⚠ ${pessoa}: ${pendentes.length} dia(s) sem hospedagem (${pendentes.slice(0,3).map(d=>{const p=d.split('-');return p[2]+'/'+p[1];}).join(', ')}${pendentes.length>3?'…':''})</div>`;
+            }
+          });
         }
       } else {
         // Sem datas definidas — alocação simples
@@ -2701,6 +2797,22 @@ async function removerAlocHosp(realIdx){
   try{
     await gravarAbaPPP(prodCidadeAtiva,'Alocações Hosp',`A${linha}:E${linha}`,[['','','','','']]);
     showToast('Alocação removida.','warn');await carregarHospedagem();
+  }catch(e){console.error(e);showToast('Erro ao remover.','error');}
+}
+
+async function removerAlocHospPessoa(pessoa, local, comodo){
+  if(!confirm(`Remover todas as alocações de ${pessoa} neste cômodo?`))return;
+  try{
+    // Remove todas as linhas desta pessoa neste cômodo
+    const linhasParaRemover=hospAlocData
+      .map((a,i)=>({a,i}))
+      .filter(({a})=>(a['PESSOA']||'')==pessoa&&(a['LOCAL']||'')==local&&
+        ((a['CÔMODO']||a['COMODO']||'')==comodo));
+    for(const {a,i} of linhasParaRemover){
+      const linha=i+2;
+      await gravarAbaPPP(prodCidadeAtiva,'Alocações Hosp',`A${linha}:E${linha}`,[['','','','','']]);
+    }
+    showToast(`Alocações de ${pessoa} removidas.`,'warn');await carregarHospedagem();
   }catch(e){console.error(e);showToast('Erro ao remover.','error');}
 }
 
@@ -2743,11 +2855,6 @@ async function salvarHospedagem(){
     const i=document.getElementById('hosp-row-idx').value;
     if(i===''){await appendAbaPPP(prodCidadeAtiva,'Hospedagem','A:I',row);showToast('Cômodo adicionado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Hospedagem',`A${parseInt(i)+2}:I${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
-    // Sincroniza total do local com Produção
-    // Soma todos os cômodos do mesmo local (incluindo o recém-salvo)
-    const totalLocal = await calcTotalHospLocal(prodCidadeAtiva, local);
-    const valDiaria = parseFloat(document.getElementById('hosp-valdiaria').value)||0;
-    await sincProd(prodCidadeAtiva, 'HOSPEDAGEM', local, 1, '', valDiaria||'', totalLocal, 'ACOMODAÇÃO');
     fecharModal('modal-hospedagem');await carregarHospedagem();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
@@ -3247,9 +3354,16 @@ function renderAlimentacao(){
   const tbody=document.getElementById('alim-body');
   const met=document.getElementById('alim-metricas');
 
-  // Popula select de fornecedor no modal de registro
+  // Popula select de fornecedor no modal de registro (inclui TIPO se disponível)
   const selForn=document.getElementById('alim-forn');
-  if(selForn) selForn.innerHTML=`<option value="">— selecione —</option>`+alimentacaoFornData.map(f=>`<option value="${f['FORNECEDOR']||''}" data-val="${f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']||0}">${f['FORNECEDOR']||''} (R$ ${parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']).toFixed(2)})</option>`).join('');
+  if(selForn) selForn.innerHTML=`<option value="">— selecione —</option>`+
+    alimentacaoFornData.map(f=>{
+      const tipo=f['TIPO']||'';
+      const label=tipo?`${f['FORNECEDOR']||''} — ${tipo} (${formatBRL(parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']))})`:
+        `${f['FORNECEDOR']||''} (${formatBRL(parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']))})`;
+      const key=`${f['FORNECEDOR']||''}||${tipo}`;
+      return `<option value="${key}" data-val="${f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']||0}">${label}</option>`;
+    }).join('');
 
   // Popula select de setor com equipe
   const selSetor=document.getElementById('alim-setor');
@@ -3257,6 +3371,25 @@ function renderAlimentacao(){
     const setores=[...new Set(equipeData.map(r=>r['EQUIPE/SETOR']).filter(Boolean))];
     selSetor.innerHTML=`<option value="">— selecione —</option>`+setores.map(s=>`<option value="${s}">${s}</option>`).join('');
   }
+
+  // Lista de fornecedores cadastrados com editar
+  const fornListHtml = alimentacaoFornData.length
+    ? `<div style="margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)">
+        <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px">Fornecedores cadastrados</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${alimentacaoFornData.map((f,i)=>{
+            const tipo=f['TIPO']||'';
+            const label=tipo?`${f['FORNECEDOR']||''} — ${tipo}`:f['FORNECEDOR']||'';
+            return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--surface3);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">
+              ${label} <span style="color:var(--green);font-family:var(--font-mono);font-size:10px">${formatBRL(parseBRL(f['VALOR VOUCHER (R$)']||f['VALOR VOUCHER']))}</span>
+              <span style="cursor:pointer;color:var(--text3);font-size:11px" onclick="abrirModalFornAlim(${i})">✏️</span>
+            </span>`;
+          }).join('')}
+        </div>
+      </div>`
+    : '';
+  const fornListEl = document.querySelector('#prod-sub-alimentacao .alim-forn-lista');
+  if(fornListEl) fornListEl.innerHTML = fornListHtml;
 
   // Filtros
   const dias=[...new Set(alimentacaoData.map(r=>r['DIA']).filter(Boolean))];
@@ -3274,10 +3407,14 @@ function renderAlimentacao(){
   // Métricas
   const totalVouchers=alimentacaoData.reduce((s,r)=>s+(parseInt(r['QNT VOUCHERS']||r['QTD VOUCHERS'])||0),0);
   const totalVal=alimentacaoData.reduce((s,r)=>s+parseBRL(r['TOTAL (R$)']||r['TOTAL']),0);
+  // Cards de totais
+  const totalPorForn={};
+  alimentacaoData.forEach(r=>{const f=r['FORNECEDOR']||'';if(f)totalPorForn[f]=(totalPorForn[f]||0)+parseBRL(r['TOTAL (R$)']||r['TOTAL']);});
+  const fornCards=Object.entries(totalPorForn).map(([f,v])=>`<div class="metric-card"><div class="metric-label" style="font-size:9px">${f}</div><div class="metric-value blue" style="font-size:14px">${formatBRL(v)}</div></div>`).join('');
   met.innerHTML=`
     <div class="metric-card"><div class="metric-label">Total vouchers</div><div class="metric-value accent">${totalVouchers}</div></div>
     <div class="metric-card"><div class="metric-label">Valor total</div><div class="metric-value green">${formatBRL(totalVal)}</div></div>
-    <div class="metric-card"><div class="metric-label">Fornecedores</div><div class="metric-value blue">${alimentacaoFornData.length}</div></div>`;
+    ${fornCards}`;
 
   renderAlimTabela();
 }
@@ -3288,6 +3425,10 @@ function autoPreencherVoucher(){
   const opt=sel.options[sel.selectedIndex];
   const val=opt?.dataset.val||'';
   document.getElementById('alim-valvoucher').value=parseBRL(val)||'';
+  // Extrai nome do fornecedor da key "FORNECEDOR||TIPO"
+  const parts=(sel.value||'').split('||');
+  if(parts[0]&&document.getElementById('alim-forn-nome'))
+    document.getElementById('alim-forn-nome').value=parts[0];
   calcTotalAlim();
 }
 
@@ -3313,20 +3454,30 @@ function renderAlimTabela(){
   }).join('');
 }
 
-function abrirModalFornAlim(){
-  document.getElementById('forn-alim-nome').value='';
-  document.getElementById('forn-alim-val').value='';
-  document.getElementById('forn-alim-obs').value='';
+let fornAlimEditIdx = null;
+function abrirModalFornAlim(idx){
+  fornAlimEditIdx = idx!==undefined ? idx : null;
+  const f = idx!==undefined ? alimentacaoFornData[idx] : null;
+  document.getElementById('forn-alim-nome').value=f?.['FORNECEDOR']||'';
+  document.getElementById('forn-alim-val').value=parseBRL(f?.['VALOR VOUCHER (R$)']||f?.['VALOR VOUCHER'])||'';
+  document.getElementById('forn-alim-obs').value=f?.['OBS']||'';
   abrirModal('modal-forn-alim');
 }
 async function salvarFornAlim(){
   const nome=document.getElementById('forn-alim-nome').value.trim();
   const val=parseFloat(document.getElementById('forn-alim-val').value)||0;
   if(!nome||!val){showToast('Informe nome e valor do voucher.','warn');return;}
-  // FORNECEDOR|VALOR VOUCHER (R$)|OBS
+  // FORNECEDOR|TIPO|VALOR VOUCHER (R$)|OBS
+  const row=[[nome,'',val,document.getElementById('forn-alim-obs').value.trim()]];
   try{
-    await appendAbaPPP(prodCidadeAtiva,'Fornecedores Alim','A:C',[[nome,val,document.getElementById('forn-alim-obs').value.trim()]]);
-    showToast('Fornecedor cadastrado!','success');fecharModal('modal-forn-alim');await carregarAlimentacao();
+    if(fornAlimEditIdx===null){
+      await appendAbaPPP(prodCidadeAtiva,'Fornecedores Alim','A:D',row);
+      showToast('Fornecedor cadastrado!','success');
+    } else {
+      await gravarAbaPPP(prodCidadeAtiva,'Fornecedores Alim',`A${fornAlimEditIdx+2}:D${fornAlimEditIdx+2}`,row);
+      showToast('Fornecedor atualizado!','success');
+    }
+    fecharModal('modal-forn-alim');await carregarAlimentacao();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
 
@@ -3354,7 +3505,8 @@ async function salvarAlimentacao(){
   if(!setor){showToast('Informe a equipe/setor.','warn');return;}
   const dia=document.getElementById('alim-dia').value;
   const selForn=document.getElementById('alim-forn');
-  const forn=selForn?.value||'';
+  const fornKey=selForn?.value||'';
+  const forn=fornKey.split('||')[0]||fornKey; // extract just fornecedor name from "NOME||TIPO" key
   const v=parseFloat(document.getElementById('alim-valvoucher').value)||0;
   const q=parseInt(document.getElementById('alim-qtd').value)||0;
   const total=v&&q?v*q:parseFloat(document.getElementById('alim-total').value)||0;
@@ -3363,12 +3515,6 @@ async function salvarAlimentacao(){
     const i=document.getElementById('alim-row-idx').value;
     if(i===''){await appendAbaPPP(prodCidadeAtiva,'Alimentação','A:H',row);showToast('Registrado!','success');}
     else{await gravarAbaPPP(prodCidadeAtiva,'Alimentação',`A${parseInt(i)+2}:H${parseInt(i)+2}`,row);showToast('Atualizado!','success');}
-    // Sincroniza total do fornecedor com Produção
-    if(forn) {
-      const totalForn = await calcTotalAlimForn(prodCidadeAtiva, forn);
-      const valVoucher = parseFloat(document.getElementById('alim-valvoucher').value)||0;
-      await sincProd(prodCidadeAtiva, 'ALIMENTAÇÃO', forn, 1, '', valVoucher||'', totalForn, 'VOUCHER');
-    }
     fecharModal('modal-alimentacao');await carregarAlimentacao();
   }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
 }
@@ -3600,6 +3746,199 @@ function mapaCarregarLista(){
 
 /* Variável para dados pré-preenchidos na Solicitação (vinda do pagamento de equipe) */
 let solDadosPreenchidos = null;
+
+/* ── BLOCO 9b: CREDENCIAMENTO ── */
+let credEquipesData = [];   // aba Presença Equipe (equipes cadastradas)
+let credPresencaData = [];  // registros de presença
+
+async function carregarCredenciamento() {
+  try {
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+    const rows = await sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Equipe!A:D');
+    if (!rows || rows.length < 2) { credEquipesData = []; credPresencaData = []; }
+    else {
+      const headers = rows[0].map(h=>(h||'').trim());
+      const all = rows.slice(1).filter(r=>r.some(c=>c!==undefined&&c!==''));
+      const objs = all.map(r=>{ const o={}; headers.forEach((h,i)=>o[h]=(r[i]||'').toString().trim()); return o; });
+      // Separa equipes (tem QUANTIDADE PREVISTA) de registros de presença (tem COMPARECEU)
+      credEquipesData = objs.filter(r=>r['QUANTIDADE PREVISTA']!==undefined&&r['COMPARECEU']===undefined||
+        (r['QUANTIDADE PREVISTA']&&!r['DATA']));
+      credPresencaData = objs.filter(r=>r['DATA']&&r['COMPARECEU']!==undefined);
+    }
+    renderCredenciamento();
+  } catch(e){ console.error(e); showToast('Erro ao carregar credenciamento.','error'); }
+}
+
+async function carregarCredenciamentoFull() {
+  // Recarrega tanto equipes quanto presença
+  delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+  const rows = await sheetsRead(SHEET_IDS[prodCidadeAtiva], 'Presença Equipe!A:D');
+  if(!rows||rows.length<2){ credEquipesData=[]; credPresencaData=[]; renderCredenciamento(); return; }
+  const headers=rows[0].map(h=>(h||'').trim());
+  const all=rows.slice(1).filter(r=>r.some(c=>c!==undefined&&c!==''))
+    .map(r=>{const o={_row:0};headers.forEach((h,i)=>o[h]=(r[i]||'').toString().trim());return o;});
+  // Row 0 = equipes (EMPRESA/SETOR + QUANTIDADE PREVISTA, sem DATA)
+  // Rows com DATA = registros de presença
+  credEquipesData = all.filter(r=>!r['DATA']&&(r['EMPRESA/SETOR']||r['EMPRESA']||''));
+  credPresencaData = all.filter(r=>r['DATA']);
+  renderCredenciamento();
+}
+
+function renderCredenciamento() {
+  const wrap = document.getElementById('cred-grade-wrap');
+  const met  = document.getElementById('cred-metricas');
+  const podeEditar = currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+
+  if(!credEquipesData.length){
+    met.innerHTML='';
+    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Nenhuma equipe cadastrada</div><div class="empty-sub">Clique em "+ Equipe" para começar</div></div>`;
+    return;
+  }
+
+  // Dias do evento — pega de appData.eventoAtivo ou usa datas de presença
+  const presencaDias=[...new Set(credPresencaData.map(r=>r['DATA']).filter(Boolean))].sort();
+  let diasEvento=presencaDias;
+  if(!diasEvento.length&&appData.eventoAtivo){
+    const ini=parseDateForInput(appData.eventoAtivo['DATA INÍCIO']||appData.eventoAtivo['DATA INICIO']||'');
+    const fim=parseDateForInput(appData.eventoAtivo['DATA FIM']||'');
+    if(ini&&fim) diasEvento=getDiasBetween(ini,fim);
+  }
+  if(!diasEvento.length){
+    // Fallback: 3 dias a partir de hoje
+    for(let i=0;i<3;i++){
+      const d=new Date(); d.setDate(d.getDate()+i);
+      diasEvento.push(d.toISOString().split('T')[0]);
+    }
+  }
+
+  // Métricas: total previsto vs compareceu hoje
+  const hoje=new Date().toISOString().split('T')[0];
+  const previsto=credEquipesData.reduce((s,e)=>s+(parseInt(e['QUANTIDADE PREVISTA']||e['QTDE PREVISTA'])||0),0);
+  const hojeComparec=credPresencaData.filter(r=>r['DATA']===hoje)
+    .reduce((s,r)=>s+(parseInt(r['COMPARECEU'])||0),0);
+  met.innerHTML=`
+    <div class="metric-card"><div class="metric-label">Total previsto</div><div class="metric-value accent">${previsto}</div></div>
+    <div class="metric-card"><div class="metric-label">Hoje compareceu</div><div class="metric-value ${hojeComparec<previsto?'amber':'green'}">${hojeComparec||'—'}</div></div>
+    <div class="metric-card"><div class="metric-label">Equipes cadastradas</div><div class="metric-value blue">${credEquipesData.length}</div></div>`;
+
+  // Grade visual: linhas=equipes, colunas=dias
+  const dFmt=d=>{const p=d.split('-');return`${p[2]}/${p[1]}`;};
+  let html=`<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px;min-width:500px">
+    <thead style="position:sticky;top:0;z-index:2">
+      <tr>
+        <th style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);min-width:160px;text-align:left;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3)">Equipe</th>
+        <th style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);text-align:center">Previsto</th>
+        ${diasEvento.map(d=>{
+          const isHoje=d===hoje;
+          return `<th style="padding:8px 6px;background:${isHoje?'var(--accent-dim)':'var(--surface2)'};border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;color:${isHoje?'var(--accent)':'var(--text3)'};text-align:center;min-width:70px">${dFmt(d)}</th>`;
+        }).join('')}
+        <th style="padding:8px;background:var(--surface2);border:1px solid var(--border);width:36px"></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  credEquipesData.forEach((equipe,ei)=>{
+    const nomeEq=equipe['EMPRESA/SETOR']||equipe['EMPRESA']||`Equipe ${ei+1}`;
+    const prevQtd=parseInt(equipe['QUANTIDADE PREVISTA']||equipe['QTDE PREVISTA'])||0;
+    const editBtn=podeEditar?`<button class="btn btn-ghost btn-sm btn-icon" onclick="abrirModalEquipeQtd(${ei})" title="Editar"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+
+    const cells=diasEvento.map(d=>{
+      const regDia=credPresencaData.find(r=>r['DATA']===d&&(r['EMPRESA/SETOR']||r['EMPRESA']||'')==nomeEq);
+      const comp=regDia?parseInt(regDia['COMPARECEU'])||0:null;
+      const isHoje=d===hoje;
+      let bgColor='transparent', textColor='var(--text3)', cellContent='—';
+      if(comp!==null){
+        if(comp>=prevQtd){bgColor='var(--green-dim)';textColor='var(--green)';}
+        else if(comp>0){bgColor='var(--amber-dim)';textColor='var(--amber)';}
+        else{bgColor='var(--red-dim)';textColor='var(--red)';}
+        cellContent=`<strong>${comp}</strong><span style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">/`+prevQtd+'</span>';
+      }
+      const clickFn=podeEditar?`onclick="abrirModalPresenca('${nomeEq.replace(/'/g,"\'")}','${d}',${comp??''},${prevQtd})"`:'' ;
+      return `<td style="padding:6px;border:1px solid var(--border2);background:${isHoje&&comp===null?'rgba(212,240,74,0.03)':bgColor};text-align:center;cursor:${podeEditar?'pointer':'default'}" ${clickFn}>${cellContent}</td>`;
+    }).join('');
+
+    html+=`<tr>
+      <td style="padding:8px 12px;border:1px solid var(--border2);font-weight:600">${nomeEq}<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${equipe['OBS']||''}</div></td>
+      <td style="padding:8px 12px;border:1px solid var(--border2);text-align:center;font-family:var(--font-mono);color:var(--text2)">${prevQtd}</td>
+      ${cells}
+      <td style="padding:4px;border:1px solid var(--border2)">${editBtn}</td>
+    </tr>`;
+  });
+
+  html+='</tbody></table></div>';
+  wrap.innerHTML=html;
+}
+
+// Modal para cadastrar/editar equipe
+function abrirModalEquipeQtd(idx){
+  const e=idx!==undefined?credEquipesData[idx]:null;
+  document.getElementById('cred-eq-idx').value=idx!==undefined?idx:'';
+  document.getElementById('cred-eq-nome').value=e?.['EMPRESA/SETOR']||e?.['EMPRESA']||'';
+  document.getElementById('cred-eq-previsto').value=e?.['QUANTIDADE PREVISTA']||e?.['QTDE PREVISTA']||'';
+  document.getElementById('cred-eq-obs').value=e?.['OBS']||'';
+  abrirModal('modal-cred-equipe');
+}
+
+async function salvarEquipeQtd(){
+  const nome=document.getElementById('cred-eq-nome').value.trim();
+  const prev=document.getElementById('cred-eq-previsto').value;
+  if(!nome||!prev){showToast('Informe nome e quantidade prevista.','warn');return;}
+  const obs=document.getElementById('cred-eq-obs').value.trim();
+  // EMPRESA/SETOR | QUANTIDADE PREVISTA | OBS | (DATA vazio = é uma equipe, não presença)
+  const row=[[nome,prev,obs,'']];
+  try{
+    const i=document.getElementById('cred-eq-idx').value;
+    if(i===''){
+      await sheetsAppend(SHEET_IDS[prodCidadeAtiva],'Presença Equipe!A:D',row);
+      showToast('Equipe adicionada!','success');
+    } else {
+      // Encontra linha real da equipe no sheet
+      const sheetRow=credEquipesData[parseInt(i)]?._row||(parseInt(i)+2);
+      await sheetsWrite(SHEET_IDS[prodCidadeAtiva],`Presença Equipe!A${sheetRow}:D${sheetRow}`,row);
+      showToast('Equipe atualizada!','success');
+    }
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+    fecharModal('modal-cred-equipe');
+    await carregarCredenciamento();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
+
+// Modal para registrar presença de um dia
+function abrirModalPresenca(equipe, data, compAtual, previsto){
+  document.getElementById('cred-pres-equipe').value=equipe;
+  document.getElementById('cred-pres-data').value=data;
+  document.getElementById('cred-pres-prev').textContent=previsto;
+  document.getElementById('cred-pres-comp').value=compAtual||'';
+  document.getElementById('cred-pres-obs').value='';
+  const dFmt=d=>{const p=d.split('-');return`${p[2]}/${p[1]}`;};
+  document.getElementById('cred-pres-titulo').textContent=`${equipe} — ${dFmt(data)}`;
+  abrirModal('modal-cred-presenca');
+}
+
+async function salvarPresenca(){
+  const equipe=document.getElementById('cred-pres-equipe').value;
+  const data=document.getElementById('cred-pres-data').value;
+  const comp=document.getElementById('cred-pres-comp').value;
+  const obs=document.getElementById('cred-pres-obs').value.trim();
+  if(!comp&&comp!=='0'){showToast('Informe a quantidade.','warn');return;}
+  // Verifica se já existe registro para esta equipe+data → atualiza; senão → append
+  const existente=credPresencaData.find(r=>
+    (r['EMPRESA/SETOR']||r['EMPRESA']||'')==equipe&&r['DATA']==data);
+  // EMPRESA/SETOR | QUANTIDADE PREVISTA | OBS | DATA → mas presença usa: EMPRESA/SETOR | DATA | COMPARECEU | OBS
+  // Ajuste para estrutura da aba: A=EMPRESA/SETOR, B=DATA, C=COMPARECEU, D=OBS
+  const row=[[equipe,data,comp,obs]];
+  try{
+    if(existente&&existente._row){
+      await sheetsWrite(SHEET_IDS[prodCidadeAtiva],`Presença Equipe!A${existente._row}:D${existente._row}`,row);
+    } else {
+      await sheetsAppend(SHEET_IDS[prodCidadeAtiva],'Presença Equipe!A:D',row);
+    }
+    delete sheetsCache[`${SHEET_IDS[prodCidadeAtiva]}::Presença Equipe!A:D`];
+    showToast('Presença registrada!','success');
+    fecharModal('modal-cred-presenca');
+    await carregarCredenciamento();
+  }catch(e){console.error(e);showToast('Erro ao salvar.','error');}
+}
 
 /* ── BLOCO 8: GANTT ── */
 let ganttDragState = null;
@@ -5221,7 +5560,9 @@ async function solEnviar() {
     // Se veio de pagamento de equipe, atualiza status AGORA (após envio bem-sucedido)
     if(solDados._equipeIdx!==undefined&&solDados._equipeCidade){
       try{
-        await gravarAbaPPP(solDados._equipeCidade,'Equipe',`K${solDados._equipeIdx+2}`,[['Pagamento solicitado']]);
+        const memSol = equipeData[solDados._equipeIdx];
+    const sheetRowSol = memSol?._sheetRow || (solDados._equipeIdx+2);
+    await gravarAbaPPP(solDados._equipeCidade,'Equipe',`K${sheetRowSol}`,[['Pagamento solicitado']]);
         delete sheetsCache[`${SHEET_IDS[solDados._equipeCidade]}::Equipe!A:P`];
       }catch(e){console.error('update equipe status:',e);}
     }
