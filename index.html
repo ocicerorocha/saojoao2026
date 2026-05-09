@@ -909,19 +909,35 @@ tbody tr:hover .btn-edit-row{opacity:1}
       <!-- APROVAÇÕES — Bloco 6 -->
       <div class="page" id="page-aprovacoes">
         <div class="section-header">
-          <span class="section-title">Pendentes de aprovação</span>
+          <span class="section-title">Aprovações</span>
           <button class="btn btn-ghost btn-sm" onclick="carregarAprovacoes()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
             Atualizar
           </button>
         </div>
+
+        <!-- Seção 1: Pendentes de aprovação -->
+        <div class="section-header" style="margin-top:4px">
+          <span class="section-title" style="font-size:13px">Pendentes de aprovação</span>
+        </div>
         <div id="apr-pendentes-wrap">
           <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
         </div>
 
-        <div style="margin-top:28px">
+        <!-- Seção 2: Pendentes MeuBilhete -->
+        <div style="margin-top:24px">
           <div class="section-header">
-            <span class="section-title" style="color:var(--text2)">Histórico</span>
+            <span class="section-title" style="font-size:13px;color:#a78bfa">Pendentes MeuBilhete</span>
+          </div>
+          <div id="apr-meubilhete-wrap">
+            <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
+          </div>
+        </div>
+
+        <!-- Seção 3: Histórico -->
+        <div style="margin-top:24px">
+          <div class="section-header">
+            <span class="section-title" style="font-size:13px;color:var(--text2)">Histórico</span>
           </div>
           <div id="apr-historico-wrap">
             <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Carregando…</div></div>
@@ -2212,6 +2228,8 @@ function renderProdPlanilha(){
 }
 
 function renderProdTabela(){
+  // Garante que filtros existem antes de aplicar
+  if(!document.getElementById('prod-busca')) renderProdFiltros();
   const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
   const tbody=document.getElementById('prod-planilha-body');
   const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
@@ -4202,166 +4220,7 @@ function renderGantt() {
 
     rowsHtml += `<tr class="gantt-row">
       <td class="gantt-sticky" title="${item.item}"><strong style="font-size:12px">${item.item.length>20?item.item.substring(0,18)+'…':item.item}</strong></td>
-      <td class="gantt-sticky2">${item.dias}d</td>
-      ${cells}
-    </tr>`;
-  });
-
-  // Drop zones — cada célula do header vira drop target
-  const dropHeader = rangeDates.map((d, ci) => {
-    const isToday = d.getTime() === hoje.getTime();
-    return `<th class="gantt-head-date${isToday?' today':''}"
-      ondragover="event.preventDefault()"
-      ondrop="ganttDrop(event,${d.getTime()})">
-      ${d.getDate()}
-    </th>`;
-  }).join('');
-
-  wrap.innerHTML = `<table class="gantt-table">
-    <thead>
-      <tr>
-        <th class="gantt-sticky gantt-head-item" rowspan="3" style="min-width:160px;max-width:160px">Item</th>
-        <th class="gantt-sticky2 gantt-head-item" rowspan="3" style="min-width:80px">Dur.</th>
-        ${mesHeader}
-      </tr>
-      <tr>${dropHeader}</tr>
-    </thead>
-    <tbody>${rowsHtml}</tbody>
-  </table>`;
-
-  // Scroll para o dia atual
-  setTimeout(() => {
-    const todayEl = wrap.querySelector('.today-col');
-    if (todayEl) {
-      const rect = todayEl.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      wrap.scrollLeft = todayEl.offsetLeft - wrapRect.width / 2;
-    }
-  }, 50);
-}
-
-function ganttDragStart(e, idx) {
-  ganttDragState = { idx };
-  e.dataTransfer.effectAllowed = 'move';
-}
-
-async function ganttDrop(e, timestampMs) {
-  if (!ganttDragState) return;
-  e.preventDefault();
-  const { idx } = ganttDragState;
-  ganttDragState = null;
-  const cidade = prodCidadeAtiva;
-  const prod = (appData.pppData[cidade] && appData.pppData[cidade].producao) || [];
-  const row = prod[idx];
-  if (!row) return;
-  const novaData = new Date(timestampMs);
-  const novaDataBR = formatDateBR(`${novaData.getFullYear()}-${(novaData.getMonth()+1).toString().padStart(2,'0')}-${novaData.getDate().toString().padStart(2,'0')}`);
-  try {
-    const linha = idx + 2;
-    await sheetsWrite(SHEET_IDS[cidade], `Produção!E${linha}`, [[novaDataBR]]);
-    delete sheetsCache[`${SHEET_IDS[cidade]}::Produção!A:O`];
-    await loadPPP(cidade);
-    renderGantt();
-    showToast(`Data de "${row['ITEM']}" atualizada.`, 'success');
-  } catch(err) {
-    console.error('ganttDrop:', err);
-    showToast('Erro ao atualizar data.', 'error');
-  }
-}
-
-/* ── BLOCO 7: DESPESAS ── */
-let despSolicitacoes = [];
-let despPagIdx = null;
-
-async function carregarDespesas() {
-  const wrap = document.getElementById('desp-table-wrap');
-  wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
-  try {
-    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
-    const rows = await sheetsRead(SHEET_IDS.geral, 'Solicitações!A:V');
-    despSolicitacoes = rowsToObjects(rows);
-    renderDespesas();
-  } catch(err) {
-    console.error('carregarDespesas:', err);
-    showToast('Erro ao carregar despesas.', 'error');
-  }
-}
-
-function renderDespesas() {
-  const wrap = document.getElementById('desp-table-wrap');
-  const filtroStatus = document.getElementById('desp-filtro-status').value;
-  const u = currentUser;
-  const nm = {irece:'Irecê', serrinha:'Serrinha', jequie:'Jequié'};
-
-  let rows = despSolicitacoes;
-
-  // Filtro por perfil
-  if (u.perfil === 'prod') {
-    const cidadeNome = nm[u.cidade] || u.cidade;
-    rows = rows.filter(r => (r['CIDADE']||'').trim() === cidadeNome);
-  } else if (currentCity && currentCity !== 'todas') {
-    // Filtro de cidade global para Mestre/Financeiro/Sócio
-    const cidadeNome = nm[currentCity] || currentCity;
-    rows = rows.filter(r => (r['CIDADE']||'').trim() === cidadeNome);
-  }
-
-  // Filtro por status
-  if (filtroStatus) {
-    rows = rows.filter(r => (r['STATUS']||'').trim() === filtroStatus);
-  }
-
-  if (!rows.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">💸</div><div class="empty-title">Nenhuma despesa encontrada</div></div>`;
-    return;
-  }
-
-  const podePagar = u.perfil === 'mestre' || u.perfil === 'fin';
-  const idx0 = despSolicitacoes.indexOf(rows[0]); // para referência
-
-  const linhas = rows.map(r => {
-    const realIdx = despSolicitacoes.indexOf(r);
-    const rowId = `desp-row-${realIdx}`;
-    const detId = `desp-det-${realIdx}`;
-    const status = (r['STATUS']||'').trim();
-    const bCls = {
-      'Em aberto':           'badge-pendente',
-      'Pagamento solicitado':'badge-solicitado',
-      'Pagamento aprovado':  'badge-aprovado',
-      'Pago parcial':        'badge-pago-parc',
-      'Pago':                'badge-pago',
-      'Rejeitado':           'badge-rejeitado',
-    }[status] || 'badge-pendente';
-
-    const valSol  = parseBRL(r['VALOR SOLICITADO (R$)']||r['VALOR SOLICITADO']);
-    const valPago = parseBRL(r['VALOR PAGO (R$)']||r['VALOR PAGO']);
-    const comp    = r['OBS / COMPROVANTE'] || r['OBS/COMPROVANTE'] || '';
-    const compHtml = comp && comp.startsWith('http')
-      ? `<a href="${comp}" target="_blank" style="color:var(--blue);font-size:11px">↗ Ver</a>`
-      : comp ? `<span style="font-size:11px;color:var(--text3)">${comp.substring(0,30)}</span>`
-      : `<span style="color:var(--text3);font-size:11px">—</span>`;
-
-    const pagarBtn = podePagar && (status === 'Pagamento aprovado' || status === 'Solicitado a MeuBilhete')
-      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();btnRun(this,()=>abrirModalPagamento(${realIdx}))">Registrar pgto</button>`+
-        (status==='Pagamento aprovado'?`<button class="btn btn-sm" style="background:rgba(168,139,250,0.15);color:#a78bfa;border:1px solid rgba(168,139,250,0.3);margin-left:4px" onclick="event.stopPropagation();btnRun(this,()=>marcarSolicitadoMeuBilhete(${realIdx}))">→ MeuBilhete</button>`:'')
-      : '';
-
-    // Linha de detalhe expandida
-    const detRow = `<tr id="${detId}" class="desp-detail" style="display:none">
-      <td colspan="11" style="padding:0">
-        <div style="padding:12px 16px;background:var(--surface3);border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Favorecido</span><div style="font-size:13px;margin-top:3px">${r['FAVORECIDO']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Banco</span><div style="font-size:13px;margin-top:3px">${r['BANCO']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Agência</span><div style="font-size:13px;margin-top:3px">${r['AGÊNCIA']||r['AGENCIA']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Conta</span><div style="font-size:13px;margin-top:3px">${r['CONTA']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">PIX</span><div style="font-size:13px;margin-top:3px">${r['PIX']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">WhatsApp</span><div style="font-size:13px;margin-top:3px">${r['WHATSAPP']||'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Custo orçado 2026</span><div style="font-size:13px;margin-top:3px">${parseBRL(r['CUSTO 2026 (R$)']||r['CUSTO 2026'])>0?formatBRL(parseBRL(r['CUSTO 2026 (R$)']||r['CUSTO 2026'])):'—'}</div></div>
-          <div><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Valor pago</span><div style="font-size:13px;margin-top:3px;color:var(--green)">${valPago>0?formatBRL(valPago):'—'}</div></div>
-          <div style="grid-column:1/-1"><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Descrição / Justificativa</span><div style="font-size:13px;margin-top:3px;color:var(--text2)">${r['DESCRIÇÃO / JUSTIFICATIVA']||r['DESCRICAO']||'—'}</div></div>
-          ${comp?`<div style="grid-column:1/-1"><span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Comprovante</span><div style="margin-top:3px">${compHtml}</div></div>`:''}
-          ${pagarBtn?`<div style="grid-column:1/-1">${pagarBtn}</div>`:''}
-        </div>
-      </td>
+      <td></td>
     </tr>`;
 
     return `<tr id="${rowId}" style="cursor:pointer" onclick="toggleDespDetalhe('${detId}')">
@@ -4475,7 +4334,9 @@ async function confirmarPagamento() {
 
     showToast(`${novoStatus}! ${formatBRL(totalPago)} registrado.`, 'success');
     fecharModalPagamento();
-    await carregarDespesas();
+    // Recarrega tanto despesas quanto aprovações
+    if(typeof carregarAprovacoes === 'function') await carregarAprovacoes();
+    if(typeof carregarDespesas === 'function' && despSolicitacoes.length>0) await carregarDespesas();
   } catch(err) {
     console.error('confirmarPagamento:', err);
     showToast('Erro ao registrar pagamento.', 'error');
@@ -4513,9 +4374,12 @@ let aprRejIdx = null;       // índice da linha sendo rejeitada
 
 async function carregarAprovacoes() {
   const pendWrap = document.getElementById('apr-pendentes-wrap');
+  const mbWrap   = document.getElementById('apr-meubilhete-wrap');
   const histWrap = document.getElementById('apr-historico-wrap');
-  pendWrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
-  histWrap.innerHTML = pendWrap.innerHTML;
+  const loading = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
+  if(pendWrap) pendWrap.innerHTML = loading;
+  if(mbWrap)   mbWrap.innerHTML   = loading;
+  if(histWrap) histWrap.innerHTML = loading;
 
   try {
     // Invalida cache e relê
@@ -4531,49 +4395,65 @@ async function carregarAprovacoes() {
 
 function renderAprovacoes() {
   const pendentes = aprSolicitacoes.filter(r =>
-    ['Em aberto','Pagamento solicitado','Pagamento aprovado'].includes((r['STATUS']||'').trim())
+    ['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
+  );
+  const meubilhete = aprSolicitacoes.filter(r =>
+    (r['STATUS']||'').trim() === 'Solicitado a MeuBilhete'
   );
   const historico = aprSolicitacoes.filter(r =>
-    !['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
+    !['Em aberto','Pagamento solicitado','Solicitado a MeuBilhete'].includes((r['STATUS']||'').trim())
   );
 
-  // Filtro por cidade para Mestre (mostra todas), já pendentes são filtradas
   document.getElementById('apr-pendentes-wrap').innerHTML =
-    pendentes.length ? renderAprTabela(pendentes, true) :
+    pendentes.length ? renderAprTabela(pendentes, 'normal') :
     `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Nenhuma solicitação pendente</div></div>`;
 
+  document.getElementById('apr-meubilhete-wrap').innerHTML =
+    meubilhete.length ? renderAprTabela(meubilhete, 'meubilhete') :
+    `<div class="empty-state"><div class="empty-icon">🟣</div><div class="empty-title">Nenhum pagamento aguardando MeuBilhete</div></div>`;
+
   document.getElementById('apr-historico-wrap').innerHTML =
-    historico.length ? renderAprTabela(historico, false) :
+    historico.length ? renderAprTabela(historico, 'historico') :
     `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum histórico ainda</div></div>`;
 }
 
-function renderAprTabela(rows, acoes) {
-  const colunas = acoes
-    ? `<th>Data</th><th>Cidade</th><th>Solicitante</th><th>Item</th><th>Valor</th><th>Status</th><th>Ações</th>`
-    : `<th>Data</th><th>Cidade</th><th>Solicitante</th><th>Item</th><th>Valor</th><th>Status</th><th>Aprovado por</th>`;
+function renderAprTabela(rows, modo) {
+  // modo: 'normal' | 'meubilhete' | 'historico'
+  const thAcoes = modo==='historico'
+    ? `<th>Aprovado por</th>`
+    : `<th>Ações</th>`;
+  const colunas = `<th>Data</th><th>Cidade</th><th>Solicitante</th><th>Item</th><th>Valor</th><th>Parcela</th><th>Status</th>${thAcoes}`;
 
   const linhas = rows.map((r, i) => {
     const idx = aprSolicitacoes.indexOf(r);
     const status = (r['STATUS']||'').trim();
     const bCls = {
-      'Em aberto':          'badge-pendente',
-      'Pagamento solicitado':'badge-solicitado',
-      'Pagamento aprovado': 'badge-aprovado',
-      'Pago parcial':       'badge-pago-parc',
-      'Pago':               'badge-pago',
-      'Rejeitado':          'badge-rejeitado',
+      'Em aberto':                'badge-pendente',
+      'Pagamento solicitado':     'badge-solicitado',
+      'Pagamento aprovado':       'badge-aprovado',
+      'Solicitado a MeuBilhete':  'badge-meubilhete',
+      'Pago parcial':             'badge-pago-parc',
+      'Pago':                     'badge-pago',
+      'Rejeitado':                'badge-rejeitado',
     }[status] || 'badge-pendente';
 
     const val = parseBRL(r['VALOR SOLICITADO (R$)']||r['VALOR SOLICITADO']);
-    const st = (r['STATUS']||'').trim();
-    const isAprovado = st === 'Pagamento aprovado';
-    const acoesHtml = acoes ? `
-      <td style="white-space:nowrap">
-        ${!isAprovado?`<button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>aprovarSolicitacao(${idx}))">Aprovar</button>`:''}
-        ${isAprovado?`<button class="btn btn-sm" style="background:rgba(168,139,250,0.15);color:#a78bfa;border:1px solid rgba(168,139,250,0.3)" onclick="btnRun(this,()=>marcarMeuBilheteAprovacoes(${idx}))">→ MeuBilhete</button>`:''}
-        ${!isAprovado?`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>`:''}
-        ${isAprovado?`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>`:''}
-      </td>` : `<td class="muted">${r['APROVADO POR']||'—'}</td>`;
+    const parcela = r['PARCELAS']||'—';
+
+    let acoesHtml = '';
+    if(modo === 'normal') {
+      acoesHtml = `<td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>aprovarSolicitacao(${idx}))">Aprovar</button>
+        <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
+      </td>`;
+    } else if(modo === 'meubilhete') {
+      acoesHtml = `<td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>abrirModalPagamentoApr(${idx}))">Confirmar pagamento</button>
+        <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
+      </td>`;
+    } else {
+      acoesHtml = `<td class="muted">${r['APROVADO POR']||r['PAGO POR']||'—'}</td>`;
+    }
 
     return `<tr>
       <td class="muted">${r['DATA']||'—'}</td>
@@ -4581,12 +4461,34 @@ function renderAprTabela(rows, acoes) {
       <td>${r['SOLICITANTE']||'—'}</td>
       <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
       <td>${val > 0 ? formatBRL(val) : '—'}</td>
+      <td class="muted" style="font-family:var(--font-mono);font-size:11px">${parcela}</td>
       <td><span class="badge ${bCls}">${status}</span></td>
       ${acoesHtml}
     </tr>`;
   }).join('');
 
   return `<div class="table-wrap"><table><thead><tr>${colunas}</tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+
+// Abre modal de pagamento a partir de Aprovações (seção MeuBilhete)
+async function abrirModalPagamentoApr(aprIdx) {
+  const row = aprSolicitacoes[aprIdx];
+  if(!row) return;
+  // Sincroniza com despSolicitacoes para reusar abrirModalPagamento
+  delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+  const rows = await sheetsRead(SHEET_IDS.geral, 'Solicitações!A:V');
+  despSolicitacoes = rowsToObjects(rows);
+  // Encontra a mesma linha em despSolicitacoes pelo item+cidade+data
+  const despIdx = despSolicitacoes.findIndex(r =>
+    r['ITEM']===(row['ITEM']||'') &&
+    r['CIDADE']===(row['CIDADE']||'') &&
+    r['DATA']===(row['DATA']||'') &&
+    r['SOLICITANTE']===(row['SOLICITANTE']||'')
+  );
+  if(despIdx === -1) { showToast('Não foi possível localizar o registro.','error'); return; }
+  abrirModalPagamento(despIdx);
+  // Após fechar o modal de pagamento, recarrega aprovações
+  const originalFechar = fecharModalPagamento;
 }
 
 async function aprovarSolicitacao(idx) {
@@ -4886,8 +4788,7 @@ async function abrirModalReceita(idx) {
   sel.innerHTML = `<option value="">— selecione —</option>`+
     cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('')+
     `<option value="__nova">+ Nova categoria…</option>`;
-  if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
-  // Listener para nova categoria
+  // Listener para nova categoria (não sobrescreve valor ao editar)
   sel.onchange = () => {
     if(sel.value==='__nova'){
       const nova=prompt('Nome da nova categoria:');
@@ -4896,9 +4797,11 @@ async function abrirModalReceita(idx) {
         opt.value=nova.trim();opt.textContent=nova.trim();
         sel.insertBefore(opt,sel.lastElementChild);
         sel.value=nova.trim();
-      } else { sel.value=''; }
+      } else { sel.value=r?.['CATEGORIA']||''; }
     }
   };
+  // Define valor APÓS o listener para não disparar onchange
+  if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
   abrirModal('modal-receita');
 }
 
@@ -5810,11 +5713,19 @@ async function solEnviar() {
     solDados.parcelasDetalhe.forEach((p,i)=>{
       const dataVenc = p.data ? formatDateBR(p.data) : dataStr;
       linhasParaGravar.push([
-        dataStr, nm[solDados.cidade]||solDados.cidade, currentUser.nome, solDados.whatsapp||'',
-        solDados.categoria, solDados.item,
-        `${solDados.descricao} (Parcela ${i+1}/${solDados.parcelas} · venc. ${dataVenc})`,
-        solDados.favorecido, solDados.banco||'', solDados.agencia||'', solDados.conta||'', solDados.pix||'',
-        p.valor, solDados.custoOrcado||'', `${i+1}/${solDados.parcelas}`, 'Em aberto',
+        dataStr,
+        nm[solDados.cidade]||solDados.cidade,
+        currentUser.nome,
+        solDados.whatsapp||'',
+        solDados.categoria,
+        solDados.item,
+        `Parcela ${i+1}/${solDados.parcelas} · venc. ${dataVenc} — ${solDados.descricao}`,
+        solDados.favorecido,
+        solDados.banco||'', solDados.agencia||'', solDados.conta||'', solDados.pix||'',
+        p.valor,
+        solDados.custoOrcado||'',
+        `Parcela ${i+1}/${solDados.parcelas}`,
+        'Em aberto',
         '','','','','',''
       ]);
     });
