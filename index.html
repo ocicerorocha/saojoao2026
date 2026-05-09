@@ -134,6 +134,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-display);min-
 .badge-aprovado{background:var(--green-dim);color:var(--green)}
 .badge-pago{background:rgba(76,219,138,0.2);color:var(--green)}
 .badge-pago-parc{background:rgba(92,184,240,0.15);color:var(--blue)}
+.badge-meubilhete{background:rgba(168,139,250,0.15);color:#a78bfa}
 .badge-rejeitado{background:var(--red-dim);color:var(--red)}
 .table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -751,11 +752,15 @@ tbody tr:hover .btn-edit-row{opacity:1}
               </div>
               <div class="form-group">
                 <label class="form-label">Valor solicitado (R$)</label>
-                <input class="form-input" id="sol-valor" type="number" min="0" step="0.01" oninput="solVerificarValor()" placeholder="0,00">
+                <input class="form-input" id="sol-valor" type="number" min="0" step="0.01" oninput="solVerificarValor();solAtualizarParcelas()" placeholder="0,00">
+              </div>
+              <div class="form-group" id="sol-avista-data-wrap">
+                <label class="form-label">Data de vencimento <span style="color:var(--text3);font-size:10px">à vista</span></label>
+                <input class="form-input" id="sol-data-avista" type="date">
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label class="form-label">Parcelas</label>
-                <select class="form-select" id="sol-parcelas">
+                <select class="form-select" id="sol-parcelas" onchange="solAtualizarParcelas()">
                   <option value="1">1× (à vista)</option>
                   <option value="2">2×</option>
                   <option value="3">3×</option>
@@ -763,6 +768,11 @@ tbody tr:hover .btn-edit-row{opacity:1}
                   <option value="5">5×</option>
                   <option value="6">6×</option>
                 </select>
+              </div>
+              <div id="sol-parcelas-detalhe" style="grid-column:1/-1;display:none">
+                <label class="form-label">Datas e valores por parcela</label>
+                <div id="sol-parcelas-lista" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+                <div id="sol-parcelas-aviso" style="font-family:var(--font-mono);font-size:10px;color:var(--amber);margin-top:6px"></div>
               </div>
             </div>
             <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px">
@@ -1665,7 +1675,7 @@ const PAGE_TITLES={
   configuracoes:'Configurações',
 };
 
-const STATUS_AUTO=['Pagamento solicitado','Pagamento aprovado','Pago parcial','Pago'];
+const STATUS_AUTO=['Pagamento solicitado','Pagamento aprovado','Solicitado a MeuBilhete','Pago parcial','Pago'];
 
 /* ── STATE ── */
 let currentUser=null, currentCity='todas', sidebarCollapsed=false;
@@ -2179,10 +2189,23 @@ function renderProdPlanilha(){
   const tbody=document.getElementById('prod-planilha-body');
   const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
   const cats=getCategorias();
-  document.getElementById('prod-cat-filtro').innerHTML=['todas',...cats].map(c=>
-    `<button class="city-pill ${c===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${c.replace(/'/g,"\\'")}')"`+
-    ` style="font-size:10px;padding:3px 10px">${c==='todas'?'Todas':c}</button>`
-  ).join('');
+  document.getElementById('prod-cat-filtro').innerHTML=
+    `<div style="display:flex;gap:4px;flex-wrap:wrap">${['todas',...cats].map(cat=>
+      `<button class="city-pill ${cat===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${cat.replace(/'/g,"\\'")}')"`+
+      ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
+    ).join('')}</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…" oninput="renderProdPlanilha()"
+        style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">
+      <select class="form-select" id="prod-filtro-status" onchange="renderProdPlanilha()"
+        style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+        <option value="">Todos os status</option>
+        <option>Pendente</option><option>Orçado</option>
+        <option>Pagamento solicitado</option><option>Pagamento aprovado</option>
+        <option>Solicitado a MeuBilhete</option>
+        <option>Pago parcial</option><option>Pago</option><option>Item cancelado</option>
+      </select>
+    </div>`;
   if(!prod.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
   let html='',catAtual=null;
   prod.forEach((row,idx)=>{
@@ -2196,6 +2219,10 @@ function renderProdPlanilha(){
       return;
     }
     if(prodCatFiltro!=='todas'&&cat!==prodCatFiltro)return;
+    const buscaTxt=(document.getElementById('prod-busca')?.value||'').toLowerCase();
+    const filtroSt=document.getElementById('prod-filtro-status')?.value||'';
+    if(buscaTxt&&!(item.toLowerCase().includes(buscaTxt)||(row['FORNECEDOR']||'').toLowerCase().includes(buscaTxt)))return;
+    if(filtroSt&&st!==filtroSt)return;
     if(cat&&cat!==catAtual&&prodCatFiltro==='todas'){
       catAtual=cat;
       html+=`<tr class="cat-row"><td style="position:sticky;left:0;background:var(--surface3)" colspan="13"><span style="opacity:0.5;margin-right:6px">▸</span>${cat}</td></tr>`;
@@ -2207,15 +2234,17 @@ function renderProdPlanilha(){
     const ab=Math.max(0,t26-pago),diff=t26-c25;
     const dc=diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero',ds=diff>0?'+':'';
     const st=(row['STATUS']||'Pendente').trim();
-    const bc={'Pendente':'badge-pendente','Orçado':'badge-orcado','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago parcial':'badge-pago-parc','Pago':'badge-pago','Item cancelado':'badge-rejeitado'}[st]||'badge-pendente';
+    const bc={'Pendente':'badge-pendente','Orçado':'badge-orcado','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Solicitado a MeuBilhete':'badge-meubilhete','Pago parcial':'badge-pago-parc','Pago':'badge-pago','Item cancelado':'badge-rejeitado'}[st]||'badge-pendente';
     const vu=parseBRL(row['VALOR UNIT (R$)']||row['VALOR UNIT']);
     const eb=podeEditar?`<button class="btn btn-ghost btn-sm btn-edit-row btn-icon" onclick="abrirModalEditItem(${idx})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:'';
+    const podeAtalho=podeEditar&&!['Pagamento solicitado','Pagamento aprovado','Solicitado a MeuBilhete','Pago parcial','Pago'].includes(st);
+    const btnAtalho=podeAtalho?`<button class="btn btn-ghost btn-sm btn-icon" onclick="atalhoSolicitarPagamento(${idx})" title="Solicitar pagamento" style="color:var(--accent)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>`:'';
     const isCancelado=st==='Item cancelado';
     const rowStyle=isCancelado?'opacity:0.45;text-decoration:line-through':'';
     html+=`<tr data-idx="${idx}" style="${rowStyle}">
       <td style="min-width:180px;position:sticky;left:0;background:inherit;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,0.2)">
         <div style="display:flex;align-items:center;gap:6px">
-          ${eb}
+          ${eb}${btnAtalho}
           <div><strong>${item}</strong>${subcat?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:1px">${subcat}</div>`:''}</div>
         </div>
       </td>
@@ -2257,6 +2286,24 @@ function renderProdPlanilha(){
 }
 
 function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdPlanilha();}
+
+function atalhoSolicitarPagamento(idx) {
+  const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
+  const row=prod[idx];
+  if(!row)return;
+  const t26=parseBRL(row['TOTAL 2026 (R$)']||row['CUSTO 2026']||row['CUSTO 2026 (R$)']);
+  solDadosPreenchidos={
+    cidade: prodCidadeAtiva,
+    categoria: (row['CATEGORIA']||'').trim(),
+    item: (row['ITEM']||'').trim(),
+    descricao: row['OBS']||'',
+    custoOrcado: t26,
+    favorecido: row['FORNECEDOR']||'',
+    banco:'',agencia:'',conta:'',pix:'',whatsapp:'',
+  };
+  navigateTo('solicitacao');
+  showToast('Preencha e confirme a solicitação.','info');
+}
 
 function navegarProdSub(subId){
   Object.entries(PROD_SUB_IDS).forEach(([k,v])=>{const el=document.getElementById(v);if(el)el.classList.toggle('active',k===subId);});
@@ -2358,7 +2405,7 @@ function preencherCatSelect(catAtual){
 function preencherStatusWrap(status,ehAuto){
   const wrap=document.getElementById('edit-status-wrap');
   if(ehAuto){
-    const bc={'Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago parcial':'badge-pago-parc','Pago':'badge-pago'}[status]||'badge-pendente';
+    const bc={'Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Solicitado a MeuBilhete':'badge-meubilhete','Pago parcial':'badge-pago-parc','Pago':'badge-pago'}[status]||'badge-pendente';
     wrap.innerHTML=`<div class="form-input" style="display:flex;align-items:center;gap:8px;opacity:0.8;cursor:default"><span class="badge ${bc}">${status}</span><span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">Controlado pelo fluxo de pagamento</span></div>`;
   }else{
     wrap.innerHTML=`<select class="form-select" onchange="document.getElementById('edit-status').value=this.value">${['Pendente','Orçado','Item cancelado'].map(o=>`<option value="${o}" ${o===status?'selected':''}>${o}</option>`).join('')}</select>`;
@@ -2495,7 +2542,7 @@ function renderEquipe() {
     const valdia = parseBRL(r['VALOR/DIA (R$)']||r['VALOR/DIA']);
     const total = diarias&&valdia ? diarias*valdia : parseBRL(r['TOTAL (R$)']||r['TOTAL']);
     const st = (r['STATUS PAGAMENTO']||'Em aberto').trim();
-    const bCls = {'Em aberto':'badge-pendente','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Pago':'badge-pago'}[st]||'badge-pendente';
+    const bCls = {'Em aberto':'badge-pendente','Pagamento solicitado':'badge-solicitado','Pagamento aprovado':'badge-aprovado','Solicitado a MeuBilhete':'badge-meubilhete','Pago parcial':'badge-pago-parc','Pago':'badge-pago'}[st]||'badge-pendente';
     const eb = podeEditar ? `<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalMembro(${i})" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : '';
     return `<tr>
       <td><strong>${r['NOME']||'—'}</strong></td>
@@ -4281,8 +4328,9 @@ function renderDespesas() {
       : comp ? `<span style="font-size:11px;color:var(--text3)">${comp.substring(0,30)}</span>`
       : `<span style="color:var(--text3);font-size:11px">—</span>`;
 
-    const pagarBtn = podePagar && status === 'Pagamento aprovado'
-      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();abrirModalPagamento(${realIdx})">Registrar pgto</button>`
+    const pagarBtn = podePagar && (status === 'Pagamento aprovado' || status === 'Solicitado a MeuBilhete')
+      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();btnRun(this,()=>abrirModalPagamento(${realIdx}))">Registrar pgto</button>`+
+        (status==='Pagamento aprovado'?`<button class="btn btn-sm" style="background:rgba(168,139,250,0.15);color:#a78bfa;border:1px solid rgba(168,139,250,0.3);margin-left:4px" onclick="event.stopPropagation();btnRun(this,()=>marcarSolicitadoMeuBilhete(${realIdx}))">→ MeuBilhete</button>`:'')
       : '';
 
     // Linha de detalhe expandida
@@ -4358,6 +4406,24 @@ function abrirModalPagamento(idx) {
 function fecharModalPagamento() {
   document.getElementById('modal-pagamento').classList.remove('open');
   despPagIdx = null;
+}
+
+async function marcarSolicitadoMeuBilhete(idx) {
+  const row = despSolicitacoes[idx];
+  if(!row) return;
+  const linhaGeral = idx + 2;
+  const agora2 = new Date();
+  const dataOp = `${agora2.getDate().toString().padStart(2,'0')}/${(agora2.getMonth()+1).toString().padStart(2,'0')}/${agora2.getFullYear()}`;
+  try {
+    await sheetsWrite(SHEET_IDS.geral, `Solicitações!P${linhaGeral}`, [['Solicitado a MeuBilhete']]);
+    // Registra quem solicitou e data na col S (PAGO POR) e T (DATA PAGAMENTO) como referência
+    await sheetsWrite(SHEET_IDS.geral, `Solicitações!S${linhaGeral}:T${linhaGeral}`, [[currentUser.nome, dataOp]]);
+    // Atualiza PPP também
+    await atualizarStatusPPP(row, 'Solicitado a MeuBilhete');
+    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+    showToast('Marcado como "Solicitado a MeuBilhete"!', 'success');
+    await carregarDespesas();
+  } catch(e) { console.error(e); showToast('Erro ao atualizar status.', 'error'); }
 }
 document.getElementById('modal-pagamento').addEventListener('click', function(e) {
   if (e.target === this) fecharModalPagamento();
@@ -4768,24 +4834,37 @@ async function abrirModalReceita(idx) {
   document.getElementById('rec-status').value = r?.['STATUS']||'Previsto';
   document.getElementById('rec-resp').value = r?.['RESPONSÁVEL']||r?.['RESPONSAVEL']||currentUser.nome;
   document.getElementById('rec-obs').value = r?.['OBS']||'';
-  // Popula categorias — recarrega se vazio
-  if(!recCategoriasData.length) {
-    const catsSet = new Set();
-    for (const cid of ['irece','serrinha','jequie']) {
-      try {
-        delete sheetsCache[`${SHEET_IDS[cid]}::Categorias Receita!A:B`];
-        const rows = await lerAbaPPP(cid, 'Categorias Receita', 'A:B');
-        rows.forEach(row => {
-          const cat = (row['CATEGORIA']||'').trim();
-          if(cat && !catsSet.has(cat)) { catsSet.add(cat); recCategoriasData.push(row); }
-        });
-      } catch(_) {}
-    }
+  // Sempre recarrega categorias para garantir dados frescos
+  recCategoriasData = [];
+  const catsSet = new Set();
+  for (const cid of ['irece','serrinha','jequie']) {
+    try {
+      delete sheetsCache[`${SHEET_IDS[cid]}::Categorias Receita!A:B`];
+      const catRows = await lerAbaPPP(cid, 'Categorias Receita', 'A:B');
+      catRows.forEach(row => {
+        const cat = (row['CATEGORIA']||'').trim();
+        if(cat && !catsSet.has(cat)) { catsSet.add(cat); recCategoriasData.push(row); }
+      });
+    } catch(_) {}
   }
   const sel = document.getElementById('rec-categoria');
   const cats = recCategoriasData.map(row=>row['CATEGORIA']||'').filter(Boolean);
-  sel.innerHTML = `<option value="">— selecione —</option>`+cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('');
+  sel.innerHTML = `<option value="">— selecione —</option>`+
+    cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('')+
+    `<option value="__nova">+ Nova categoria…</option>`;
   if(r?.['CATEGORIA']) sel.value = r['CATEGORIA'];
+  // Listener para nova categoria
+  sel.onchange = () => {
+    if(sel.value==='__nova'){
+      const nova=prompt('Nome da nova categoria:');
+      if(nova&&nova.trim()){
+        const opt=document.createElement('option');
+        opt.value=nova.trim();opt.textContent=nova.trim();
+        sel.insertBefore(opt,sel.lastElementChild);
+        sel.value=nova.trim();
+      } else { sel.value=''; }
+    }
+  };
   abrirModal('modal-receita');
 }
 
@@ -5509,6 +5588,49 @@ function solSelecionarItem() {
   solVerificarValor();
 }
 
+function solAtualizarParcelas() {
+  const n = parseInt(document.getElementById('sol-parcelas').value)||1;
+  const total = parseFloat(document.getElementById('sol-valor').value)||0;
+  const det = document.getElementById('sol-parcelas-detalhe');
+  const lista = document.getElementById('sol-parcelas-lista');
+  if(n <= 1) {
+    det.style.display='none';
+    return;
+  }
+  det.style.display='';
+  const valorParcela = total>0 ? (total/n).toFixed(2) : '';
+  // Datas sugeridas: mês a mês a partir de hoje
+  const hoje = new Date();
+  lista.innerHTML = Array.from({length:n},(_,i)=>{
+    const d = new Date(hoje);
+    d.setMonth(d.getMonth()+i);
+    const dStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+      <div>
+        <label style="font-family:var(--font-mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Parcela ${i+1} — Data</label>
+        <input class="form-input" type="date" id="sol-parc-data-${i}" value="${dStr}" style="min-height:32px;font-size:12px;padding:4px 8px;margin-top:3px" oninput="solValidarParcelas()">
+      </div>
+      <div>
+        <label style="font-family:var(--font-mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Valor (R$)</label>
+        <input class="form-input" type="number" min="0" step="0.01" id="sol-parc-val-${i}" value="${valorParcela}" style="min-height:32px;font-size:12px;padding:4px 8px;margin-top:3px" oninput="solValidarParcelas()">
+      </div>
+    </div>`;
+  }).join('');
+  solValidarParcelas();
+}
+
+function solValidarParcelas() {
+  const n = parseInt(document.getElementById('sol-parcelas').value)||1;
+  const total = parseFloat(document.getElementById('sol-valor').value)||0;
+  if(n<=1||!total) return;
+  let soma = 0;
+  for(let i=0;i<n;i++) soma+=(parseFloat(document.getElementById(`sol-parc-val-${i}`)?.value)||0);
+  const aviso = document.getElementById('sol-parcelas-aviso');
+  const diff = Math.abs(soma-total);
+  if(diff>0.01) aviso.textContent=`⚠ Soma das parcelas: ${formatBRL(soma)} (faltam/sobram ${formatBRL(diff)})`;
+  else aviso.textContent='✓ Valores conferem';
+}
+
 function solVerificarValor() {
   const val = parseFloat(document.getElementById('sol-valor').value) || 0;
   const orc = solDados.custoOrcado || 0;
@@ -5544,7 +5666,22 @@ function solAvancar(passoAtual) {
     const val = parseFloat(document.getElementById('sol-valor').value);
     if (!val || val <= 0) { showToast('Informe o valor solicitado.', 'warn'); return; }
     solDados.valor    = val;
-    solDados.parcelas = parseInt(document.getElementById('sol-parcelas').value) || 1;
+    const np = parseInt(document.getElementById('sol-parcelas').value) || 1;
+    solDados.parcelas = np;
+    if(np > 1) {
+      solDados.parcelasDetalhe = [];
+      let somaP = 0;
+      for(let i=0;i<np;i++){
+        const pVal=parseFloat(document.getElementById(`sol-parc-val-${i}`)?.value)||0;
+        const pData=document.getElementById(`sol-parc-data-${i}`)?.value||'';
+        solDados.parcelasDetalhe.push({valor:pVal, data:pData});
+        somaP+=pVal;
+      }
+      if(Math.abs(somaP-val)>0.01){showToast(`Soma das parcelas (${formatBRL(somaP)}) difere do valor total.`,'warn');return;}
+    } else {
+      solDados.dataVencimento = document.getElementById('sol-data-avista')?.value||'';
+      solDados.parcelasDetalhe = null;
+    }
   }
   if (passoAtual === 3) {
     const fav = document.getElementById('sol-favorecido').value.trim();
@@ -5586,9 +5723,14 @@ function solMostrarPasso(n) {
 
 function solMontarResumo() {
   const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
-  const parc = solDados.parcelas > 1
-    ? ` (${solDados.parcelas}× de ${formatBRL(solDados.valor / solDados.parcelas)})`
-    : ' (à vista)';
+  let parc = '';
+  if(solDados.parcelasDetalhe&&solDados.parcelasDetalhe.length>1){
+    parc=` (${solDados.parcelas}× — `+solDados.parcelasDetalhe.map((p,i)=>`${formatBRL(p.valor)}${p.data?' em '+formatDateBR(p.data):''}`).join(' / ')+')';
+  } else if(solDados.parcelas>1){
+    parc=` (${solDados.parcelas}× de ${formatBRL(solDados.valor/solDados.parcelas)})`;
+  } else {
+    parc=` (à vista${solDados.dataVencimento?' · venc. '+formatDateBR(solDados.dataVencimento):''})`;
+  }
 
   const linhas = [
     ['Cidade',        nm[solDados.cidade] || solDados.cidade],
