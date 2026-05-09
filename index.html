@@ -2182,22 +2182,18 @@ function initProducao(){
   renderProdPlanilha();
 }
 
-function renderProdPlanilha(){
-  const nm={irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
-  document.getElementById('prod-planilha-titulo').textContent=`Planilha de Produção — ${nm[prodCidadeAtiva]||prodCidadeAtiva}`;
-  const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
-  const tbody=document.getElementById('prod-planilha-body');
-  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+function renderProdFiltros(){
+  // Renderiza filtros uma única vez — não destrói campos ao filtrar
   const cats=getCategorias();
   document.getElementById('prod-cat-filtro').innerHTML=
-    `<div style="display:flex;gap:4px;flex-wrap:wrap">${['todas',...cats].map(cat=>
+    `<div style="display:flex;gap:4px;flex-wrap:wrap" id="prod-cat-pills">${['todas',...cats].map(cat=>
       `<button class="city-pill ${cat===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${cat.replace(/'/g,"\\'")}')"`+
       ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
     ).join('')}</div>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…" oninput="renderProdPlanilha()"
+      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…" oninput="renderProdTabela()"
         style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">
-      <select class="form-select" id="prod-filtro-status" onchange="renderProdPlanilha()"
+      <select class="form-select" id="prod-filtro-status" onchange="renderProdTabela()"
         style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
         <option value="">Todos os status</option>
         <option>Pendente</option><option>Orçado</option>
@@ -2206,6 +2202,24 @@ function renderProdPlanilha(){
         <option>Pago parcial</option><option>Pago</option><option>Item cancelado</option>
       </select>
     </div>`;
+}
+
+function renderProdPlanilha(){
+  const nm={irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
+  document.getElementById('prod-planilha-titulo').textContent=`Planilha de Produção — ${nm[prodCidadeAtiva]||prodCidadeAtiva}`;
+  renderProdFiltros();
+  renderProdTabela();
+}
+
+function renderProdTabela(){
+  const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
+  const tbody=document.getElementById('prod-planilha-body');
+  const podeEditar=currentUser.perfil==='mestre'||currentUser.perfil==='prod';
+  document.getElementById('prod-cat-pills')?.querySelectorAll('.city-pill').forEach(b=>{
+    b.classList.toggle('active',(b.textContent==='Todas'&&prodCatFiltro==='todas')||(b.textContent===prodCatFiltro));
+  });
+  const buscaTxt=(document.getElementById('prod-busca')?.value||'').toLowerCase();
+  const filtroSt=document.getElementById('prod-filtro-status')?.value||'';
   if(!prod.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
   let html='',catAtual=null;
   prod.forEach((row,idx)=>{
@@ -2219,8 +2233,6 @@ function renderProdPlanilha(){
       return;
     }
     if(prodCatFiltro!=='todas'&&cat!==prodCatFiltro)return;
-    const buscaTxt=(document.getElementById('prod-busca')?.value||'').toLowerCase();
-    const filtroSt=document.getElementById('prod-filtro-status')?.value||'';
     if(buscaTxt&&!(item.toLowerCase().includes(buscaTxt)||(row['FORNECEDOR']||'').toLowerCase().includes(buscaTxt)))return;
     if(filtroSt&&st!==filtroSt)return;
     if(cat&&cat!==catAtual&&prodCatFiltro==='todas'){
@@ -2285,7 +2297,7 @@ function renderProdPlanilha(){
     <div class="metric-card"><div class="metric-label">Sem orçamento 2026</div><div class="metric-value ${semOrc>0?'amber':''}" style="font-size:16px">${semOrc}</div><div class="metric-sub">itens pendentes</div></div>`;
 }
 
-function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdPlanilha();}
+function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdTabela();}
 
 function atalhoSolicitarPagamento(idx) {
   const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
@@ -4519,7 +4531,7 @@ async function carregarAprovacoes() {
 
 function renderAprovacoes() {
   const pendentes = aprSolicitacoes.filter(r =>
-    ['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
+    ['Em aberto','Pagamento solicitado','Pagamento aprovado'].includes((r['STATUS']||'').trim())
   );
   const historico = aprSolicitacoes.filter(r =>
     !['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
@@ -4553,10 +4565,14 @@ function renderAprTabela(rows, acoes) {
     }[status] || 'badge-pendente';
 
     const val = parseBRL(r['VALOR SOLICITADO (R$)']||r['VALOR SOLICITADO']);
+    const st = (r['STATUS']||'').trim();
+    const isAprovado = st === 'Pagamento aprovado';
     const acoesHtml = acoes ? `
       <td style="white-space:nowrap">
-        <button class="btn btn-primary btn-sm" onclick="aprovarSolicitacao(${idx})">Aprovar</button>
-        <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
+        ${!isAprovado?`<button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>aprovarSolicitacao(${idx}))">Aprovar</button>`:''}
+        ${isAprovado?`<button class="btn btn-sm" style="background:rgba(168,139,250,0.15);color:#a78bfa;border:1px solid rgba(168,139,250,0.3)" onclick="btnRun(this,()=>marcarMeuBilheteAprovacoes(${idx}))">→ MeuBilhete</button>`:''}
+        ${!isAprovado?`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>`:''}
+        ${isAprovado?`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>`:''}
       </td>` : `<td class="muted">${r['APROVADO POR']||'—'}</td>`;
 
     return `<tr>
@@ -4705,6 +4721,21 @@ async function reverterStatusEquipeSeNecessario(solRow) {
   }catch(e){console.error('reverterStatusEquipe:',e);}
 }
 
+async function marcarMeuBilheteAprovacoes(idx) {
+  const row = aprSolicitacoes[idx];
+  if(!row) return;
+  const linhaGeral = idx + 2;
+  const ag = new Date();
+  const dataOp=`${ag.getDate().toString().padStart(2,'0')}/${(ag.getMonth()+1).toString().padStart(2,'0')}/${ag.getFullYear()}`;
+  try {
+    await sheetsWrite(SHEET_IDS.geral,`Solicitações!P${linhaGeral}:R${linhaGeral}`,[['Solicitado a MeuBilhete',currentUser.nome,dataOp]]);
+    await atualizarStatusPPP(row,'Solicitado a MeuBilhete');
+    delete sheetsCache[`${SHEET_IDS.geral}::Solicitações!A:V`];
+    showToast('Marcado como "Solicitado a MeuBilhete"!','success');
+    await carregarAprovacoes();
+  }catch(e){console.error(e);showToast('Erro.','error');}
+}
+
 async function tentarNotificarAprovacao(row) {
   const cfg = JSON.parse(localStorage.getItem('sj2026_config') || '{}');
   if (!cfg.twilioSid || !cfg.whatsappPagador) return;
@@ -4839,13 +4870,16 @@ async function abrirModalReceita(idx) {
   const catsSet = new Set();
   for (const cid of ['irece','serrinha','jequie']) {
     try {
-      delete sheetsCache[`${SHEET_IDS[cid]}::Categorias Receita!A:B`];
-      const catRows = await lerAbaPPP(cid, 'Categorias Receita', 'A:B');
+      const sheetIdCat = SHEET_IDS[cid];
+      delete sheetsCache[`${sheetIdCat}::Categorias Receita!A:B`];
+      const rawCatRows = await sheetsRead(sheetIdCat, 'Categorias Receita!A:B');
+      const catRows = rowsToObjects(rawCatRows||[]);
+      console.log('[cats receita]', cid, catRows);
       catRows.forEach(row => {
         const cat = (row['CATEGORIA']||'').trim();
         if(cat && !catsSet.has(cat)) { catsSet.add(cat); recCategoriasData.push(row); }
       });
-    } catch(_) {}
+    } catch(err) { console.warn('[cats receita] erro', cid, err); }
   }
   const sel = document.getElementById('rec-categoria');
   const cats = recCategoriasData.map(row=>row['CATEGORIA']||'').filter(Boolean);
@@ -5593,11 +5627,15 @@ function solAtualizarParcelas() {
   const total = parseFloat(document.getElementById('sol-valor').value)||0;
   const det = document.getElementById('sol-parcelas-detalhe');
   const lista = document.getElementById('sol-parcelas-lista');
+  const avistaWrap = document.getElementById('sol-avista-data-wrap');
+  // Mostra/esconde campo de data à vista
+  if(avistaWrap) avistaWrap.style.display = n===1 ? '' : 'none';
   if(n <= 1) {
     det.style.display='none';
     return;
   }
   det.style.display='';
+  // Só gera parcelas se tiver valor — evita pré-preencher com 0
   const valorParcela = total>0 ? (total/n).toFixed(2) : '';
   // Datas sugeridas: mês a mês a partir de hoje
   const hoje = new Date();
@@ -5627,8 +5665,13 @@ function solValidarParcelas() {
   for(let i=0;i<n;i++) soma+=(parseFloat(document.getElementById(`sol-parc-val-${i}`)?.value)||0);
   const aviso = document.getElementById('sol-parcelas-aviso');
   const diff = Math.abs(soma-total);
-  if(diff>0.01) aviso.textContent=`⚠ Soma das parcelas: ${formatBRL(soma)} (faltam/sobram ${formatBRL(diff)})`;
-  else aviso.textContent='✓ Valores conferem';
+  if(diff>1.00) {
+    aviso.textContent=`⚠ Soma das parcelas: ${formatBRL(soma)} | Total: ${formatBRL(total)} | Diferença: ${formatBRL(diff)}`;
+    aviso.style.color='var(--amber)';
+  } else {
+    aviso.textContent='✓ Valores conferem';
+    aviso.style.color='var(--green)';
+  }
 }
 
 function solVerificarValor() {
@@ -5677,7 +5720,11 @@ function solAvancar(passoAtual) {
         solDados.parcelasDetalhe.push({valor:pVal, data:pData});
         somaP+=pVal;
       }
-      if(Math.abs(somaP-val)>0.01){showToast(`Soma das parcelas (${formatBRL(somaP)}) difere do valor total.`,'warn');return;}
+      // Tolerância de R$ 1,00 para evitar problemas de arredondamento
+      if(Math.abs(somaP-val)>1.00){
+        showToast(`Soma das parcelas (${formatBRL(somaP)}) difere do valor total (${formatBRL(val)}). Ajuste os valores.`,'warn');
+        return;
+      }
     } else {
       solDados.dataVencimento = document.getElementById('sol-data-avista')?.value||'';
       solDados.parcelasDetalhe = null;
@@ -5756,31 +5803,37 @@ async function solEnviar() {
   const agora = new Date();
   const dataStr = `${agora.getDate().toString().padStart(2,'0')}/${(agora.getMonth()+1).toString().padStart(2,'0')}/${agora.getFullYear()}`;
   const nm = {irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
-  const parc = solDados.parcelas > 1 ? `${solDados.parcelas}x` : '1x (à vista)';
 
-  // Ordem colunas Solicitações: DATA | CIDADE | SOLICITANTE | WHATSAPP | CATEGORIA | ITEM | DESCRIÇÃO | FAVORECIDO | BANCO | AGÊNCIA | CONTA | PIX | VALOR SOLICITADO | CUSTO 2026 | PARCELAS | STATUS | ...
-  const row = [[
-    dataStr,
-    nm[solDados.cidade] || solDados.cidade,
-    currentUser.nome,
-    solDados.whatsapp || '',
-    solDados.categoria,
-    solDados.item,
-    solDados.descricao,
-    solDados.favorecido,
-    solDados.banco || '',
-    solDados.agencia || '',
-    solDados.conta || '',
-    solDados.pix || '',
-    solDados.valor,
-    solDados.custoOrcado || '',
-    parc,
-    'Em aberto',
-    '', '', '', '', '', ''   // campos de aprovação/pagamento em branco
-  ]];
+  // Gera uma linha por parcela (ou uma linha se à vista)
+  const linhasParaGravar = [];
+  if(solDados.parcelasDetalhe&&solDados.parcelasDetalhe.length>1){
+    solDados.parcelasDetalhe.forEach((p,i)=>{
+      const dataVenc = p.data ? formatDateBR(p.data) : dataStr;
+      linhasParaGravar.push([
+        dataStr, nm[solDados.cidade]||solDados.cidade, currentUser.nome, solDados.whatsapp||'',
+        solDados.categoria, solDados.item,
+        `${solDados.descricao} (Parcela ${i+1}/${solDados.parcelas} · venc. ${dataVenc})`,
+        solDados.favorecido, solDados.banco||'', solDados.agencia||'', solDados.conta||'', solDados.pix||'',
+        p.valor, solDados.custoOrcado||'', `${i+1}/${solDados.parcelas}`, 'Em aberto',
+        '','','','','',''
+      ]);
+    });
+  } else {
+    const dataVenc = solDados.dataVencimento ? formatDateBR(solDados.dataVencimento) : dataStr;
+    linhasParaGravar.push([
+      dataStr, nm[solDados.cidade]||solDados.cidade, currentUser.nome, solDados.whatsapp||'',
+      solDados.categoria, solDados.item,
+      solDados.dataVencimento ? `${solDados.descricao} (venc. ${dataVenc})` : solDados.descricao,
+      solDados.favorecido, solDados.banco||'', solDados.agencia||'', solDados.conta||'', solDados.pix||'',
+      solDados.valor, solDados.custoOrcado||'', '1x (à vista)', 'Em aberto',
+      '','','','','',''
+    ]);
+  }
 
   try {
-    await sheetsAppend(SHEET_IDS.geral, 'Solicitações!A:V', row);
+    for(const row of linhasParaGravar){
+      await sheetsAppend(SHEET_IDS.geral, 'Solicitações!A:V', [row]);
+    }
     // Tenta notificar WhatsApp (silencia erro se não configurado)
     await tentarNotificarWhatsApp(solDados);
     // Se veio de pagamento de equipe, atualiza status AGORA (após envio bem-sucedido)
