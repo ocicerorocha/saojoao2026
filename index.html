@@ -893,7 +893,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label class="form-label">Comprovante <span style="color:var(--text3);font-size:10px">link ou referência</span></label>
-                <input class="form-input" id="pag-comprovante" placeholder="Cole o link do comprovante (upload no Bloco 10)" style="opacity:0.7">
+                <input class="form-input" id="pag-comprovante" placeholder="Cole o link do comprovante (Drive, etc.)">
               </div>
             </div>
             <div id="pag-aviso" class="alert alert-info" style="display:none;margin-bottom:12px">
@@ -2209,31 +2209,44 @@ function initProducao(){
 }
 
 function renderProdFiltros(){
-  // Renderiza filtros uma única vez — não destrói campos ao filtrar
   const cats=getCategorias();
-  document.getElementById('prod-cat-filtro').innerHTML=
-    `<div style="display:flex;gap:4px;flex-wrap:wrap" id="prod-cat-pills">${['todas',...cats].map(cat=>
-      `<button class="city-pill ${cat===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${cat.replace(/'/g,"\\'")}')"`+
-      ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
-    ).join('')}</div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…"
-        oninput="prodBuscaTxt=this.value.toLowerCase();renderProdTabela()"
-        value="${prodBuscaTxt}"
-        style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">
-      <select class="form-select" id="prod-filtro-status"
-        onchange="prodStatusFiltro=this.value;renderProdTabela()"
-        style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
-        <option value="" ${prodStatusFiltro===''?'selected':''}>Todos os status</option>
-        ${['Pendente','Orçado','Pagamento solicitado','Pagamento aprovado','Solicitado a MeuBilhete','Pago parcial','Pago','Item cancelado']
-          .map(s=>`<option value="${s}" ${prodStatusFiltro===s?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>`;
+  const jaExiste=!!document.getElementById('prod-busca');
+  if(!jaExiste){
+    // Primeira renderização: cria estrutura completa
+    document.getElementById('prod-cat-filtro').innerHTML=
+      `<div style="display:flex;gap:4px;flex-wrap:wrap" id="prod-cat-pills">${['todas',...cats].map(cat=>
+        `<button class="city-pill ${cat===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${cat.replace(/'/g,"\'")}')"` +
+        ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
+      ).join('')}</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…"
+          oninput="prodBuscaTxt=this.value.toLowerCase();renderProdTabela()"
+          value="${prodBuscaTxt}"
+          style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">
+        <select class="form-select" id="prod-filtro-status"
+          onchange="prodStatusFiltro=this.value;renderProdTabela()"
+          style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
+          <option value="" ${prodStatusFiltro===''?'selected':''}>Todos os status</option>
+          ${['Pendente','Orçado','Pagamento solicitado','Pagamento aprovado','Solicitado a MeuBilhete','Pago parcial','Pago','Item cancelado']
+            .map(s=>`<option value="${s}" ${prodStatusFiltro===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>`;
+  } else {
+    // Já existe: só reconstrói os pills sem tocar no input/select (mantém estado)
+    const pillsEl=document.getElementById('prod-cat-pills');
+    if(pillsEl){
+      pillsEl.innerHTML=['todas',...cats].map(cat=>
+        `<button class="city-pill ${cat===prodCatFiltro?'active':''}" onclick="filtrarPorCategoria('${cat.replace(/'/g,"\'")}')"` +
+        ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
+      ).join('');
+    }
+  }
 }
-
 function renderProdPlanilha(){
   const nm={irece:'Irecê',serrinha:'Serrinha',jequie:'Jequié'};
   document.getElementById('prod-planilha-titulo').textContent=`Planilha de Produção — ${nm[prodCidadeAtiva]||prodCidadeAtiva}`;
+  // Limpa container para forçar recriação completa (cidade/categoria pode ter mudado)
+  document.getElementById('prod-cat-filtro').innerHTML='';
   renderProdFiltros();
   renderProdTabela();
 }
@@ -2291,7 +2304,7 @@ function renderProdTabela(){
         </div>
       </td>
       <td class="muted">${row['QNT']||'—'}</td><td class="muted">${row['DIAS']||'—'}</td>
-      <td class="muted">${row['DATA INÍCIO']||'—'}</td>
+      <td class="muted">${normalizarData(row['DATA INÍCIO']||'')}</td>
       <td class="muted">${vu>0?formatBRL(vu):'—'}</td>
       <td class="muted">${c25>0?formatBRL(c25):'—'}</td>
       <td style="color:var(--accent);font-weight:600">${t26>0?formatBRL(t26):'—'}</td>
@@ -2503,6 +2516,22 @@ async function salvarItemProducao(){
 }
 
 function formatDateBR(iso){if(!iso)return'';const[a,m,d]=iso.split('-');return`${d}/${m}/${a}`;}
+function normalizarData(val){
+  if(!val||val==='—'||val.toString().trim()==='')return'—';
+  // Serial numérico do Sheets
+  const n=parseFloat(val);
+  if(!isNaN(n)&&n>40000){
+    const d=serialToDate(n);
+    if(d)return`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+  }
+  // YYYY-MM-DD → DD/MM/AAAA
+  if(/^\d{4}-\d{2}-\d{2}$/.test(val.toString().trim())){
+    const[y,mo,dy]=val.toString().trim().split('-');
+    return`${dy}/${mo}/${y}`;
+  }
+  // Já está em DD/MM/AAAA ou outro texto
+  return val;
+}
 function parseDateForInput(br){
   if(!br)return'';
   if(/^\d{4}-\d{2}-\d{2}$/.test(br))return br;
@@ -2590,8 +2619,8 @@ function renderEquipe() {
       <td><strong>${r['NOME']||'—'}</strong></td>
       <td class="muted">${r['FUNÇÃO']||r['FUNCAO']||'—'}</td>
       <td class="muted">${r['EQUIPE/SETOR']||'—'}</td>
-      <td class="muted">${r['DATA IDA']||'—'}</td>
-      <td class="muted">${r['DATA VOLTA']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA IDA']||'')}</td>
+      <td class="muted">${normalizarData(r['DATA VOLTA']||'')}</td>
       <td class="muted">${diarias||'—'}</td>
       <td class="muted">${valdia>0?formatBRL(valdia):'—'}</td>
       <td>${total>0?formatBRL(total):'—'}</td>
@@ -2871,7 +2900,7 @@ function renderHospedagem() {
       html+=`<tr>
         <td style="vertical-align:top;padding:10px 12px">
           <div style="font-weight:600;font-size:13px">${comodoNome||(r['CÔMODO']||r['COMODO']||r['QUARTO']||'—')}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['CHECK-IN']||'—'} → ${r['CHECK-OUT']||'—'} · ${cap} vaga(s) · ${total>0?formatBRL(total):'sem valor'}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${normalizarData(r['CHECK-IN']||'')} → ${normalizarData(r['CHECK-OUT']||'')} · ${cap} vaga(s) · ${total>0?formatBRL(total):'sem valor'}</div>
           ${gradeHtml}
         </td>
         <td style="padding:8px;vertical-align:top;white-space:nowrap;width:120px">${eb}${alocBtn}</td>
@@ -3092,7 +3121,7 @@ function renderTransporte(){
     return `<tr>
       <td style="vertical-align:top">
         <strong>${veicNome}</strong>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['TRAJETO']||'—'} · ${dataP||'—'} ${r['HORÁRIO']||r['HORARIO']||''} · ${ocup}/${vagas} vagas</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${r['TRAJETO']||'—'} · ${normalizarData(dataP)||'—'} ${r['HORÁRIO']||r['HORARIO']||''} · ${ocup}/${vagas} vagas</div>
         ${r['RETORNO']?`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">Retorno: ${r['RETORNO']}</div>`:''}
         ${passHtml}
       </td>
@@ -3188,7 +3217,9 @@ function renderPulseiras(){
   // ── Métricas agrupadas por tipo (todas as datas) ──
   const met=document.getElementById('pulseiras-metricas');
   const tiposUnicos=[...new Set(pulsTiposData.map(t=>t['TIPO']||'').filter(Boolean))];
-  met.innerHTML=tiposUnicos.map(tipo=>{
+
+  // Linha 1: cards por tipo (estoque e saldo)
+  let metHtml=tiposUnicos.map(tipo=>{
     const tiposDestipoData=pulsTiposData.filter(t=>(t['TIPO']||'')===tipo);
     const estoqueTotal=tiposDestipoData.reduce((s,t)=>s+(parseInt(t['QUANTIDADE INICIAL']||t['QUANTIDADE'])||0),0);
     const saidasTipo=pulseirasData.filter(r=>(r['TIPO']||'')===tipo).reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
@@ -3200,6 +3231,30 @@ function renderPulseiras(){
       <div class="metric-sub">saldo de ${estoqueTotal} · ${saidasTipo} saídas (${pct}% restante)</div>
     </div>`;
   }).join('');
+
+  // Linha 2: cards por dia (totais de saídas e contagem real)
+  const diasUnicos=[...new Set(pulseirasData.map(r=>r['DIA']||'').filter(Boolean))].sort();
+  if(diasUnicos.length){
+    metHtml+=`<div style="width:100%;margin-top:4px;padding-top:10px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Saídas por dia</div>`;
+    metHtml+=diasUnicos.map(dia=>{
+      const rowsDia=pulseirasData.filter(r=>(r['DIA']||'')=== dia);
+      const totalSaidas=rowsDia.reduce((s,r)=>s+(parseInt(r['SAÍDAS']||r['SAIDAS'])||0),0);
+      const contagemRows=rowsDia.filter(r=>(r['OBS']||'').includes('Contagem real'));
+      const totalContagem=contagemRows.reduce((s,r)=>s+(parseInt(r['CONTAGEM REAL'])||0),0);
+      const temContagem=contagemRows.length>0;
+      const diff=temContagem?totalContagem-totalSaidas:null;
+      const diffHtml=diff!==null
+        ?`<div style="font-size:10px;color:${diff<0?'var(--red)':diff>0?'var(--amber)':'var(--green)'};font-family:var(--font-mono)">${diff>=0?'+':''}${diff} contagem</div>`
+        :`<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">sem contagem</div>`;
+      return `<div class="metric-card">
+        <div class="metric-label">${normalizarData(dia)}</div>
+        <div class="metric-value blue">${totalSaidas}</div>
+        <div class="metric-sub">saídas totais</div>
+        ${diffHtml}
+      </div>`;
+    }).join('');
+  }
+  met.innerHTML=metHtml;
 
   // ── Filtros ──
   const tiposOpts=tiposUnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
@@ -3253,7 +3308,7 @@ function aplicarFiltrosPulseiras(){
         :'—';
       const isContagem=(r['OBS']||'').includes('Contagem real');
       html+=`<tr style="${isContagem?'background:var(--surface3)':''}">
-        <td class="muted">${r['DIA']||'—'}</td>
+        <td class="muted">${normalizarData(r['DIA']||'')}</td>
         <td><strong>${r['TIPO']||'—'}</strong>${isContagem?'<span style="font-family:var(--font-mono);font-size:9px;color:var(--blue);margin-left:6px">CONTAGEM</span>':''}</td>
         <td class="muted">${sai||'—'}</td>
         <td class="muted">${cont!==null?cont:'—'}</td>
@@ -3366,8 +3421,8 @@ function renderRadios(){
       <td>${r['RESPONSÁVEL ATUAL']||r['RESPONSAVEL ATUAL']||'—'}</td>
       <td><span class="badge ${stCls}">${st}</span></td>
       <td class="muted">${r['FONE?']||'—'}</td>
-      <td class="muted">${r['DATA ENTREGA']||'—'}</td>
-      <td class="muted">${r['DATA DEVOLUÇÃO']||r['DATA DEVOLUCAO']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA ENTREGA']||'')}</td>
+      <td class="muted">${normalizarData(r['DATA DEVOLUÇÃO']||r['DATA DEVOLUCAO']||'')}</td>
       <td class="muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r['OBS']||'—'}</td>
       <td style="padding:4px">
         <button class="btn btn-red btn-sm" onclick="excluirRadio(${i})" title="Excluir">✕</button>
@@ -3585,7 +3640,7 @@ function renderAlimTabela(){
     const total=parseBRL(r['TOTAL (R$)']||r['TOTAL']);
     const realIdx=alimentacaoData.indexOf(r);
     const eb=`<button class="btn btn-ghost btn-sm btn-icon btn-edit-row" onclick="abrirModalAlimentacao(${realIdx})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
-    return `<tr><td class="muted">${r['DIA']||'—'}</td><td>${r['EQUIPE/SETOR']||'—'}</td><td class="muted">${r['FORNECEDOR']||'—'}</td><td class="muted">${parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])>0?formatBRL(parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])):'—'}</td><td class="muted">${r['QNT VOUCHERS']||r['QTD VOUCHERS']||'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
+    return `<tr><td class="muted">${normalizarData(r['DIA']||'')}</td><td>${r['EQUIPE/SETOR']||'—'}</td><td class="muted">${r['FORNECEDOR']||'—'}</td><td class="muted">${parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])>0?formatBRL(parseBRL(r['VALOR VOUCHER (R$)']||r['VALOR VOUCHER'])):'—'}</td><td class="muted">${r['QNT VOUCHERS']||r['QTD VOUCHERS']||'—'}</td><td>${total>0?formatBRL(total):'—'}</td><td class="muted">${r['DATA/HORA']||'—'}</td><td class="muted">${r['OBS']||'—'}</td><td style="padding:4px">${eb}</td></tr>`;
   }).join('');
 }
 
@@ -4494,7 +4549,7 @@ function renderAprTabela(rows, modo) {
     }
 
     return `<tr>
-      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA']||'')}</td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td>${r['SOLICITANTE']||'—'}</td>
       <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
@@ -4775,7 +4830,7 @@ function renderRecTabela() {
     const stCls={'Previsto':'badge-pendente','Confirmado':'badge-aprovado','Recebido':'badge-pago','Recebido parcial':'badge-pago-parc'};
     const podeReceberBtn=(st==='Confirmado'||st==='Previsto')&&(currentUser.perfil==='mestre'||currentUser.perfil==='fin');
     return `<tr>
-      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA']||'')}</td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td><strong>${r['CATEGORIA']||'—'}</strong></td>
       <td>${r['DESCRIÇÃO']||r['DESCRICAO']||'—'}</td>
@@ -4844,7 +4899,16 @@ async function abrirModalReceita(idx) {
     }
   };
 
-  if(r?.['CATEGORIA']) sel.value=r['CATEGORIA'];
+  // BUG 3 fix: se a categoria do registro não consta nas opções carregadas, adiciona dinamicamente
+  if(r?.['CATEGORIA']) {
+    const catExiste = [...sel.options].some(o => o.value === r['CATEGORIA']);
+    if(!catExiste && r['CATEGORIA'].trim()) {
+      const opt = document.createElement('option');
+      opt.value = r['CATEGORIA']; opt.textContent = r['CATEGORIA'];
+      sel.insertBefore(opt, sel.lastElementChild); // antes do "+ Nova categoria…"
+    }
+    sel.value = r['CATEGORIA'];
+  }
   return; // function ends here — rest handled above
 }
 // dummy to absorb old function body start:
@@ -5023,7 +5087,7 @@ function renderBilTabela() {
     const rec=parseBRL(r['RECEITA TOTAL (R$)']||r['RECEITA TOTAL']);
     const ticket=parseBRL(r['TICKET MÉDIO (R$)']||r['TICKET MEDIO']);
     return `<tr>
-      <td class="muted">${r['DATA UPLOAD']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA UPLOAD']||'')}</td>
       <td><strong>${r['CIDADE / EVENTO']||r['CIDADE']||'—'}</strong></td>
       <td class="muted">${r['INGRESSOS VENDIDOS']||'—'}</td>
       <td class="muted">${r['MEIA-ENTRADA']||'—'}</td>
@@ -5213,7 +5277,7 @@ function renderDocTabela() {
     const link=r['LINK DRIVE']||r['LINK'];
     const linkHtml=link?`<a href="${link}" target="_blank" style="color:var(--blue);font-size:12px">↗ Abrir</a>`:'—';
     return `<tr>
-      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${normalizarData(r['DATA']||'')}</td>
       <td><span class="badge badge-pendente">${r['TIPO']||'—'}</span></td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td><strong>${r['TÍTULO']||r['TITULO']||'—'}</strong></td>
@@ -5309,7 +5373,7 @@ function renderAlertTabela() {
     const varCls=varPct>0?'var(--red)':varPct<0?'var(--green)':'var(--text2)';
     const varHtml=varPct!==0?`<span style="color:${varCls};font-weight:600">${varPct>0?'+':''}${varPct.toFixed(1)}%</span>`:'—';
     return `<tr>
-      <td class="muted" style="white-space:nowrap">${r['DATA / HORA']||r['DATA/HORA']||'—'}</td>
+      <td class="muted" style="white-space:nowrap">${r['DATA / HORA']||r['DATA/HORA']?normalizarData((r['DATA / HORA']||r['DATA/HORA']).split(' ')[0])+' '+((r['DATA / HORA']||r['DATA/HORA']).split(' ').slice(1).join(' ')):'—'}</td>
       <td class="muted">${r['USUÁRIO']||r['USUARIO']||'—'}</td>
       <td><strong>${r['ITEM']||'—'}</strong></td>
       <td class="muted">${r['CIDADE']||'—'}</td>
