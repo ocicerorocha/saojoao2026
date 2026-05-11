@@ -407,7 +407,7 @@ tbody tr:hover .btn-edit-row{opacity:1}
                 <tr>
                   <th style="min-width:180px;position:sticky;left:0;top:0;background:var(--surface2);z-index:4">Item</th>
                   <th style="min-width:50px">Qtd</th><th style="min-width:50px">Dias</th><th style="min-width:90px">Data início</th>
-                  <th style="min-width:90px">Valor unit</th><th style="min-width:90px">Custo 2025</th><th style="min-width:90px">Total 2026</th>
+                  <th style="min-width:90px">Valor unit</th><th style="min-width:90px">Custo 2025</th><th style="min-width:90px;color:var(--accent);background:var(--accent-dim)">Total 2026 ★</th>
                   <th style="min-width:80px">Diferença</th><th style="min-width:90px">Valor pago</th><th style="min-width:80px">Em aberto</th>
                   <th style="min-width:120px">Status</th><th style="min-width:120px">Fornecedor</th><th style="min-width:100px">OBS</th>
                 </tr>
@@ -927,14 +927,24 @@ tbody tr:hover .btn-edit-row{opacity:1}
         <!-- Seção 2: Pendentes MeuBilhete -->
         <div style="margin-top:24px">
           <div class="section-header">
-            <span class="section-title" style="font-size:13px;color:#a78bfa">Pendentes MeuBilhete</span>
+            <span class="section-title" style="font-size:13px;color:#a78bfa">→ Pendentes MeuBilhete</span>
           </div>
           <div id="apr-meubilhete-wrap">
             <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
           </div>
         </div>
 
-        <!-- Seção 3: Histórico -->
+        <!-- Seção 3: Pendentes confirmação pagamento -->
+        <div style="margin-top:24px">
+          <div class="section-header">
+            <span class="section-title" style="font-size:13px;color:var(--green)">✓ Pendentes confirmação de pagamento</span>
+          </div>
+          <div id="apr-confirmar-wrap">
+            <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>
+          </div>
+        </div>
+
+        <!-- Seção 4: Histórico -->
         <div style="margin-top:24px">
           <div class="section-header">
             <span class="section-title" style="font-size:13px;color:var(--text2)">Histórico</span>
@@ -1695,7 +1705,7 @@ const STATUS_AUTO=['Pagamento solicitado','Pagamento aprovado','Solicitado a Meu
 
 /* ── STATE ── */
 let currentUser=null, currentCity='todas', sidebarCollapsed=false;
-let prodSubOpen=false, prodCidadeAtiva=null, prodCatFiltro='todas';
+let prodSubOpen=false, prodCidadeAtiva=null, prodCatFiltro='todas', prodStatusFiltro='', prodBuscaTxt='';
 
 /* ── LOGIN ── */
 const loginScreen=document.getElementById('login-screen');
@@ -2207,15 +2217,16 @@ function renderProdFiltros(){
       ` style="font-size:10px;padding:3px 10px">${cat==='todas'?'Todas':cat}</button>`
     ).join('')}</div>
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…" oninput="renderProdTabela()"
+      <input class="form-input" id="prod-busca" placeholder="🔍 Buscar item…"
+        oninput="prodBuscaTxt=this.value.toLowerCase();renderProdTabela()"
+        value="${prodBuscaTxt}"
         style="width:200px;min-height:32px;font-size:12px;padding:4px 10px">
-      <select class="form-select" id="prod-filtro-status" onchange="renderProdTabela()"
+      <select class="form-select" id="prod-filtro-status"
+        onchange="prodStatusFiltro=this.value;renderProdTabela()"
         style="width:auto;min-height:32px;font-size:12px;padding:4px 10px">
-        <option value="">Todos os status</option>
-        <option>Pendente</option><option>Orçado</option>
-        <option>Pagamento solicitado</option><option>Pagamento aprovado</option>
-        <option>Solicitado a MeuBilhete</option>
-        <option>Pago parcial</option><option>Pago</option><option>Item cancelado</option>
+        <option value="" ${prodStatusFiltro===''?'selected':''}>Todos os status</option>
+        ${['Pendente','Orçado','Pagamento solicitado','Pagamento aprovado','Solicitado a MeuBilhete','Pago parcial','Pago','Item cancelado']
+          .map(s=>`<option value="${s}" ${prodStatusFiltro===s?'selected':''}>${s}</option>`).join('')}
       </select>
     </div>`;
 }
@@ -2236,8 +2247,9 @@ function renderProdTabela(){
   document.getElementById('prod-cat-pills')?.querySelectorAll('.city-pill').forEach(b=>{
     b.classList.toggle('active',(b.textContent==='Todas'&&prodCatFiltro==='todas')||(b.textContent===prodCatFiltro));
   });
-  const buscaTxt=(document.getElementById('prod-busca')?.value||'').toLowerCase();
-  const filtroSt=document.getElementById('prod-filtro-status')?.value||'';
+  // Usa variáveis de estado em vez de ler do DOM (mais confiável)
+  const buscaTxt=prodBuscaTxt||'';
+  const filtroSt=prodStatusFiltro||'';
   if(!prod.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum dado</td></tr>`;return;}
   let html='',catAtual=null;
   prod.forEach((row,idx)=>{
@@ -2282,7 +2294,7 @@ function renderProdTabela(){
       <td class="muted">${row['DATA INÍCIO']||'—'}</td>
       <td class="muted">${vu>0?formatBRL(vu):'—'}</td>
       <td class="muted">${c25>0?formatBRL(c25):'—'}</td>
-      <td>${t26>0?formatBRL(t26):'—'}</td>
+      <td style="color:var(--accent);font-weight:600">${t26>0?formatBRL(t26):'—'}</td>
       <td class="${dc}">${c25>0&&t26>0?ds+formatBRL(diff):'—'}</td>
       <td style="color:var(--green)">${pago>0?formatBRL(pago):'—'}</td>
       <td style="color:${ab>0?'var(--amber)':'var(--text3)'}">${t26>0?formatBRL(ab):'—'}</td>
@@ -2315,7 +2327,7 @@ function renderProdTabela(){
     <div class="metric-card"><div class="metric-label">Sem orçamento 2026</div><div class="metric-value ${semOrc>0?'amber':''}" style="font-size:16px">${semOrc}</div><div class="metric-sub">itens pendentes</div></div>`;
 }
 
-function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdTabela();}
+function filtrarPorCategoria(cat){prodCatFiltro=cat;renderProdFiltros();renderProdTabela();}
 
 function atalhoSolicitarPagamento(idx) {
   const prod=(appData.pppData[prodCidadeAtiva]&&appData.pppData[prodCidadeAtiva].producao)||[];
@@ -4224,7 +4236,7 @@ function renderGantt() {
     </tr>`;
 
     return `<tr id="${rowId}" style="cursor:pointer" onclick="toggleDespDetalhe('${detId}')">
-      <td class="muted">${r['DATA']||'—'}</td>
+      <td class="muted">${formatAprData(r['DATA']||'—')}</td>
       <td class="muted">${r['CIDADE']||'—'}</td>
       <td><strong>${r['ITEM']||'—'}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r['CATEGORIA']||''}</div></td>
       <td class="muted">${r['PARCELAS']||'1x'}</td>
@@ -4379,6 +4391,8 @@ async function carregarAprovacoes() {
   const loading = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando…</div></div>`;
   if(pendWrap) pendWrap.innerHTML = loading;
   if(mbWrap)   mbWrap.innerHTML   = loading;
+  const confWrap = document.getElementById('apr-confirmar-wrap');
+  if(confWrap) confWrap.innerHTML = loading;
   if(histWrap) histWrap.innerHTML = loading;
 
   try {
@@ -4394,15 +4408,15 @@ async function carregarAprovacoes() {
 }
 
 function renderAprovacoes() {
-  const pendentes = aprSolicitacoes.filter(r =>
-    ['Em aberto','Pagamento solicitado'].includes((r['STATUS']||'').trim())
-  );
-  const meubilhete = aprSolicitacoes.filter(r =>
-    (r['STATUS']||'').trim() === 'Solicitado a MeuBilhete'
-  );
-  const historico = aprSolicitacoes.filter(r =>
-    !['Em aberto','Pagamento solicitado','Solicitado a MeuBilhete'].includes((r['STATUS']||'').trim())
-  );
+  const statusPendente    = ['Em aberto','Pagamento solicitado'];
+  const statusMeuBilhete  = ['Pagamento aprovado'];
+  const statusConfirmar   = ['Solicitado a MeuBilhete'];
+  const statusHistorico   = ['Pago','Pago parcial','Rejeitado'];
+
+  const pendentes  = aprSolicitacoes.filter(r=>statusPendente.includes((r['STATUS']||'').trim()));
+  const meubilhete = aprSolicitacoes.filter(r=>statusMeuBilhete.includes((r['STATUS']||'').trim()));
+  const confirmar  = aprSolicitacoes.filter(r=>statusConfirmar.includes((r['STATUS']||'').trim()));
+  const historico  = aprSolicitacoes.filter(r=>statusHistorico.includes((r['STATUS']||'').trim()));
 
   document.getElementById('apr-pendentes-wrap').innerHTML =
     pendentes.length ? renderAprTabela(pendentes, 'normal') :
@@ -4412,13 +4426,30 @@ function renderAprovacoes() {
     meubilhete.length ? renderAprTabela(meubilhete, 'meubilhete') :
     `<div class="empty-state"><div class="empty-icon">🟣</div><div class="empty-title">Nenhum pagamento aguardando MeuBilhete</div></div>`;
 
+  const confWrap = document.getElementById('apr-confirmar-wrap');
+  if(confWrap) confWrap.innerHTML =
+    confirmar.length ? renderAprTabela(confirmar, 'confirmar') :
+    `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Nenhum pagamento aguardando confirmação</div></div>`;
+
   document.getElementById('apr-historico-wrap').innerHTML =
     historico.length ? renderAprTabela(historico, 'historico') :
     `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum histórico ainda</div></div>`;
 }
 
+function formatAprData(val) {
+  if(!val||val==='—') return '—';
+  // Se for número serial do Sheets → converte
+  const n = parseFloat(val);
+  if(!isNaN(n) && n > 40000) {
+    const d = serialToDate(n);
+    if(d) return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+  }
+  // Se já é DD/MM/AAAA ou texto → retorna como está
+  return val;
+}
+
 function renderAprTabela(rows, modo) {
-  // modo: 'normal' | 'meubilhete' | 'historico'
+  // modo: 'normal' | 'meubilhete' | 'confirmar' | 'historico'
   const thAcoes = modo==='historico'
     ? `<th>Aprovado por</th>`
     : `<th>Ações</th>`;
@@ -4442,16 +4473,23 @@ function renderAprTabela(rows, modo) {
 
     let acoesHtml = '';
     if(modo === 'normal') {
+      // Pendentes: Aprovar + Rejeitar
       acoesHtml = `<td style="white-space:nowrap">
         <button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>aprovarSolicitacao(${idx}))">Aprovar</button>
         <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
       </td>`;
     } else if(modo === 'meubilhete') {
+      // Aprovado: só → MeuBilhete
+      acoesHtml = `<td style="white-space:nowrap">
+        <button class="btn btn-sm" style="background:rgba(168,139,250,0.15);color:#a78bfa;border:1px solid rgba(168,139,250,0.3)" onclick="btnRun(this,()=>marcarMeuBilheteAprovacoes(${idx}))">→ MeuBilhete</button>
+      </td>`;
+    } else if(modo === 'confirmar') {
+      // Solicitado a MeuBilhete: só Confirmar pagamento
       acoesHtml = `<td style="white-space:nowrap">
         <button class="btn btn-primary btn-sm" onclick="btnRun(this,()=>abrirModalPagamentoApr(${idx}))">Confirmar pagamento</button>
-        <button class="btn btn-red btn-sm" style="margin-left:4px" onclick="abrirModalRejeitar(${idx})">Rejeitar</button>
       </td>`;
     } else {
+      // Histórico: só leitura
       acoesHtml = `<td class="muted">${r['APROVADO POR']||r['PAGO POR']||'—'}</td>`;
     }
 
@@ -4757,6 +4795,60 @@ function renderRecTabela() {
 }
 
 async function abrirModalReceita(idx) {
+  // Show modal immediately, load cats async
+  const r = idx!==undefined ? receitasData[idx] : null;
+  document.getElementById('rec-row-idx').value = idx!==undefined?idx:'';
+  document.getElementById('modal-rec-titulo').textContent = r?'Editar receita':'Nova receita';
+  document.getElementById('rec-data').value = parseDateForInput(r?.['DATA']||'')||dataHoje();
+  document.getElementById('rec-cidade').value = r?.['CIDADE']||'Irecê';
+  document.getElementById('rec-desc').value = r?.['DESCRIÇÃO']||r?.['DESCRICAO']||'';
+  document.getElementById('rec-valor').value = parseBRL(r?.['VALOR (R$)']||r?.['VALOR'])||'';
+  document.getElementById('rec-status').value = r?.['STATUS']||'Previsto';
+  document.getElementById('rec-resp').value = r?.['RESPONSÁVEL']||r?.['RESPONSAVEL']||currentUser.nome;
+  document.getElementById('rec-obs').value = r?.['OBS']||'';
+
+  // Seed select with loading state
+  const sel = document.getElementById('rec-categoria');
+  sel.innerHTML = '<option value="">Carregando categorias…</option>';
+  abrirModal('modal-receita');
+
+  // Load categories async
+  const catsSet = new Set();
+  recCategoriasData = [];
+  for(const cid of ['irece','serrinha','jequie']) {
+    try {
+      const shId = SHEET_IDS[cid];
+      delete sheetsCache[`${shId}::Categorias Receita!A:B`];
+      const rawRows = await sheetsRead(shId, 'Categorias Receita!A:B');
+      (rowsToObjects(rawRows||[])).forEach(row => {
+        const cat=(row['CATEGORIA']||'').trim();
+        if(cat&&!catsSet.has(cat)){catsSet.add(cat);recCategoriasData.push(row);}
+      });
+    } catch(e){ console.warn('cats',cid,e); }
+  }
+
+  const cats = [...catsSet];
+  sel.innerHTML = `<option value="">— selecione —</option>`+
+    cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('')+
+    `<option value="__nova">+ Nova categoria…</option>`;
+
+  sel.onchange = () => {
+    if(sel.value==='__nova'){
+      const nova=prompt('Nova categoria:');
+      if(nova?.trim()){
+        const opt=document.createElement('option');
+        opt.value=nova.trim();opt.textContent=nova.trim();
+        sel.insertBefore(opt,sel.lastElementChild);
+        sel.value=nova.trim();
+      } else { sel.value=''; }
+    }
+  };
+
+  if(r?.['CATEGORIA']) sel.value=r['CATEGORIA'];
+  return; // function ends here — rest handled above
+}
+// dummy to absorb old function body start:
+async function _OLD_abrirModalReceita_REMOVED(idx) {
   const r = idx!==undefined ? receitasData[idx] : null;
   document.getElementById('rec-row-idx').value = idx!==undefined?idx:'';
   document.getElementById('modal-rec-titulo').textContent = r?'Editar receita':'Nova receita';
